@@ -1,0 +1,39 @@
+{
+  "upstreamTag": "v1.48.0-dev.19",
+  "upstreamCommit": "db2338b3bf8a0342b50c738cbc7cf50b0ce0d15c",
+  "branchBase": "adc2a9f901283c01e5e7fec99ffd96f601746d5b",
+  "branch": "bdcrusher/better-lyrics",
+  "betterLyricsCommit": "272d7c16c9e882b28170277e3cbc876f11169995",
+  "braccatoCore": "1.16.11",
+  "braccatoParsers": "0.4.0",
+  "officialBundleSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+  "morphe-patches-gradle-plugin": "a230c33f7eca1e18b07bf1114ca850421520f98d",
+  "morphe-patcher": "812e96eaac173cd058ba49e242325371959befae",
+  "morphe-patches-library": "0284c65b53d1d83da8a58a9cff97019825396d68",
+  "smali": "d92701d9473095244e81edadee0b7d158df74744",
+  "ARSCLib": "9b742c412dc52c3b243a7bb553a156049df6a43e",
+  "morphe-patcher-beta": "0d59d43d892d27858f61e8d215ec54abb918a231",
+  "smali-beta": "4220ae75f7faf79ec6158d30dcac2e5409881cdf",
+  "ARSCLib-beta": "10d0708212cb356d6a77eda3b2637aa2749580f0",
+  "stableVerification": {
+    "patcher": {
+      "commit": "8c7ff9f29d4cf6395fcbe42a4ceddd034d71fecf",
+      "version": "2.0.0",
+      "archiveSha256": "1f17ce6a4923a90c3ff46fc6088f14ab3297a6ea81e7fe8ba8b0d104ef3d3666",
+      "localAdaptation": "settings.gradle.kts reuses pinned local ARSCLib-beta/Smali"
+    },
+    "official": {
+      "version": "1.48.0",
+      "url": "https://github.com/MorpheApp/morphe-patches/releases/download/v1.48.0/patches-1.48.0.mpp",
+      "sha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7"
+    }
+  },
+  "localBraccatoCorrection": {
+    "package": "@braccato/core",
+    "version": "1.16.11",
+    "file": "dist/engine.js",
+    "upstreamSha256": "a3abca4640ef83edd4c5d2b34e7efb221e439365a24005051e34f92851c1f834",
+    "patchedSha256": "6ea93232be38ac2082cc78680bb7e4314e5a629cc05a9afc010e027e8a987226",
+    "change": "Clamp expired automatic scroll suppression at zero, allowing manual follow pause; retain upstream timing, layout and easing."
+  }
+}

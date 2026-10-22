@@ -1,0 +1,61 @@
+{
+  "os": [
+    "win32"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "bugs": {
+    "url": "https://github.com/evanw/esbuild/issues"
+  },
+  "dist": {
+    "shasum": "9bdad8176be7811ad148d1f8772359041f46c6c5",
+    "tarball": "https://registry.npmjs.org/@esbuild/win32-x64/-/win32-x64-0.25.12.tgz",
+    "fileCount": 3,
+    "integrity": "sha512-alJC0uCZpTFrSL0CCDjcgleBXPnCrEAhTBILpeAp7M/OFgoqtAetfBzX0xM00MUsVVPpVjlPuMbREqnZCXaTnA==",
+    "signatures": [
+      {
+        "sig": "MEQCIEPZHGD9AQ42eZnnjWyb9fVnCasOPg7ldp7w9UPQySTBAiAU5KAZyJJDUmXrRGXB/PTkkZxxToPl4QOhFmI0DSf2bw==",
+        "keyid": "SHA256:DhQ8wR5APBvFHLF/+Tc+AYvPOdTpcIDqOhxsBHRwC7U"
+      }
+    ],
+    "unpackedSize": 10617862
+  },
+  "name": "@esbuild/win32-x64",
+  "engines": {
+    "node": ">=18"
+  },
+  "gitHead": "208f539945b145e7c9d6d844290f81c3fe5af320",
+  "license": "MIT",
+  "_npmUser": {
+    "name": "evanw",
+    "email": "evan.exe@gmail.com"
+  },
+  "homepage": "https://github.com/evanw/esbuild#readme",
+  "repository": {
+    "url": "git+https://github.com/evanw/esbuild.git",
+    "type": "git"
+  },
+  "_npmVersion": "10.9.2",
+  "description": "The Windows 64-bit binary for esbuild, a JavaScript bundler.",
+  "directories": {},
+  "maintainers": [
+    {
+      "name": "evanw",
+      "email": "evan.exe@gmail.com"
+    },
+    {
+      "name": "esbuild",
+      "email": "evan.exe+esbuild@gmail.com"
+    }
+  ],
+  "_nodeVersion": "22.14.0",
+  "_hasShrinkwrap": false,
+  "preferUnplugged": true,
+  "_npmOperationalInternal": {
+    "tmp": "tmp/win32-x64_0.25.12_1762040099149_0.6871573441152947",
+    "host": "s3://npm-registry-packages-npm-production"
+  },
+  "_id": "@esbuild/win32-x64@0.25.12",
+  "version": "0.25.12"
+}

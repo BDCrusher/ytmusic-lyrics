@@ -1,0 +1,592 @@
+# @braccato/core
+
+A custom element that renders synchronized lyrics and lights each syllable up as it is sung. No
+runtime dependencies, only a types-only one on `@braccato/types`. The lines go into light DOM rather
+than a shadow root, so the CSS already on your page reaches them.
+
+Extracted from the [Better Lyrics](https://better-lyrics.boidu.dev) rendering engine, which is still
+where it runs.
+
+The [renderer guide](https://docs.betterlyrics.org/braccato/renderer) on the docs site covers properties, events,
+scrolling and theming with lyrics from the Better Lyrics API. This README is still the full reference.
+
+## Install
+
+```bash
+npm i @braccato/core
+```
+
+## Usage
+
+```html
+<audio id="player" src="song.mp3" controls></audio>
+<braccato-lyrics source="#player"></braccato-lyrics>
+
+<script type="module">
+  import "@braccato/core/element";
+  import "@braccato/core/styles/variables.css";
+  import "@braccato/core/styles/lyrics.css";
+  import "@braccato/core/styles/instrumental.css";
+
+  document.querySelector("braccato-lyrics").lyrics = [
+    { startTimeMs: 0, durationMs: 4200, words: "The first line" },
+    { startTimeMs: 4200, durationMs: 3800, words: "The second" },
+  ];
+</script>
+```
+
+`source` takes a CSS selector or a media element. It is resolved when the element connects, so put
+the `<audio>` before the tag, or write the property from script. Without a source, drive the view
+yourself by writing `currentTime` and `playing`.
+
+Two things catch everybody once. The element has no `display` of its own:
+
+```css
+braccato-lyrics {
+  display: block;
+}
+```
+
+And autoscroll writes `scrollTop` on the nearest ancestor that scrolls, falling through to the
+document when nothing does. If the element is not inside its own scroller, say which one it is:
+
+```js
+view.host = { getScrollElement: () => yourFrame };
+```
+
+## Lyrics
+
+The array is the whole input, and nothing in this package produces one.
+[`@braccato/parsers`](https://www.npmjs.com/package/@braccato/parsers) reads TTML, LRC, SRT, QRC and
+plain text, and picks between them by looking at the file.
+
+```js
+import { detectParser } from "@braccato/parsers";
+
+const text = await fetch("song.ttml").then(response => response.text());
+view.lyrics = detectParser(text).parse(text, player.duration * 1000);
+```
+
+A `Lyric` is `{ startTimeMs, durationMs, words }`, with an optional `parts` array of the same three
+fields for syllable or word timing, and optional `translation`, `romanization` and
+`timedRomanization` beside them.
+
+Who wrote the song travels beside the lines rather than in them. Hand the names to `lyricsOptions` and
+the view closes with a "Written by" line after the last lyric. The parsers read them out of the file:
+
+```js
+const parser = detectParser(text);
+view.lyricsOptions = { songwriters: parser.metadata(text).songwriters };
+view.lyrics = parser.parse(text, player.duration * 1000);
+```
+
+## Properties
+
+Every one of these may be written before the element is in a document. The renderer is built when it
+connects, and everything it was handed by then is applied at once.
+
+| Property        | Attribute      | Type                                | Default  | Description                                                                                                                              |
+| --------------- | -------------- | ----------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `lyrics`        |                | `Lyric[] \| null`                   | `null`   | The song. Null means it was never given one, and an empty array clears the view, so there is a way to say both.                            |
+| `lyricsOptions` |                | `{ loaderVisible?, noLyrics?, language?, songwriters? }` | `{}`     | How the lines are built. `noLyrics` marks a message as a placeholder rather than a song, which keeps passive scrolling from drifting it. `songwriters` closes the view with a credits line. |
+| `source`        | `source`       | `string \| HTMLMediaElement \| null` | `null`  | A selector or the media element itself. See Following a media element.                                                                     |
+| `mediaElement`  |                | `HTMLMediaElement \| null` (get)    | `null`   | What `source` resolved to. Null while disconnected, and null for a selector that missed.                                                   |
+| `currentTime`   | `current-time` | `number`                            | `0`      | Playback position in **seconds**. Writing it renders the view again, so whoever holds the clock drives the lyrics by writing this.        |
+| `playing`       | `playing`      | `boolean`                           | `false`  | A paused view animates differently from a playing one.                                                                                     |
+| `tickOptions`   |                | `ElementTickOptions`                | `{}`     | The rest of a tick: four offsets taken off the clock before it is matched, whether passive scrolling is on, when the clock was sampled, and the rate the song is playing at. |
+| `theme`         | `theme`        | `string`                            | `""`     | A compiled stylesheet. See Theming.                                                                                                        |
+| `host`          |                | `Partial<LyricsRendererHost>`       | `{}`     | Overrides for what the renderer asks of its surroundings. Every member has a default. Writing it while connected rebuilds the view.        |
+| `layout`        | `layout`       | `"scroll" \| "stage"`               | `"scroll"` | `stage` shows only the lines being sung. See Entry points. Writing it while connected rebuilds the view.                                    |
+| `renderer`      |                | `LyricsRenderer \| null` (get)      | `null`   | The renderer underneath, for the day the tag runs out. A different one after every reconnection.                                            |
+| `status`        |                | `ElementStatus` (get)               | `"idle"` | `idle`, `rendering`, `theme-conflict`, `unsynced-on-stage` or `no-browsing-context`.                                                                            |
+
+`tickOptions` and `lyricsOptions` are stored on write and read by the next tick or the next build, so
+writing options and the clock on the same frame renders once.
+
+## Attributes
+
+An attribute writes its property, and a property never writes back. Reflecting `current-time` would
+put the playback clock into the DOM sixty times a second, and one attribute reflecting while the rest
+do not is worse than none of them doing it.
+
+| Attribute      | Writes        | Notes                                                                                              |
+| -------------- | ------------- | -------------------------------------------------------------------------------------------------- |
+| `source`       | `source`      | The selector form only. Another selector moves the binding, and removing it unbinds.                |
+| `theme`        | `theme`       | A whole stylesheet in an attribute value. It works, but nobody would ship a theme this way.          |
+| `layout`       | `layout`      | `stage` puts the view on a stage. Any other value, or no attribute, scrolls.                       |
+| `current-time` | `currentTime` | Seconds. A value that does not parse as a number is ignored rather than read as zero.               |
+| `playing`      | `playing`     | An ordinary boolean attribute: its presence is what counts, so `playing="false"` is playing.         |
+
+## Events
+
+All five bubble and are composed, so an element you put inside your own shadow root still reaches
+your listener.
+
+| Event                    | Detail                    | When                                                                            |
+| ------------------------ | ------------------------- | --------------------------------------------------------------------------------- |
+| `braccato:lyrics-loaded` | `{ lineCount, syncType }` | Lyrics were applied, including an empty array. A theme change that rebuilds the lines reports itself the same way. |
+| `braccato:line-click`    | `{ timeS }`               | A line was clicked. The seek has already reached the bound media element by the time you hear about it.            |
+| `braccato:scroll-state`  | `{ userScrolling }`       | Autoscroll stopped following the song, or started again.                                                           |
+| `braccato:stage-layout`  | `{ box }`                 | Stage layout only. The box around the sung lines in the container's coordinates, or null when nothing sung is on stage. |
+| `braccato:error`         | `{ phase, error }`        | Connecting, resolving a source, or applying lyrics or a theme went wrong, or a stage cannot show what it was given. `phase` is `connect`, `conflict`, `layout`, `source`, `lyrics` or `theme`. |
+
+Errors are dispatched a microtask after they happen rather than where they happen, which is what
+makes them receivable at all: `connectedCallback` runs before any listener a page could have added.
+A listener added later than that still misses them, so `status` answers the same question and needs
+no listener. Nothing thrown by a tick lands here, because sixty error events a second would bury the
+one that mattered.
+
+There is no `braccato:word-click`. The renderer tells its host `seek(timeS)` and nothing else, so the
+element cannot tell a word seek from a line seek without re-deriving the click branch off the DOM.
+The DOM is light and the class names are published, so listen for `click` on the element and read
+`.blyrics--word` yourself.
+
+## Theming
+
+A theme is a stylesheet. Write CSS against the class names below and the module stays out of it. What
+it does read is the `blyrics-*` lines inside the comments, which is how a theme changes behaviour
+without a second configuration format.
+
+```js
+view.theme = `
+  /* blyrics-target-scroll-pos-ratio = 0.5; */
+  /* blyrics-long-word-threshold = 900; */
+
+  .blyrics-container {
+    --blyrics-font-size: 3.5rem;
+    --blyrics-lyric-active-color: white;
+    --blyrics-lyric-inactive-color: rgb(255 255 255 / 0.25);
+  }
+`;
+```
+
+Settings are read from comments only. Everything else is CSS the browser is going to read, and a
+stylesheet must not be able to configure the module by accident. An empty theme puts every setting
+back to its default. The stylesheet itself goes into the document head under the
+`blyrics-custom-style` id.
+
+A comment setting holds one value for every view in the bundle. The target scroll position can
+also be set per view: when `--blyrics-target-scroll-pos-ratio` resolves on `.blyrics-container`, it
+wins over `blyrics-target-scroll-pos-ratio`, so an ordinary selector scopes it to one view. It takes
+a unitless number, clamped to `0` to `1`; anything else falls back to the comment setting. Like the
+other custom properties the module reads, it is read once per theme, so the selector has to match
+before the theme is applied.
+
+```css
+/* blyrics-target-scroll-pos-ratio = 0.5; */
+.pip-view .blyrics-container {
+  --blyrics-target-scroll-pos-ratio: 0.37;
+}
+```
+
+A view whose edges are hidden, for example faded out by a mask, declares that with `scroll-padding`
+on its scroll element. Active lines are then kept inside the band between the two insets instead of
+the full viewport. When several active lines do not fit, the latest line still being sung keeps its
+top in view, and an earlier line's tail or the next line's lookahead gives way. Give each inset as a
+length or a percentage of the viewport height; a `calc()` that mixes the two is ignored, as are
+insets that leave no band. The insets are measured on resize and relayout, not every tick.
+
+```css
+.pip-view .scroller {
+  scroll-padding-block: 12% 16%;
+}
+```
+
+### Autoscroll grouping and animation
+
+`blyrics-early-scroll-consider-s` is a comment setting with an independent default of `0.54`
+seconds. When a lyric reaches its scroll time, the renderer includes nearby upcoming lines in
+its target calculation. Entering the lookahead window alone does not scroll. A line already
+included in a committed scroll does not scroll again when its own time arrives. Seeking,
+resuming autoscroll and relayout can still reposition the view.
+
+```css
+/* blyrics-early-scroll-consider-s = 0.54; */
+/* blyrics-line-scroll-duration = 750ms; */
+```
+
+New groups scroll immediately. Previous per-line `translate` animations continue and compose
+additively, so their duration does not block the next scroll. The line-scroll duration knobs
+control visual motion. The legacy `--blyrics-lyric-scroll-duration` variable and its
+`--blyrics-lyric-transition-duration` alias have been removed, along with the container transform
+transition. `blyrics-queue-scroll-ms` is ignored, and no timing equation needs balancing.
+Missing or invalid line durations fall back to an internal `750ms` duration; nonpositive resolved
+durations also use that fallback. Themes should set the line-scroll duration knobs directly
+instead of referencing the removed variables.
+
+Themes that previously relied on duration-derived lookahead should set their preferred
+`blyrics-early-scroll-consider-s` explicitly. The default remains close to the former default
+of approximately `0.54s`, but a custom animation duration no longer changes grouping.
+
+There is no `longWordThreshold`, `lineSyncedDelay` or `disableRichsync` property. Those are theme
+settings (`blyrics-long-word-threshold`, `blyrics-line-synced-animation-delay`,
+`blyrics-disable-richsync`), read from the stylesheet you already hand over. A theme that set one
+while a property said otherwise would leave the module with two answers and no rule for picking.
+
+`parseThemeConfig` is published on `@braccato/core/themeSettings` for reading the settings out of a
+stylesheet somewhere no renderer is running.
+
+### Custom properties
+
+The ones a theme reaches for first. `variables.css` declares the rest.
+
+```css
+.blyrics-container {
+  --blyrics-font-family: system-ui, sans-serif;
+  --blyrics-font-size: 3rem;
+  --blyrics-line-height: 1.333;
+  --blyrics-padding: 2rem;
+  --blyrics-lyric-active-color: white;
+  --blyrics-lyric-inactive-color: rgb(255 255 255 / 0.3);
+  --blyrics-glow-color: rgb(255 255 255 / 0.5);
+}
+```
+
+`--blyrics-font-size` is what everything else is sized off, including the instrumental dots.
+`--blyrics-padding` is the vertical room around each line, and the one to reach for before
+`line-height`. Every word is given the glow, so a theme that wants it to mean something selects on
+`data-long-word`, which the module sets on any part held past `blyrics-long-word-threshold`.
+
+The instrumental ripple is the one place a property carries geometry rather than a value.
+`--blyrics-instrumental-wave-path-high` and `--blyrics-instrumental-wave-path-low` are the two shapes
+it morphs between, each a `path()`, and a theme redrawing them is how the wave changes amplitude or
+frequency. Both must use the same commands in the same order with the same number of arguments: a
+browser only interpolates two paths smoothly when their command sequences match, and a mismatched
+pair snaps at the halfway point instead of flowing.
+
+### Credits
+
+Given `songwriters`, the view ends with `A, B & C` after the last line. It sits dim through the song,
+and once the last line has ended it brightens and takes the scroll focus, the way Apple Music closes a
+song. The scroll never carries the last sung line out of view to do it, so a long list of writers
+settles below that line rather than centred. Seeking back hands the focus to the lines again. Unsynced lyrics have no end, so their credits
+show at full strength from the start.
+
+| Custom property                      | Default          | What it sets                                         |
+| ------------------------------------ | ---------------- | ---------------------------------------------------- |
+| `--blyrics-credits-label`            | `"Written by"`   | The words before the names. Localise it here.        |
+| `--blyrics-credits-font-size`        | `max(0.4em, 12px)` | The size of the whole line.                        |
+| `--blyrics-credits-opacity`          | `0.2`            | While the song plays.                                |
+| `--blyrics-credits-focused-opacity`  | `0.85`           | Once the song has ended.                             |
+
+The credits are a `p`, not a `div`, so rules a theme writes for the lines as `.blyrics-container > div`
+(hover scaling, per-line opacity and blur) never reach them. Style them through `.blyrics-credits`.
+
+The container carries `data-credits-focused` while the credits hold the focus. To hide them, a
+stylesheet can set `.blyrics-credits { display: none; }`, which the scroll then ignores, or a theme can
+declare `/* blyrics-hide-credits = true; */` so they are never built.
+
+### Letter wave (experimental)
+
+On by default; a theme opts out with `/* blyrics-letter-wave = false; */`. It splits every word into
+per-letter spans and, as the word is sung, floats each letter up and eases it most of the way back on
+a small stagger, so a wave travels through the word. It layers on top of the word wobble rather than
+replacing it: the word keeps whatever `--blyrics-word-wobble-*` does and the letters ride on top, so
+it composes with the default `scaleX` pop and reduces to just the letters when a theme sets its wobble
+to identity. It follows `--blyrics-animate-word-wobble`, so reduced motion turns it off with the rest.
+
+A word held past `blyrics-long-word-threshold` (the same `data-long-word` the glow keys off) also
+swells each letter with a transient scale at the crest.
+
+```css
+.blyrics-container {
+  --blyrics-letter-wave-transform: translateY(-0.05em); /* crest lift */
+  --blyrics-letter-wave-settle: translateY(-0.02em); /* rest the crest eases back to */
+  --blyrics-letter-wave-emphasis-scale: 1.11; /* long-word letter swell, 1 turns it off */
+  --blyrics-letter-wave-duration: 0.9s;
+  --blyrics-letter-wave-rise-easing: ease-in-out;
+  --blyrics-letter-wave-fall-easing: ease-out;
+}
+```
+
+The split multiplies the DOM per character and reruns the karaoke sweep per letter, so a theme that
+does not want the cost turns it off with `/* blyrics-letter-wave = false; */`. `blyrics-letter-wave`
+reloads the lines when it changes, the way every build-time setting does.
+
+### Word state
+
+The renderer writes `data-word-state` on every word as the song crosses it, so a theme can tell a
+word being sung from one already sung or one not yet reached. It carries `upcoming` before the word
+starts, `active` while it is being sung, and `past` once it has finished, and it is written on both
+layers of a word, the base `.blyrics--word` and its highlight overlay, so a theme can key either. A
+word stays `active` for exactly as long as it is sung, so a transition on the flip is the whole of a
+per-word karaoke effect, the one ramansg/Max-Performance built before the swept overlay.
+
+```css
+.blyrics--word {
+  color: var(--blyrics-lyric-inactive-color);
+  transition: color 180ms ease;
+}
+
+.blyrics--word[data-word-state="active"],
+.blyrics--word[data-word-state="past"] {
+  color: var(--blyrics-lyric-active-color);
+}
+```
+
+It is written only when a word's state changes rather than every frame, so selecting on it costs a
+theme nothing per tick. A line synced word, which has no duration of its own, is `active` from its
+start until the next word begins.
+
+### Browser engine
+
+On Firefox the container carries `data-browser-engine="gecko"`. The renderer's Gecko-only CSS keys on
+it, and a theme can do the same to target Firefox without sniffing the user agent. It is detected from
+a feature only Gecko ships, so forks of Firefox carry it too. Script reads the same answer from
+`isGecko()` in `@braccato/core/util`, which the renderer's Gecko-only script checks once on load.
+
+```css
+.blyrics-container[data-browser-engine="gecko"] .blyrics--line {
+  /* Firefox only */
+}
+```
+
+The letter wave uses both. WebRender rounds text moved by a 2D translation to whole device
+pixels, and it only redraws a cached tile once something on it has moved a quarter of a pixel, so the
+wave stepped on Firefox. Lettered words on animating lines get a distant `perspective` there, and each
+base letter in the wave runs an invisible additive opacity ripple that changes every frame and forces the
+redraw. Chromium gets neither.
+
+The playback clock checks `isGecko()`. Firefox advances a media element's `currentTime` about every 40ms, so
+each read lags the true time by a different amount and never leads it. The renderer took each new lag
+for drift and reseeked the line, so the highlight swipe jumped back mid-word. On Firefox the tick keeps
+its own clock instead: a read ahead of it is taken, a read behind it pulls it back by a tenth per
+second, and a read more than 60ms off, about one Firefox step plus margin, counts as a seek.
+
+The instrumental fill uses the attribute. Gecko resolves a `fill-box` transform origin wrongly for a shape
+inside a `clipPath`, so the flattening wave crest came loose from the rising fill. On Firefox the wave
+scales from its floor in user units instead, which Chromium already renders identically.
+
+### Class names
+
+These are published API rather than implementation. Renaming one costs a migration rather than a
+refactor. Import them from `@braccato/core/constants` instead of typing them out.
+
+| Constant                  | Class                       | What it is                                                |
+| ------------------------- | --------------------------- | ----------------------------------------------------------- |
+| `LYRICS_CLASS`            | `blyrics-container`         | The view. One per renderer.                                  |
+| `LINE_CLASS`              | `blyrics--line`             | One line, carrying its own `dir="auto"`.                     |
+| `CURRENT_LYRICS_CLASS`    | `blyrics--active`           | The line the song is on right now.                           |
+| `WORD_CLASS`              | `blyrics--word`             | One word, and the unit the sweep animates.                   |
+| `BACKGROUND_LYRIC_CLASS`  | `blyrics-background-lyric`  | A background vocal, sung over the line it answers.           |
+| `USER_SCROLLING_CLASS`    | `blyrics-user-scrolling`    | Set while a reader has scrolled away and autoscroll waits.   |
+| `TRANSLATED_LYRICS_CLASS` | `blyrics--translated`       | A translation hung off a line that was already built.        |
+| `EXPLICIT_WORD_CLASS`     | `blyrics-explicit`          | A word the lyrics flag as explicit. Unstyled unless a theme styles it. |
+| `CREDITS_CLASS`           | `blyrics-credits`           | The songwriter credits after the last line.                  |
+| `CUSTOM_THEME_STYLE_ID`   | `blyrics-custom-style`      | The id of the `<style>` the theme lands in.                  |
+
+## Stylesheets
+
+Four sheets ship with the package, and loading them is yours, the way any package's CSS is. Leave
+them out and you get lines that are in the document and unstyled, rather than lines that are missing.
+
+| File                                     | What it carries                                                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `@braccato/core/styles/variables.css`    | Every `--blyrics-*` default. It goes first, because the others read from it.                                              |
+| `@braccato/core/styles/lyrics.css`       | The container, the lines, the words and the sweep, plus two `@property` registrations the word animation interpolates through. |
+| `@braccato/core/styles/instrumental.css` | The waveform that fills a bar nobody sings over, and the animation that walks it.                                          |
+| `@braccato/core/styles/stage.css`        | Placement for the stage layout, and nothing else. Only a renderer created with `layout: "stage"` needs it.                  |
+
+One thing they do not do for you. The module measures the room the first and last lines need to reach
+the view's target scroll position and writes it on the root as `--blyrics-padding-top` and
+`--blyrics-padding-bottom`, but `lyrics.css` only spends the bottom one. Supply the top rule:
+
+```css
+.blyrics-container {
+  padding-top: var(--blyrics-padding-top, 2rem);
+}
+```
+
+## Light DOM, not shadow DOM
+
+The element builds into itself. That is what lets a stylesheet at document level select the lines,
+and what lets the package's own `@property` registrations apply to them, which they would not inside
+a shadow root. The theme is adopted into the element's document rather than encapsulated, and the
+package's stylesheets are yours to load for the same reason.
+
+## Entry points
+
+`@braccato/core` is the facade and registers nothing. `createLyricsRenderer(options)` returns one
+`LyricsRenderer`: give it lyrics, tick it, and it owns the DOM it builds and every re-measurement
+that DOM needs. `resetPlaybackClock`, `resumeAllAutoscroll`, `injectRomanization` and
+`injectTranslation` are published beside it, for what one instance cannot answer for on its own. Hang
+one onto a built line and call `renderer.scheduleLyricPositionUpdate` the way you already would to
+catch the layout up: the hung line floats into place while the lines around it slide to make room,
+rather than the rest of the lyric jumping down. `--blyrics-animate-decoration-entry` set to `0` drops
+both for an instant insert, and reduced-motion does the same.
+
+`createLyricsRenderer({ layout: "stage" })` builds a view for subtitles over a video: one line at a
+time, and only while it is being sung. It fills its nearest positioned ancestor. There is no scroll
+element to hand it, no scroll padding written and no line culling. Unsynced lyrics show nothing, because
+a stage places lines by their time and unsynced lines have none.
+
+The engine owns where a line is and whether you can see it. It moves each line with a `translate` Web
+Animation and fades it through `--blyrics-stage-opacity`, blurring it slightly on the way in and out so
+one line reads as turning into the next. Each line carries `data-stage-role` (`current`, `previous`,
+`queued` or `gone`) and the container carries `data-layout="stage"`. `stage.css` sets a stage line's
+`opacity` from that property with `!important` inside a cascade layer, and keeps the line
+`visibility: hidden` until it is marked `data-stage-visible`. Layered important declarations outrank
+unlayered ones whatever their specificity, so a theme that forces `opacity: 1 !important` on active
+lines, which some do, can neither reveal a queued line nor hold one that is leaving. In a duet (any line sung by `v2` or `v3`) the
+container also gets `data-stage-duet` and each singer keeps to their side, mirrored for right-to-left
+lines; lines for everyone stay centred.
+
+Everything else is the theme's. Lines are styled exactly as they would be in a scrolling view.
+`host.onStageLayout(box)` reports the box around the sung lines in the container's coordinates, or null
+when nothing sung is on stage, so you can draw a backdrop outside the container the theme styles.
+
+The element takes the same layout as `layout="stage"`, and reports the same box as
+`braccato:stage-layout`. Give the element or its parent a size and a position, and load `stage.css`.
+A stage that cannot show what it was given says so rather than staying blank: unsynced lyrics set
+`status` to `unsynced-on-stage`, and both they and a missing `stage.css` dispatch `braccato:error`
+with `phase: "layout"`. Each song is reported once, so a theme that rebuilds the lines stays quiet.
+The stylesheet is checked a frame after the song is built, and only the event reports it.
+
+```html
+<div style="position: relative; aspect-ratio: 16 / 9">
+  <video id="clip" src="clip.mp4"></video>
+  <braccato-lyrics source="#clip" layout="stage"></braccato-lyrics>
+</div>
+```
+
+`@braccato/core/element` registers `<braccato-lyrics>`, and `<better-lyrics>` beside it, on import.
+Registration is a side effect, which is why it is entered separately.
+
+Four leaves import nothing at all, so taking one does not pull the engine into your bundle with it:
+
+- `@braccato/core/constants` for the class names and element ids above
+- `@braccato/core/text` for script detection: `testRtl`, `containsNonLatin`, `detectNonLatinLanguage`
+- `@braccato/core/themeSettings` for `parseThemeConfig`
+- `@braccato/core/util` for pure helpers such as `clamp` and `toMs`, and `isGecko` for engine-specific fixes
+
+Two notes on the element entry point. A browser extension's isolated world has no custom element
+registry, so `window.customElements` is null there and importing this file throws where it registers.
+An extension that wants the tag has to run in the page's own world; one that stays isolated calls
+`createLyricsRenderer` directly. And registration is silent about a name already taken, so two copies
+of this package on one page means the first to load takes both names and `instanceof` against the
+second copy's class is false for every element on the page. Load one copy.
+
+## Following a media element
+
+While a `source` is bound, the element drives itself. It reads `currentTime` and `paused` off the
+media element on a `requestAnimationFrame` loop that runs only while the song plays, and a click on a
+lyric line sets `currentTime` back on it. So `currentTime` and `playing` become outputs: a write to
+either is dropped and the getter keeps reporting what the binding last read. Dropped rather than
+reported, because a consumer who bound a source and left their own frame loop running would otherwise
+be told about it sixty times a second. Unbind and the clock goes back to whoever asked for it.
+
+The rate is read off the media element too, and passed on as `tickOptions.playbackRate`, so a song at
+half or double speed animates at half or double speed rather than sweeping at 1x and being corrected
+on the next tick. A consumer driving the clock itself sets that option instead. Only the animations
+that follow the song are scaled: a line's exit, a word's fade and the scroll between lines keep the
+timing the theme asked for at every rate.
+
+A reading the media element has not refreshed yet is carried forward at the playback rate it was
+taken at, capped at 100ms of frame time. That cap is what covers a stall: the view runs at most 100ms
+past the last real reading and then waits with it. What it costs is a step backwards when the clock
+moves again, scaled by the rate. 100ms at 1x, 400ms at 4x.
+
+`play`, `pause`, `seeking`, `seeked` and `ratechange` are listened to. The frame loop covers the rest
+by asking the media element whether its clock is still going rather than trusting that something said
+so. One gap is worth knowing: `emptied` while already paused leaves no loop running to notice, so
+swapping `audio.src` between songs without playing goes on reporting the old position until the next
+`play`.
+
+## One renderer per document
+
+Two renderers in one document write over each other, so the module supports one. It is a constraint
+rather than a setting, and it is stated rather than enforced: none of the points where two of them
+collide is a crash. A stage renderer is the exception. It writes no scroll padding, so it can sit in
+the same document as a scrolling one, with three rules: give both the same theme, tick both with the
+same time and wall time in the same frame (whichever ticks first is the one that sees a seek), and if
+the stage renderer applied the theme first, destroy it first, because its `<style>` element goes with it.
+
+Two things are written per document and belong to whichever renderer wrote them last: the theme's
+`<style>` element, and the scroll padding on the root. Two more are per bundle, because a settings
+registry and the playback clock both live at module scope: one theme means one set of values for
+every view in that bundle, and whichever view ticked last is the one whose clock the others replay.
+
+None of that is a limit on how many elements you may have. Two views handed the **same** theme share
+only the settings both of them asked for, and the renderer adopts an existing theme element rather
+than adding a rival under the same id. The line is drawn at the disagreement: when an element applies
+a theme another element in its document was not given, both dispatch `braccato:error` with
+`phase: "conflict"` and both read `status === "theme-conflict"`. Neither stops rendering, because a
+blank view with a reason is worse than a themed one with a warning.
+
+## Docs and demo
+
+Full documentation is at [braccato.boidu.dev](https://braccato.boidu.dev).
+
+The demo page lives at [`demo/`](https://github.com/better-lyrics/braccato/tree/master/demo) in the
+repository and runs against the emitted package, with a control for most of what is above. Clone the
+repository and run `pnpm -C demo dev`, then open `http://localhost:5173/`.
+
+## Licence
+
+MIT. See `LICENSE`.
+
+### Content language and CJK fonts
+
+Pass the source BCP 47 language to `renderer.setLyrics(lyrics, { language: "ja" })`
+(or `element.lyricsOptions = { language: "ja" }` before assigning lyrics). If language detection
+finishes later, `renderer.setLanguage("ja")` updates the existing lines and their measurements
+without replacing their DOM or animations. Repeating the same language (including equivalent spellings
+such as `ja-JP` and `ja_JP`) does not write to the DOM or measure again. Omitting the language on a
+new song clears the old hint.
+
+The renderer preserves Chinese script/region tags and uses kana or Hangul as a fallback when
+metadata is missing or contradicts the text. Han characters alone cannot identify a language;
+untagged Han-only lyrics remain unknown. Translation and romanization settings are not needed
+for this local inference.
+
+Use `injectTranslation(document, lineElement, text, "zh-Hant")` to label a translation separately
+from its source. The language argument is optional; unknown translations get `lang=""` so they
+do not inherit the original lyrics' language. Romanizations use the source language with `Latn`.
+
+Default font stacks now resolve on each lyric and decoration instead of only at the root. Hosts
+loading regional CJK web fonts should set `--noto-sans-universal` on these elements according to
+`:lang()`: a Japanese line and its Chinese translation can then choose different font subsets.
+`--blyrics-font-family` and `--blyrics-translated-font-family` remain explicit theme overrides.
+They are unset by default; custom CSS that reads them directly should use
+`var(--blyrics-font-family, var(--blyrics-default-font-family))` for the default stack.
+
+### Theme-provided image fills
+
+Image highlights are optional. Enable them in a theme comment:
+
+```css
+/* blyrics-image-highlights = true; */
+.blyrics-container {
+  --blyrics-highlight-image: url("my-image.jpg");
+  --blyrics-image-glow-opacity-from: 0.5;
+  --blyrics-image-glow-opacity-to: 0;
+}
+```
+
+Changing this setting requests a lyric rebuild through the existing `setTheme` return value.
+Without it, the renderer adds no image or glow layers and keeps its shadow animation. With it,
+the sharp fill and a separate blurred copy share the word reveal, letter motion, opacity, pause,
+seek and playback-rate handling. Existing glow radius, duration and easing properties still apply;
+the two image-glow opacity properties replace the solid shadow color's alpha.
+
+The image may be an SDR texture or an HDR gain-map asset. The theme owns HDR media queries
+and `dynamic-range-limit`; the core never opts into extra display brightness. Ordinary active
+text color backs up the image fill, while the note keeps its original color path until its
+SVG image loads. The note image reuses the original animated wave clip and fade group.
+
+The glow layer is outside the paint's mask, avoiding clipped halos at word edges. Bidi-sensitive
+runs and fragmented long words use a parallel inline text run for the glow, so the browser
+reproduces the same ordering and wrapped fragments. Its reveal and visibility use the same
+animation clock as the sharp text. No generated text or per-frame geometry reads are needed.
+Joining-script word groups retain contextual joining by using whole-word sweeps instead of
+inline-block letter waves, including when image highlights are disabled.
+Forced colors suppress the image and halo in favor of system text colors.
+
+For real-browser regression checks, build the package, serve the repository root and open
+`tooling/browser/image-highlights.html`. Import `image-highlights-checks.js` from that page and
+call `runImageHighlightChecks(testView)`. The default fixture uses an SDR image; a `theme` query
+parameter can point at a consumer's HDR stylesheet for physical-display testing.
+`runLetterInkChecks(testView)` in the same module checks that letter masks cover glyph overhang,
+such as a `j`'s hook or an italic `f`, without moving any letter.
+
+Words that mix RTL characters with LTR letters or numbers retain native text shaping instead of per-letter motion. Image glow, letter masks and letter motion retain their current paint during the line exit fade.

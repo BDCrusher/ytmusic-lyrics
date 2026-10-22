@@ -1,0 +1,377 @@
+{
+  "version": "0.2.1-beta.1",
+  "bundleSha256": {
+    "full": "33ec5728f083610e4ca7f1d2e61137be66dc5993734320a7538f5bba0ff50996",
+    "addon": "b044f6b78ad2f646529bebe59a51b75a15a433cf2b1d31f05dfe9c3d80bac754"
+  },
+  "input": {
+    "package": "com.google.android.apps.youtube.music",
+    "version": "9.42.52",
+    "versionCode": 94252240,
+    "abi": "arm64-v8a",
+    "minSdk": 26,
+    "sha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56"
+  },
+  "engine": "2.0.0",
+  "officialPatches": "1.48.0",
+  "fullCollectionBaseline": "1.48.0-dev.19",
+  "sourcePins": {
+    "upstreamTag": "v1.48.0-dev.19",
+    "upstreamCommit": "db2338b3bf8a0342b50c738cbc7cf50b0ce0d15c",
+    "branchBase": "adc2a9f901283c01e5e7fec99ffd96f601746d5b",
+    "branch": "bdcrusher/better-lyrics",
+    "betterLyricsCommit": "272d7c16c9e882b28170277e3cbc876f11169995",
+    "braccatoCore": "1.16.11",
+    "braccatoParsers": "0.4.0",
+    "officialBundleSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+    "morphe-patches-gradle-plugin": "a230c33f7eca1e18b07bf1114ca850421520f98d",
+    "morphe-patcher": "812e96eaac173cd058ba49e242325371959befae",
+    "morphe-patches-library": "0284c65b53d1d83da8a58a9cff97019825396d68",
+    "smali": "d92701d9473095244e81edadee0b7d158df74744",
+    "ARSCLib": "9b742c412dc52c3b243a7bb553a156049df6a43e",
+    "morphe-patcher-beta": "0d59d43d892d27858f61e8d215ec54abb918a231",
+    "smali-beta": "4220ae75f7faf79ec6158d30dcac2e5409881cdf",
+    "ARSCLib-beta": "10d0708212cb356d6a77eda3b2637aa2749580f0",
+    "stableVerification": {
+      "patcher": {
+        "commit": "8c7ff9f29d4cf6395fcbe42a4ceddd034d71fecf",
+        "version": "2.0.0",
+        "archiveSha256": "1f17ce6a4923a90c3ff46fc6088f14ab3297a6ea81e7fe8ba8b0d104ef3d3666",
+        "localAdaptation": "settings.gradle.kts reuses pinned local ARSCLib-beta/Smali"
+      },
+      "official": {
+        "version": "1.48.0",
+        "url": "https://github.com/MorpheApp/morphe-patches/releases/download/v1.48.0/patches-1.48.0.mpp",
+        "sha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7"
+      }
+    },
+    "localBraccatoCorrection": {
+      "package": "@braccato/core",
+      "version": "1.16.11",
+      "file": "dist/engine.js",
+      "upstreamSha256": "a3abca4640ef83edd4c5d2b34e7efb221e439365a24005051e34f92851c1f834",
+      "patchedSha256": "6ea93232be38ac2082cc78680bb7e4314e5a629cc05a9afc010e027e8a987226",
+      "change": "Clamp expired automatic scroll suppression at zero, allowing manual follow pause; retain upstream timing, layout and easing."
+    }
+  },
+  "runs": {
+    "full-defaults": {
+      "bundleSha256": "33ec5728f083610e4ca7f1d2e61137be66dc5993734320a7538f5bba0ff50996",
+      "mode": "defaults",
+      "officialSha256": "",
+      "duplicateClasses": 0,
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 78,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "120b0a8f06d314a60c478b216aeb170e11af0a0bc3c9e25673c7fe25c963fefe"
+    },
+    "full-lyrics-only": {
+      "bundleSha256": "33ec5728f083610e4ca7f1d2e61137be66dc5993734320a7538f5bba0ff50996",
+      "mode": "lyrics",
+      "officialSha256": "",
+      "duplicateClasses": 0,
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 78,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "a83042b303c9ee5ffc7056b6eae13c407ca9ae4053b81c996d9814669a3cbf81"
+    },
+    "addon-first": {
+      "bundleSha256": "b044f6b78ad2f646529bebe59a51b75a15a433cf2b1d31f05dfe9c3d80bac754",
+      "mode": "addon-first",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 77,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "75f7378396ce6615984516292f8dfb5b25f3189f0f48c78a205e4b7289b49774"
+    },
+    "official-first": {
+      "bundleSha256": "b044f6b78ad2f646529bebe59a51b75a15a433cf2b1d31f05dfe9c3d80bac754",
+      "mode": "official-first",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 77,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "d515b13d88321e625350bcd744106eda6a0a139c80b4df1b6058c105577fb974"
+    },
+    "conflict": {
+      "expectedFailure": true,
+      "mode": "conflict",
+      "bundleSha256": "b044f6b78ad2f646529bebe59a51b75a15a433cf2b1d31f05dfe9c3d80bac754",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7"
+    },
+    "missing-official": {
+      "expectedFailure": true,
+      "mode": "missing-official",
+      "bundleSha256": "b044f6b78ad2f646529bebe59a51b75a15a433cf2b1d31f05dfe9c3d80bac754",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7"
+    }
+  },
+  "jvmTests": {
+    "tests": 11,
+    "skipped": 5,
+    "failures": 0,
+    "errors": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 5
+  },
+  "payloadIsolation": {
+    "addonClasses": 77,
+    "fullClasses": 1668,
+    "addonOnlyPersonalNamespace": true,
+    "addonOnlyPersonalMpe": true,
+    "fullKnownCompilerHelpers": [
+      "Lcom/android/tools/r8/RecordTag;",
+      "Lkotlin/KotlinNullPointerException;",
+      "Lkotlin/UninitializedPropertyAccessException;",
+      "Lkotlin/jvm/internal/Intrinsics;"
+    ],
+    "duplicateDefinitions": 0
+  },
+  "browser": {
+    "browser": {
+      "passed": true,
+      "initial": {
+        "agents": [
+          "v1",
+          "v2",
+          "v1000",
+          "v1"
+        ],
+        "alignment": [
+          "start",
+          "right",
+          "center",
+          "start"
+        ],
+        "background": 1,
+        "letters": 120,
+        "translation": "Embedded translation",
+        "animations": 87,
+        "overflow": false
+      },
+      "customized": {
+        "alignment": [
+          "right",
+          "left",
+          "center",
+          "right"
+        ],
+        "letters": 0,
+        "bgDisplay": "none"
+      },
+      "plainCount": 2,
+      "staleResponseRejected": true,
+      "errors": []
+    },
+    "providers": {
+      "passed": true,
+      "providerVariants": [
+        {
+          "key": "bLyrics-richsynced",
+          "passed": true
+        },
+        {
+          "key": "bLyrics-synced",
+          "passed": true
+        },
+        {
+          "key": "binimum-richsynced",
+          "passed": true
+        },
+        {
+          "key": "binimum-synced",
+          "passed": true
+        },
+        {
+          "key": "portato-richsynced",
+          "passed": true
+        },
+        {
+          "key": "legato-synced",
+          "passed": true
+        },
+        {
+          "key": "musixmatch-richsync",
+          "passed": true
+        },
+        {
+          "key": "musixmatch-synced",
+          "passed": true
+        },
+        {
+          "key": "lrclib-synced",
+          "passed": true
+        },
+        {
+          "key": "lrclib-plain",
+          "passed": true
+        },
+        {
+          "key": "unison-richsynced",
+          "passed": true
+        },
+        {
+          "key": "unison-wordsynced",
+          "passed": true
+        },
+        {
+          "key": "unison-synced",
+          "passed": true
+        },
+        {
+          "key": "unison-plain",
+          "passed": true
+        },
+        {
+          "key": "yt-captions",
+          "passed": true
+        },
+        {
+          "key": "yt-lyrics",
+          "passed": true
+        }
+      ],
+      "wrongSongRejected": true,
+      "light": {
+        "background": "rgba(0, 0, 0, 0)",
+        "inactive": "rgba(17,17,17,.3)",
+        "overflow": false,
+        "letters": 0
+      },
+      "navigator": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+    },
+    "controls": {
+      "passed": true,
+      "live": {
+        "selected": "bLyrics-richsynced",
+        "lines": 51,
+        "parts": 558,
+        "letters": 2356,
+        "label": "Better Lyrics",
+        "counter": "1/2",
+        "ttmlChars": 18125
+      },
+      "layers": {
+        "chevron": 659,
+        "source": 696,
+        "defaults": 748,
+        "background": "rgba(0, 0, 0, 0)",
+        "icon": 939
+      },
+      "expandedHeight": 161,
+      "collapsedHeight": 47,
+      "threeLayers": true,
+      "copyAndOffsets": true,
+      "priorityReorder": true,
+      "clearSavedPin": true,
+      "disabledFallback": true,
+      "reducedMotion": true,
+      "errors": []
+    },
+    "interactions": {
+      "passed": true,
+      "cover": {
+        "selected": "unison-richsynced",
+        "lines": 50,
+        "letters": 2730,
+        "videoId": "MYal8NoVQXs",
+        "ttmlChars": 23376
+      },
+      "flyout": {
+        "bodyPortal": true,
+        "visible": "1",
+        "blur": "blur(26px)",
+        "bottom": 691,
+        "pillTop": 699,
+        "selected": 1,
+        "noExtraTypeText": true,
+        "width": 160
+      },
+      "layout": {
+        "dockBackground": "rgba(0, 0, 0, 0)",
+        "scrollHeight": 820,
+        "viewport": 820,
+        "overlap": true,
+        "pillBlur": "blur(20px) saturate(1.3)",
+        "centers": [
+          {
+            "id": "collapse",
+            "dx": 0,
+            "dy": 0
+          },
+          {
+            "id": "previous",
+            "dx": 0,
+            "dy": 0
+          },
+          {
+            "id": "next",
+            "dx": 0,
+            "dy": 0
+          },
+          {
+            "id": "earlier",
+            "dx": 0,
+            "dy": 0
+          },
+          {
+            "id": "later",
+            "dx": 0,
+            "dy": 0
+          }
+        ],
+        "lineSurvived": true,
+        "tapHighlight": "rgba(0, 0, 0, 0)"
+      },
+      "follow": {
+        "active": 1,
+        "tap": "rgba(0, 0, 0, 0)",
+        "scrollTop": 590
+      },
+      "seekMs": 31885,
+      "reducedMotion": true,
+      "errors": []
+    }
+  },
+  "jvmCatalogTransport": {
+    "ttmlChars": 23376,
+    "jvmCatalog": true,
+    "recordingVideoId": "MYal8NoVQXs",
+    "passed": true,
+    "exactRecording": true,
+    "androidVerified": false,
+    "actualSourceSha256": {
+      "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "37b8ef5af880895348d8e8316de5c75387cc88d14cecd75d885a1728cb1c810c",
+      "app\\bdcrusher\\ytmusic\\lyrics\\LyricsNetwork.java": "734625cafe9f4d9b4a4426d55d4242c0be054ee4ec50fe987cad21e7819370c3",
+      "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
+    }
+  },
+  "androidPhoneVerified": false,
+  "liveAndroidServiceAuthenticationVerified": false,
+  "sourceExportChanges": [
+    "BuildSources/morphe-patcher-beta/docs/2_1_setup.md",
+    "BuildSources/morphe-patcher-stable/docs/2_1_setup.md",
+    "build-local.ps1",
+    "build-smali.ps1",
+    "playwright-local.ps1",
+    "verify-beta.ps1",
+    "verify-stable.ps1"
+  ],
+  "publishedPayloadRebuilt": false
+}
