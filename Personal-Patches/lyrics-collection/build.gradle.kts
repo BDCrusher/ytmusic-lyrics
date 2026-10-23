@@ -48,6 +48,7 @@ tasks.named<Jar>("jar") {
     from(project(":lyrics-addon").layout.buildDirectory.file("runtime/lyrics-addon.mpe")) { into("extensions") }
     from(rootProject.file("patches/src/main/resources/copyvideolinkbutton/drawable/morphe_yt_copy_bold.xml")) { into("drawable") }
     from(rootProject.file("patches/src/main/resources/romanisationbutton/drawable/morphe_yt_romanize.xml")) { into("drawable") }
-    from(rootProject.file("LICENSE"))
+    // Guava already owns license/; avoid a file/directory case collision on Android/Windows.
+    from(rootProject.file("LICENSE")) { rename { "COPYING-GPL.txt" } }
     from(rootProject.file("NOTICE"))
 }
