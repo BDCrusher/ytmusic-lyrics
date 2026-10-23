@@ -32,6 +32,8 @@ val playlistTrackTapPatch = bytecodePatch(
     description = "Adds an option to play only the tapped track of a playlist or album, " +
             "or to add it to the queue, instead of replacing the queue with the whole playlist.",
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

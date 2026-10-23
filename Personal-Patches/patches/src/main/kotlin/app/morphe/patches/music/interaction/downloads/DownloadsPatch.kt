@@ -91,6 +91,8 @@ val downloadsPatch = bytecodePatch(
     description = "Adds support to download songs using the in-app download button, " +
         "either with an external downloader app or inside YouTube Music.",
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         downloadsResourcePatch,
         settingsPatch,

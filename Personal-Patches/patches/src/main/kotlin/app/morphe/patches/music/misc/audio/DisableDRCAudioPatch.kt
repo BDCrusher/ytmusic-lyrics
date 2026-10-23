@@ -19,6 +19,8 @@ import app.morphe.patches.shared.misc.audio.drc.disableDRCAudioPatch
 @Suppress("unused")
 val disableDRCAudioPatch = disableDRCAudioPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch,

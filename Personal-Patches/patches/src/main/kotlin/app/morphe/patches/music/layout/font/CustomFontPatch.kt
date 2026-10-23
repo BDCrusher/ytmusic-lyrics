@@ -19,6 +19,8 @@ val customFontPatch = baseCustomFontPatch(
     preferenceScreen = PreferenceScreen.GENERAL,
     applicationInitFingerprint = YouTubeMusicApplicationInitFingerprint,
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch

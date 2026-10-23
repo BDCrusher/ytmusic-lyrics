@@ -12,6 +12,8 @@ import app.morphe.patches.shared.misc.audio.tracks.forceOriginalAudioPatch
 @Suppress("unused")
 val forceOriginalAudioPatch = forceOriginalAudioPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch,

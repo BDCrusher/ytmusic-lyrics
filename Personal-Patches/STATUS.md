@@ -1,3 +1,3 @@
-# STATUS
+# YT-Music
 
-See the [current public document](../STATUS.md).
+See the [current public guide](../STATUS.md). One source contains both expandable categories.

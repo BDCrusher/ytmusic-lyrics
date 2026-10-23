@@ -66,3 +66,6 @@ file("../BuildSources/morphe-patches-library").let { libDir ->
 
 include(":lyrics-addon")
 gradle.rootProject { project(":lyrics-addon").pluginManager.apply(app.morphe.patches.gradle.PatchesPlugin::class.java) }
+
+include(":lyrics-collection")
+gradle.rootProject { project(":lyrics-collection").pluginManager.apply(app.morphe.patches.gradle.PatchesPlugin::class.java) }

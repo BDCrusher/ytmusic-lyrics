@@ -27,6 +27,8 @@ val enableAudioVideoSwitchPatch = bytecodePatch(
     name = "Enable audio/video switch",
     description = "Adds an option to switch between the audio and the video version of a track by redirecting videoId."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

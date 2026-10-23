@@ -27,6 +27,8 @@ val playbackSpeedPatch = bytecodePatch(
     name = "Playback speed",
     description = "Adds options to change the playback speed and pitch of tracks.",
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

@@ -25,6 +25,8 @@ val enableExclusiveAudioPlaybackPatch = bytecodePatch(
     name = "Enable exclusive audio playback",
     description = "Enables the option to play audio without video.",
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

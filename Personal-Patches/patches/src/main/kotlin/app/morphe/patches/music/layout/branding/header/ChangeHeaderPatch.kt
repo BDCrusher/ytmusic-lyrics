@@ -64,6 +64,8 @@ val changeHeaderPatch = baseChangeHeaderPatch(
     appendVariantToLogo = false,
     preferenceScreen = PreferenceScreen.GENERAL,
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(changeHeaderBytecodePatch)
         compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
     }

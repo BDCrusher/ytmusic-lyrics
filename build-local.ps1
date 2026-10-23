@@ -1,4 +1,4 @@
-param([Parameter(ValueFromRemainingArguments=$true)][string[]]$GradleTasks = @(':patches:buildAndroid', ':lyrics-addon:buildAndroid'))
+param([Parameter(ValueFromRemainingArguments=$true)][string[]]$GradleTasks = @(':lyrics-collection:buildAndroid'))
 $ErrorActionPreference = 'Stop'
 $scope = $PSScriptRoot
 if (-not (Test-Path -LiteralPath "$scope\BuildCache\Maven\com\github\MorpheApp\smali\smali\d92701d947\smali-d92701d947.pom")) {

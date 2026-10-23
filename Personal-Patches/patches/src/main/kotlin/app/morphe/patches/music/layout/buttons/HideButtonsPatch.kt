@@ -37,6 +37,8 @@ val hideButtonsPatch = bytecodePatch(
     name = "Hide buttons",
     description = "Adds options to hide the cast, history, notification, search, voice search, sound search, and Library New buttons."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

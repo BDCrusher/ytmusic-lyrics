@@ -9,6 +9,8 @@ import app.morphe.patches.shared.misc.privacy.sanitizeSharingLinksPatch
 @Suppress("unused")
 val sanitizeSharingLinksPatch = sanitizeSharingLinksPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch,

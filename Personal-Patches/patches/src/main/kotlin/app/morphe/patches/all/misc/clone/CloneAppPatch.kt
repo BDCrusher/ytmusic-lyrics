@@ -113,6 +113,8 @@ val cloneAppPatch = resourcePatch(
             "may cause app crashes or other unexpected behavior.",
     default = false
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     packageNameOption = stringOption(
         key = "packageName",
         default = "Default",

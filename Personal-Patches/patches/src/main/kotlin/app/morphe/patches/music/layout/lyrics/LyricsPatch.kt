@@ -60,6 +60,8 @@ val lyricsPatch = bytecodePatch(
     name = "Third-party lyrics",
     description = "BDCrusher’s personal Better Lyrics renderer, sources, background vocals and singer placement. Replaces the native Third-party lyrics panel."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

@@ -41,6 +41,8 @@ val hideFlyoutMenuComponentsPatch = bytecodePatch(
     name = "Hide flyout menu components",
     description = "Adds options to hide individual items from the player and queue flyout menus."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

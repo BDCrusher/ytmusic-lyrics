@@ -23,6 +23,8 @@ val forcePortraitOrientationPatch = bytecodePatch(
     name = "Force portrait orientation",
     description = "Adds an option to keep the app in portrait orientation when the device is rotated."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

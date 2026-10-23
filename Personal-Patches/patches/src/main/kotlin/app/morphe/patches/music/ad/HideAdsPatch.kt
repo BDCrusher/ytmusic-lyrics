@@ -37,6 +37,8 @@ val hideAdsPatch = bytecodePatch(
     name = "Hide ads",
     description = "Adds options to hide fullscreen ads, Premium promotions and video ads."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         hideFullscreenAdsPatch(PreferenceScreen.ADS),

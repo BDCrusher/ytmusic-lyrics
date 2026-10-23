@@ -7,6 +7,8 @@ import app.morphe.patches.shared.misc.dns.checkWatchHistoryDomainNameResolutionP
 
 val checkWatchHistoryDomainNameResolutionPatch = checkWatchHistoryDomainNameResolutionPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch
         )

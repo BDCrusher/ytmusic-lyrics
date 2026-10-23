@@ -10,6 +10,8 @@ import app.morphe.patches.shared.misc.settings.preference.SwitchPreference
 @Suppress("unused")
 val enableDebuggingPatch = enableDebuggingPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch

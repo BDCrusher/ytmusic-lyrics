@@ -42,6 +42,8 @@ val musicSponsorBlockPatch = bytecodePatch(
     name = "SponsorBlock",
     description = "Adds options to enable and configure SponsorBlock, which can skip non-music segments."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         musicVideoInformationPatch,

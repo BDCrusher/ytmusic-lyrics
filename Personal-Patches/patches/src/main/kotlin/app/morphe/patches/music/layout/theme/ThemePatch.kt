@@ -98,6 +98,8 @@ val themePatch = baseThemePatch(
         is_9_30_or_greater
     },
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch,

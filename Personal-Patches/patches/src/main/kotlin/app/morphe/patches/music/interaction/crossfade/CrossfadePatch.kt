@@ -109,6 +109,8 @@ val crossfadePatch = bytecodePatch(
     name = "Crossfade",
     description = "Adds a true dual-player crossfade between consecutive tracks.",
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

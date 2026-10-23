@@ -98,6 +98,8 @@ val customBrandingPatch = baseCustomBrandingPatch(
     preferenceScreen = PreferenceScreen.GENERAL,
 
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             startupAnimationPatch

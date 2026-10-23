@@ -26,6 +26,8 @@ val spoofAppVersionPatch = baseSpoofAppVersionPatch(
         )
     },
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch

@@ -36,8 +36,17 @@ fun main(args: Array<String>) {
     val firstOfficial=if(officialFirst)loadPatchesFromJar(setOf(File(args[4])))else emptySet()
     val patches=loadPatchesFromJar(setOf(bundle))
     val isAddon=args.size==5
-    val lyrics=patches.filter { it.name?.startsWith("Third-party lyrics")==true && it.compatibility?.any { c->c.packageName=="com.google.android.apps.youtube.music" }==true }
+    val allLyrics=patches.filter { it.name?.startsWith("Third-party lyrics")==true && it.compatibility?.any { c->c.packageName=="com.google.android.apps.youtube.music" }==true }
+    val combined=allLyrics.size==2
+    val addonMode=isAddon||args[3] in setOf("missing-official","editions-both","editions-reverse","addon-full-other")
+    val lyrics=if(combined)allLyrics.filter { (it.category=="Lyrics-only Add-on")==addonMode }else allLyrics
     require(lyrics.size==1) { "Expected one personal lyrics entry" }
+    if(combined){
+        require(allLyrics.map {it.category}.toSet()==setOf("Full Collection","Lyrics-only Add-on"))
+        require(!allLyrics.single {it.category=="Lyrics-only Add-on"}.default)
+        val uncategorized=patches.filter {it.name!=null&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true&&it.category !in setOf("Full Collection","Lyrics-only Add-on")}
+        require(uncategorized.isEmpty()) { "Missing categories: "+uncategorized.joinToString {it.name.orEmpty()} }
+    }
     var officialHash=""
     val official=if(isAddon){officialHash=digest(File(args[4]));if(officialFirst)firstOfficial else loadPatchesFromJar(setOf(File(args[4])))}else emptySet()
     val officialSelected=official.filter { p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(p.name!="Third-party lyrics"||args[3]=="conflict")}
@@ -45,10 +54,17 @@ fun main(args: Array<String>) {
         "lyrics","missing-official"->lyrics.toSet()
         "addon-first"->(lyrics+officialSelected).toSet()
         "official-first","conflict"->(officialSelected+lyrics).toSet()
+        "editions-both"->allLyrics.toSet()
+        "editions-reverse"->allLyrics.reversed().toSet()
+        "addon-full-other"->(lyrics+patches.single {it.name=="Hide ads"&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true}).toSet()
         else->patches.filter { p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true}.toSet()
     }
     val sdk=File(System.getenv("ANDROID_HOME") ?: error("ANDROID_HOME is required"))
     workspace.mkdirs()
+    if(combined){
+        val music=patches.filter {it.name!=null&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true}
+        workspace.resolve("categories.json").writeText("""{"bundleSha256":${quote(bundleHash)},"patches":[${music.joinToString(",") {p->"""{"name":${quote(p.name!!)},"category":${quote(p.category?:"")},"default":${p.default}}"""}}]}""")
+    }
     val catalog=lyrics.joinToString(",") { patch->
         val c=patch.compatibility!!.single {it.packageName=="com.google.android.apps.youtube.music"}
         val targets=c.targets.joinToString(",") {t->"""{"version":${quote(t.version?:"")},"minSdk":${t.minSdk},"experimental":${t.isExperimental},"versionCodes":${quote(t.versionCodes.toString())}}"""}
@@ -67,13 +83,14 @@ fun main(args: Array<String>) {
         patcher.get().applyTo(output)
     }
     }catch(ex:Exception){
-        if(args[3]!="conflict"&&args[3]!="missing-official")throw ex
+        val editionConflict=args[3] in setOf("editions-both","editions-reverse","addon-full-other")
+        if(args[3]!="conflict"&&args[3]!="missing-official"&&!editionConflict)throw ex
         val messages=generateSequence(ex as Throwable?){it.cause}.mapNotNull {it.message}.joinToString(" | ")
-        require(if(args[3]=="conflict")messages.contains("Two lyrics patches selected")else messages.contains("Missing official Morphe runtime")){"Unexpected negative failure: "+messages}
+        require(if(editionConflict)messages.contains("Choose one personal edition")else if(args[3]=="conflict")messages.contains("Two lyrics patches selected")else messages.contains("Missing official Morphe runtime")){"Unexpected negative failure: "+messages}
         workspace.resolve("verification.json").writeText("""{"expectedFailure":true,"mode":${quote(args[3])},"bundleSha256":${quote(bundleHash)},"officialSha256":${quote(officialHash)},"reason":${quote(messages)}}""")
         println("PASS: expected actionable rejection: "+args[3]);return
     }
-    require(args[3]!="conflict"&&args[3]!="missing-official"){"Invalid selection was accepted"}
+    require(args[3] !in setOf("conflict","missing-official","editions-both","editions-reverse","addon-full-other")){"Invalid selection was accepted"}
     ZipFile(output).use { zip ->
         val required=listOf("index.html","renderer.js","lyrics.css","variables.css","host.css","Satoshi-Variable.woff2")
         ZipFile(bundle).use { packed ->

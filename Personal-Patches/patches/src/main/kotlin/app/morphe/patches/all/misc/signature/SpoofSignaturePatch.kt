@@ -16,5 +16,7 @@ val spoofSignaturePatch = resourcePatch (
     description = "Spoofs the package signature of the original APK.",
     default = false
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(spoofSignaturePatch)
 }

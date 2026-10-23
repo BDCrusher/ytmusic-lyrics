@@ -40,6 +40,8 @@ val scrobblingPatch = bytecodePatch(
     name = "Scrobbling",
     description = "Adds options to add played tracks to Last.fm and ListenBrainz."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

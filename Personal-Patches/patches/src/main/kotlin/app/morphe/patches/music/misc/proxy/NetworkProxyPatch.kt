@@ -26,6 +26,8 @@ val networkProxyPatch = baseNetworkProxyPatch(
         is_9_20_or_greater
     },
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch,

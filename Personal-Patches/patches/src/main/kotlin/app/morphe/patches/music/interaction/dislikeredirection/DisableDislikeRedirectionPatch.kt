@@ -36,6 +36,8 @@ val disableDislikeRedirectionPatch = bytecodePatch(
     description = "Adds an option to prevent skipping to the next track when the dislike " +
             "button is pressed."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

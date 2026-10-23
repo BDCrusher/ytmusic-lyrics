@@ -86,6 +86,8 @@ val jamQueueSharingPatch = bytecodePatch(
     description = "Shares the host queue and playback controls through an authenticated Jam bridge. "
             + "Root installation is not supported."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

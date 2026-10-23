@@ -1,3 +1,3 @@
 # Status
 
-Public 0.2.3-beta.3 source with separate Full and Lyrics-only feeds. Exact compiled/static/browser checks passed; phone acceptance remains pending. See README.md and verification.json.
+0.2.4-beta.1: one bundle, two expandable categories. Exact compiled/SDK selection checks passed; real phone/category UI acceptance pending. See README and verification.json.

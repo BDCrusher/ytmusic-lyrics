@@ -48,9 +48,11 @@ private val assets=resourcePatch {
 @Suppress("unused")
 val lyricsAddon=bytecodePatch(
     name="Third-party lyrics — Better Lyrics add-on",
-    description="BDCrusher lyrics-only companion. Requires official default Music patches in the same run, with official Third-party lyrics disabled."
+    description="BDCrusher lyrics-only companion. Deselect Full Collection. Requires official default Music patches with official Third-party lyrics disabled.",
+    default=false
 ){
-    dependsOn(assets)
+    category("Lyrics-only Add-on")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.addonEditionGuard, assets)
     extendWith("extensions/lyrics-addon.mpe")
     compatibleWith(Compatibility(packageName="com.google.android.apps.youtube.music",name="YouTube Music",
         apkFileType=ApkFileType.APK_REQUIRED,appIconColor=0xFF0000,

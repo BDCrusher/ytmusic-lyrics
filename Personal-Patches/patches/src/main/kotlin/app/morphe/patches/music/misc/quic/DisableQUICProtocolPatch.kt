@@ -16,6 +16,8 @@ import app.morphe.patches.shared.misc.quic.disableQUICProtocolPatch
 @Suppress("unused")
 val disableQUICProtocolPatchMusic = disableQUICProtocolPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch

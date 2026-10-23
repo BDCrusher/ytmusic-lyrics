@@ -1,28 +1,11 @@
-# Compatibility — 0.2.3-beta.3
+# Compatibility - 0.2.4-beta.1
 
-Original: com.google.android.apps.youtube.music **9.42.52 /94252240 arm64-v8a**, minSDK26, targetSDK36. Experimental; other versions unverified.
+One source and one MPP, with expandable **Full Collection** and **Lyrics-only Add-on** categories. Morphe Manager 2.0.0 or newer is required. The add-on is unchecked by default. For add-on use, deselect every Full Collection patch, select the add-on and official Morphe 1.48.0 default Music patches, with official Third-party lyrics disabled. For Full use, deselect the add-on and official source. The old separate Full source should be disabled when using the combined source.
 
-APK SHA-256:9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56
+Exact personal target: original YouTube Music **9.42.52 / 94252240, arm64-v8a, minSDK26**, experimental. APK SHA-256: 9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56.
 
-Full SHA-256:572bbf119355e34e7704822cd7040644303124295356f40559c2db01c17ba164
+Combined MPP SHA-256: d4b78e6463ce78b69dd1c44af267abd5d032db9143952c5eaeb7ad94112743fe.
 
-Add-on SHA-256:e702fad4351c01cbcb6e7a0371e29100ab8d6d66aaa370dea7fedf30e012189a
+Passed: Full lyrics alone, Full Music defaults, add-on plus official patches in both source orders. Actual APK applications used stable Patcher 2.0.0 and SDK DEX/reference/hierarchy checks; output asset identity and duplicate-class audits passed. Native compiled hook/CFG audits passed on all four outputs. Both personal editions, reverse selection order, add-on plus a non-lyrics Full setting, official lyrics conflict and missing official infrastructure all rejected as expected. Loaded bundle metadata verifies the two categories, exact target and unchecked add-on. All injected runtime payloads and renderer assets are byte-identical to 0.2.3-beta.3. Existing browser/lint evidence is reused only for those unchanged bytes. See verification.json for exact identities and test counts.
 
-Official stable1.48.0 SHA-256:82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7
-
-Verification engine: stable Patcher2.0.0, commit8c7ff9f29d4cf6395fcbe42a4ceddd034d71fecf. Full source baseline remains applied dev.19, preserving dev.18 history. Native structural fingerprints and six protobuf message-info hashes guard the exact APK contracts; native model shape/state and Music palette binding are runtime-checked.
-
-| Selection | Result |
-| --- | --- |
-| full-lyrics | PASS |
-| full-defaults | PASS |
-| addon-first | PASS |
-| official-first | PASS |
-| conflict | Expected rejection |
-| missing-official | Expected rejection |
-
-Four positive unsigned outputs passed SDK dexdump/d8, cross-DEX references/hierarchy, one metadata/playback hook, asset identity and zero duplicate classes. Compiled audits verify native model/presenter/controller contracts, public bridge visibility, covered callback/constructor returns, disabled old view/global installers and no personal button/window construction. Add-on: 100 personal classes only, one MPE, no bundled Morphe stubs/helpers. Full: 1691 selected Music classes, four explicitly retained compiler helpers.
-
-Java model/host/entry checks:45 using real 9.42.52 native fixtures and explicitly simulated Android/native proxies. JVM tests:6 executed,5 skipped; lint:0 errors,6 warnings. Prior source-identical transport/repository/native Java evidence is labeled reused in verification.json. Fresh browser passes cover all16 providers, voices/highlighting, source controls, seeking/follow and bottom-toggle positioning, keyboard and reduced motion at three viewport sizes.
-
-**No phone acceptance claim.** The user's screenshots rejected0.2.2-beta.3. This new build still needs real native button/layout/theme/header/back/drag, video separation, large-font/rotation/authentication/timing checks. Native app experiments and selected palette may affect geometry/color. Counterpart video/audio time conversion is not implemented. Released as two separate source feeds. Enable Pre-release patches and Experimental app versions for this beta.
+**Phone verification is pending.** No Manager category screenshot, installation or phone runtime result is claimed. This packaging update makes no new native Lyrics button, panel/theme, source retrieval or synchronization fix; their previous device limitations remain. No signing, installation or MuMu access occurred.

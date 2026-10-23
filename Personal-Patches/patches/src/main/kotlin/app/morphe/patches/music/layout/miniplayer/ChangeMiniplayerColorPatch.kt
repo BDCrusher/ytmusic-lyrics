@@ -37,6 +37,8 @@ val changeMiniplayerColorPatch = bytecodePatch(
     name = "Change miniplayer color",
     description = "Adds an option to change the miniplayer background color to match the fullscreen player."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

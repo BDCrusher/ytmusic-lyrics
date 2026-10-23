@@ -17,6 +17,8 @@ val poTokenProviderPatch = poTokenProviderPatch(
     originalAppPackageName = COMPATIBILITY_YOUTUBE_MUSIC.packageName!!,
     preferenceScreen = PreferenceScreen.MISC,
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
 
         dependsOn(sharedExtensionPatch)

@@ -28,6 +28,8 @@ val rememberRepeatStatePatch = bytecodePatch(
     name = "Remember repeat state",
     description = "Adds an option to remember the repeat state when playing a new track or playlist."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

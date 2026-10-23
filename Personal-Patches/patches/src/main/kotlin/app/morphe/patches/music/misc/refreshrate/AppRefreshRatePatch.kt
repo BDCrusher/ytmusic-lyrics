@@ -18,6 +18,8 @@ val appRefreshRatePatch = baseAppRefreshRatePatch(
     preferenceScreen = PreferenceScreen.MISC,
     useRefreshRateType = false,
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch

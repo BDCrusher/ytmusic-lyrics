@@ -28,6 +28,8 @@ val enableForcedMiniplayerPatch = bytecodePatch(
     name = "Enable forced miniplayer",
     description = "Adds an option to enable forced miniplayer when switching between music videos, podcasts, or songs."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch

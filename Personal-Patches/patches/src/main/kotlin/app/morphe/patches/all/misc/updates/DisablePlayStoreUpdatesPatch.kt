@@ -76,6 +76,8 @@ internal val disablePlayStoreUpdatesPatch = bytecodePatch(
             "app is installed by root mounting",
     default = false
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
 
     dependsOn(disablePlayStoreUpdatesResourcePatch)
 

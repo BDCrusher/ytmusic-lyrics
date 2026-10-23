@@ -16,6 +16,8 @@ import app.morphe.patches.shared.misc.audio.silence.skipSilencePatch
 @Suppress("unused")
 val skipSilencePatch = skipSilencePatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch

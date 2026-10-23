@@ -16,6 +16,8 @@ import app.morphe.patches.shared.interaction.dialog.removeViewerDiscretionDialog
 @Suppress("unused")
 val removeViewerDiscretionDialogPatch = removeViewerDiscretionDialogPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch,

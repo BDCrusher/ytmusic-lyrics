@@ -21,6 +21,8 @@ val navigationBarPatch = bytecodePatch(
     name = "Navigation bar",
     description = "Adds options to hide navigation bar, labels and buttons."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

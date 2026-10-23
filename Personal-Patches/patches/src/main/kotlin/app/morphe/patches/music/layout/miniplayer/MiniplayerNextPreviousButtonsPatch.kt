@@ -98,6 +98,8 @@ val miniplayerPreviousNextButtonsPatch = bytecodePatch(
     name = "Miniplayer previous and next buttons",
     description = "Adds options to show previous and next track buttons in the miniplayer."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(
         sharedExtensionPatch,
         settingsPatch,

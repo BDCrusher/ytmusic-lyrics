@@ -1,3 +1,3 @@
-# YT-Music patch sources
+# YT-Music
 
-See [public setup and the two source tabs](../README.md), [build guide](../BUILDING.md), [compatibility](../COMPATIBILITY.md) and [verification](../verification.json).
+See the [current public guide](../README.md). One source contains both expandable categories.

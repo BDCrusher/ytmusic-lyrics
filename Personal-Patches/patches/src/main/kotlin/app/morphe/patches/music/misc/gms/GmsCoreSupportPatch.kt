@@ -25,6 +25,8 @@ val gmsCoreSupportPatch = gmsCoreSupportPatch(
     extensionPatch = sharedExtensionPatch,
     gmsCoreSupportResourcePatchFactory = ::gmsCoreSupportResourcePatch,
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     dependsOn(spoofVideoStreamsPatch)
 
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
@@ -37,6 +39,8 @@ private fun gmsCoreSupportResourcePatch() =
         spoofedPackageSignature = "afb0fed5eeaebdd86f56a97742f4b6b33ef59875",
         screen = PreferenceScreen.MISC,
         block = {
+            category("Full Collection")
+            dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
             dependsOn(
                 settingsPatch,
                 fileProviderPatch(

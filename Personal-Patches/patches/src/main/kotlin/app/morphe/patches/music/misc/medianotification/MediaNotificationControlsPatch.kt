@@ -16,6 +16,8 @@ import app.morphe.patches.shared.misc.medianotification.mediaNotificationControl
 @Suppress("unused")
 val mediaNotificationControlsPatchMusic = mediaNotificationControlsPatch(
     block = {
+        category("Full Collection")
+        dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
         dependsOn(
             sharedExtensionPatch,
             settingsPatch

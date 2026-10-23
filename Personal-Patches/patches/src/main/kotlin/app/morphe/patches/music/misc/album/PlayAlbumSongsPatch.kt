@@ -27,6 +27,8 @@ val playAlbumSongsPatch = bytecodePatch(
     name = "Play albums songs",
     description = "Adds an option to play the song version of album tracks instead of music videos."
 ) {
+    category("Full Collection")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.fullEditionGuard)
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
 
     dependsOn(
