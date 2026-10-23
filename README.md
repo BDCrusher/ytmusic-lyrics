@@ -2,7 +2,7 @@
 
 One Morphe source with two expandable patch categories, like HushFeed's category layout. Personal Better Lyrics providers, Braccato rendering, vocal agents and background vocals for original YouTube Music **9.42.52 / 94252240 arm64-v8a**. Unofficial derivative; phone acceptance is pending.
 
-**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.5-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.5-beta.1)
+**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.6-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.6-beta.1)
 
 ## Expandable categories
 
@@ -26,14 +26,14 @@ Settings: **YouTube Music → Settings → Morphe → Lyrics**.
 
 ## What changed
 
-0.2.5-beta.1 addresses the reported disabled/end-of-row Lyrics button. Native client-generated action rows do not always have the server-response object required by the old bridge. The patch now captures the video identity from both native paths, remembers the original model and replays it through the original native renderer when lyrics arrive. It edits the original Lyrics action's enabled state, command and position immediately after Like/Dislike. It adds no replacement button or tap overlay. Delayed panel definitions, multiple presenters and stale track results are handled separately.
+0.2.6-beta.1 hides the native WebView and page scrollbars while preserving scrolling. It removes repeated lyric measurements from duplicate native visibility messages, settles dock clearance once after animation, coalesces native attachment work and reuses the navigation pixel sampler without unchanged window writes. Braccato's highlighting, BG vocals, singer placement, letter wave and follow timing remain.
 
-The system navigation area now follows the drawn background of the visible native Lyrics panel, including edge-to-edge three-button and gesture insets. Native window styling is restored on closing, detachment or focus loss. The existing themed native menu, Better Lyrics renderer and bottom control dock remain; all 15 web assets are unchanged.
+Native Lyrics definitions are preserved even before their content loads. When YouTube Music supplies a real Lyrics presentation during this process, the fallback now prefers that native layout, with prior lyric content removed and the current panel palette applied. **A cold session without a supplied native Lyrics definition still uses the Related-derived native fallback.** This improves reuse; it does not establish identical phone feel.
 
 ## Verification
 
-Four exact-bundle applications passed on original 9.42.52: Full lyrics, Full defaults and add-on with official 1.48.0 in both orders. SDK DEX/reference/hierarchy, duplicate-class, asset identity and compiled native hook audits passed. Five incompatible selections rejected. The actual Java source passed 24 entry/model/host checks using a real wire fixture with simulated native callbacks, plus 22 system-navigation checks with simulated Android state. Build, JVM tests and Android lint passed with zero lint errors (six warnings). Exact identities and limits are in [verification.json](verification.json).
+The actual Java source passed 29 entry/host and 24 simulated navigation checks. Browser comparison reproduced repeated full-line measurements in the previous visibility handler and eliminated them in the new one. The tested line transitions had no reverse steps. All 16 provider variants, vocal layout, hidden bars, manual scroll/resume, reduced motion and bottom dock checks passed. Four exact original-APK applications, five invalid selections, compiled native/SDK/isolation audits, JVM tests and Android lint passed. Exact identities and limits are in [verification.json](verification.json).
 
-**Actual phone acceptance remains pending.** The user's previous phone test failed; these source, simulation and compiled checks are not a replacement for checking native button dispatch, position, Samsung navigation colors, orientation and timing on the phone. No signing, installation or MuMu access occurred. Alternate audio/video timeline conversion remains unimplemented. Vendor APKs and private connection/device data are excluded.
+**The reported Samsung jitter has not been reproduced on a phone.** These are verified reductions in unnecessary work and browser checks, not proof that phone line-transition jitter is eliminated. Native button, cold/warm panel feel, actual bars, navigation, orientation and timing need phone acceptance. No signing, installation or MuMu operations occurred. Alternate audio/video timeline conversion remains unimplemented.
 
 [Build](BUILDING.md) | [Compatibility](COMPATIBILITY.md) | [Patch metadata](patches-list.json) | [Source pins](SOURCE-PINS.json) | [Notices](NOTICE) | [Third-party notices](THIRD-PARTY-NOTICES.txt)

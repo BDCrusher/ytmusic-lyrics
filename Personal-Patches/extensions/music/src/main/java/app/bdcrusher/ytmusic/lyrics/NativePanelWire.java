@@ -4,6 +4,13 @@ import java.nio.charset.StandardCharsets;
 
 /** Preserve the registered native Music presentation, including its palette entity. */
 final class NativePanelWire {
+    /** Retain presentation only: another recording's native lyric content is never cached. */
+    static byte[] presentation(byte[] original){ProtoWire panel=new ProtoWire(original);panel.remove(3);return panel.bytes();}
+    static byte[] fromPresentation(byte[] template,byte[] currentRelated,String title){
+        ProtoWire palette=new ProtoWire(definition(currentRelated,title,true)),panel=new ProtoWire(template);
+        panel.put(palette.one(37));panel.put(palette.one(41));
+        return definition(panel.bytes(),title,false);
+    }
     static byte[] definition(byte[] original,String title,boolean fromRelated){
         ProtoWire panel=new ProtoWire(original);
         if(fromRelated){

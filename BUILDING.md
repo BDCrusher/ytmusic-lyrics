@@ -1,6 +1,6 @@
-# Build 0.2.5-beta.1
+# Build 0.2.6-beta.1
 
-Run build-local.ps1 with installed JDK25/JDK17 and Android SDK36. Its default task is now `:lyrics-collection:buildAndroid`. The combined output is `Personal-Patches/lyrics-collection/build/libs/lyrics-collection-0.2.5-beta.1.mpp`. Separate `:patches:buildAndroid` and `:lyrics-addon:buildAndroid` targets remain available for development.
+Run build-local.ps1 with installed JDK25/JDK17 and Android SDK36. Its default task is now `:lyrics-collection:buildAndroid`. The combined output is `Personal-Patches/lyrics-collection/build/libs/lyrics-collection-0.2.6-beta.1.mpp`. Separate `:patches:buildAndroid` and `:lyrics-addon:buildAndroid` targets remain available for development.
 
 The collection compiles the add-on entry once and incorporates Full patch code and shared hooks once. It includes both runtime alternatives as resources; selecting the add-on does not select Full or inject Full payloads. The add-on's own runtime remains personal-only. Existing source/dependency checkouts and notices are retained. No shared global tools are copied into this repository.
 
@@ -11,3 +11,5 @@ The app-owned dependency bootstrap uses pinned public archive hashes and no npm 
 Keep the inherited Patcher-Version1.15.1 compatibility declaration: it preserves partial-string fingerprints on stable Patcher2.0.0. The newer engine was used for all final APK checks. The combined bundle carries its GPL license as COPYING-GPL.txt to avoid colliding with a dependency license/ directory.
 
 For this native-entry correction use `Verification/verify_entry_replay.ps1`: it runs the catalog, four positive APK combinations, five invalid-selection checks and native compiled audits. Every output directory must be fresh. The original APK and native wire fixtures are private local inputs; tests deliberately refuse to overwrite prior evidence. `check_entry_replay.py` reuses only stub declarations from `check_native_host.py`, not that older helper's test execution. `check_lyrics_system_bars.py` simulates Android drawing/window state. These are not device tests. The source report records the exact Java hashes and 24/22 results. Run build-local.ps1 with `:lyrics-collection:buildAndroid :patches:test :extensions:music:lintRelease` before APK verification.
+
+Current correction: Verification/verify_follow.ps1; source simulations: check_follow_host.py (29) and check_follow_bars.py (24). Browser: web/follow-transition-check.js plus the existing renderer/provider/dock checks, reloading between independent tests. The transition comparison needs the previous published renderer as a private local fixture. Native wire inputs remain private, and every report/output directory must be fresh. Old verification helpers are historical. No phone performance claim.

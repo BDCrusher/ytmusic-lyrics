@@ -1,8 +1,8 @@
 {
-  "version": "0.2.5-beta.1",
-  "download_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/download/v0.2.5-beta.1/bdcrusher-ytmusic-lyrics-0.2.5-beta.1.mpp",
-  "created_at": "2026-10-23T17:34:49",
-  "description": "Native client/server Lyrics availability and original-model replay; navigation area follows the native Lyrics panel. Full and Lyrics-only categories. Exact experimental9.42.52 arm64. Phone acceptance pending.",
+  "version": "0.2.3-beta.3",
+  "download_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/download/v0.2.3-beta.3/bdcrusher-ytmusic-lyrics-addon-0.2.3-beta.3.mpp",
+  "created_at": "2026-10-23T04:47:21",
+  "description": "BDCrusher Lyrics-only Add-on. Use official Morphe1.48.0 defaults with official Third-party lyrics OFF. Exact experimental YouTube Music9.42.52 /94252240 arm64-v8a. Phone acceptance pending.",
   "signature_download_url": "",
-  "page_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.5-beta.1"
+  "page_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.3-beta.3"
 }

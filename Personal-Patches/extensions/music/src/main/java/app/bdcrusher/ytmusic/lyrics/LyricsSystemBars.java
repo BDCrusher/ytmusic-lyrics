@@ -24,6 +24,8 @@ final class LyricsSystemBars {
     private static final ColorDrawable protection=new ColorDrawable();
     private static int previousColor,previousDivider,previousAppearance,appliedColor;
     private static boolean previousContrast;
+    private static Bitmap samplePixel;
+    private static Canvas sampleCanvas;
     private LyricsSystemBars(){}
 
     static void sync(View view,boolean active){
@@ -48,15 +50,17 @@ final class LyricsSystemBars {
             previousColor=window.getNavigationBarColor();
         }
         appliedColor=color;protection.setColor(color);protection.setBounds(navigation);
-        window.setNavigationBarColor(color);
-        if(Build.VERSION.SDK_INT>=28)window.setNavigationBarDividerColor(Color.TRANSPARENT);
-        if(Build.VERSION.SDK_INT>=29)window.setNavigationBarContrastEnforced(false);
+        if(window.getNavigationBarColor()!=color)window.setNavigationBarColor(color);
+        if(Build.VERSION.SDK_INT>=28&&window.getNavigationBarDividerColor()!=Color.TRANSPARENT)window.setNavigationBarDividerColor(Color.TRANSPARENT);
+        if(Build.VERSION.SDK_INT>=29&&window.isNavigationBarContrastEnforced())window.setNavigationBarContrastEnforced(false);
         boolean light=Color.red(color)*299+Color.green(color)*587+Color.blue(color)*114>=160000;
         if(Build.VERSION.SDK_INT>=30){
             WindowInsetsController controller=window.getInsetsController();
-            if(controller!=null)controller.setSystemBarsAppearance(light?WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS:0,WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
+            int desired=light?WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS:0;
+            if(controller!=null&&(controller.getSystemBarsAppearance()&WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)!=desired)controller.setSystemBarsAppearance(desired,WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
         }else{
-            int flags=decor.getSystemUiVisibility();decor.setSystemUiVisibility(light?flags|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR:flags&~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            int flags=decor.getSystemUiVisibility(),desired=light?flags|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR:flags&~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+            if(flags!=desired)decor.setSystemUiVisibility(desired);
         }
     }
     static void release(View view){
@@ -100,9 +104,10 @@ final class LyricsSystemBars {
     }
     private static Integer sample(Drawable drawable){
         Rect bounds=drawable.getBounds();if(bounds.isEmpty())return null;
-        Bitmap bitmap=Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888);
-        try{Canvas canvas=new Canvas(bitmap);canvas.translate(-bounds.centerX(),-(bounds.bottom-1));drawable.draw(canvas);return bitmap.getPixel(0,0);}
+        if(samplePixel==null){samplePixel=Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888);sampleCanvas=new Canvas(samplePixel);}
+        samplePixel.eraseColor(Color.TRANSPARENT);int saved=sampleCanvas.save();
+        try{sampleCanvas.translate(-bounds.centerX(),-(bounds.bottom-1));drawable.draw(sampleCanvas);return samplePixel.getPixel(0,0);}
         catch(RuntimeException unsupported){return null;}
-        finally{bitmap.recycle();}
+        finally{sampleCanvas.restoreToCount(saved);}
     }
 }

@@ -8975,10 +8975,23 @@
     closeSources();
     if (persist) native?.dock(collapsed);
   }
-  var dockResize = new ResizeObserver(() => {
-    document.documentElement.style.setProperty("--dock-clearance", `${$("dock").getBoundingClientRect().height + 12}px`);
-    if ($("source-menu").classList.contains("open")) positionSources();
+  var dockLayoutTimer;
+  var lastDockClearance = -1;
+  function settleDockLayout() {
+    clearTimeout(dockLayoutTimer);
+    const height = Math.round($("dock").getBoundingClientRect().height + 12);
+    if (height === lastDockClearance) return;
+    lastDockClearance = height;
+    document.documentElement.style.setProperty("--dock-clearance", `${height}px`);
     renderer.relayout();
+  }
+  var dockResize = new ResizeObserver(() => {
+    if ($("source-menu").classList.contains("open")) positionSources();
+    clearTimeout(dockLayoutTimer);
+    dockLayoutTimer = setTimeout(settleDockLayout, 64);
+  });
+  $("dock-content").addEventListener("transitionend", (event) => {
+    if (event.propertyName === "grid-template-rows") settleDockLayout();
   });
   var enrichmentRequested = /* @__PURE__ */ new Set();
   var renderer = createLyricsRenderer({ document, window, mount: $("lyrics"), host: {
@@ -9189,7 +9202,9 @@
       startClock();
     },
     visible(visible) {
-      active = visible === true;
+      const next = visible === true;
+      if (active === next) return;
+      active = next;
       if (!active) {
         cancelAnimationFrame(raf);
         raf = 0;
@@ -9255,6 +9270,8 @@
     },
     dispose() {
       cancelAnimationFrame(raf);
+      clearTimeout(dockLayoutTimer);
+      dockResize.disconnect();
       renderer.destroy();
     }
   };

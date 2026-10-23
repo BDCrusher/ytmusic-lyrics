@@ -91,6 +91,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         if(web!=null)return;
         try{
             web=new WebView(getContext());web.setBackgroundColor(Color.TRANSPARENT);
+            web.setVerticalScrollBarEnabled(false);web.setHorizontalScrollBarEnabled(false);
             web.getSettings().setJavaScriptEnabled(true);web.getSettings().setAllowFileAccess(false);
             web.getSettings().setAllowContentAccess(false);web.getSettings().setDomStorageEnabled(false);
             web.getSettings().setMixedContentMode(android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW);

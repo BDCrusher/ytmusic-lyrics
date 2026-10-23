@@ -2,6 +2,8 @@
 @font-face{font-family:Satoshi;src:url('Satoshi-Variable.woff2') format('woff2');font-weight:300 900;font-display:swap}
 :root{color-scheme:dark light;--bd-foreground:#fff;--bd-pill:rgba(255,255,255,.08);--bd-bg-size:.65;--bd-bg-opacity:.7;--dock-clearance:170px;--blyrics-font-size:28px;--blyrics-translated-font-size:.56em;--blyrics-font-weight:700;--blyrics-romanized-font-size:.56em;--blyrics-lyric-inactive-color:rgba(255,255,255,.3)}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent!important}
+/* Keep touch/keyboard scrolling, without a track/thumb on any lyric surface. */
+*{scrollbar-width:none!important}*::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
 body{color:var(--bd-foreground);font-family:Satoshi,Roboto,sans-serif}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 button{font:inherit;color:inherit;border:0;border-radius:999px;background:transparent;padding:8px 14px;touch-action:manipulation;cursor:pointer;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background-color .14s ease,scale .14s ease}

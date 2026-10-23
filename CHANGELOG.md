@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.6-beta.1
+
+Hide native/Web scrollbars. Deduplicate visible notifications, settle dock remeasurement, coalesce native attachment and reuse native navigation sampling. Prefer a real session-native Lyrics presentation with current palette and no old lyric content. Cold fallback still requires the native Related template. Browser/source/compiled checks passed; actual Samsung jitter remains unverified.
+
 ## 0.2.5-beta.1
 
 Handle both native client/server action-row paths, remove optional-response and panel-ready gates, replay the original native model for late results, reject stale recording updates, and preserve active presenter/controller ownership. Match the system navigation background to the visible native Lyrics panel and restore previous window styling. Exact APK and simulated regression checks passed; phone acceptance remains pending.

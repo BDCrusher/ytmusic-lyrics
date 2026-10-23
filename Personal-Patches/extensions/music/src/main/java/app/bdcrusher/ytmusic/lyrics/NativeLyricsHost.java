@@ -19,6 +19,8 @@ public final class NativeLyricsHost {
     private static WeakReference<Object> controller=new WeakReference<>(null),panel=new WeakReference<>(null);
     private static WeakReference<BetterLyricsPanelView> renderer=new WeakReference<>(null);
     private static int epoch;
+    private static int queuedEpoch=-1;
+    private static byte[] nativeLyricsPresentation;
     private static boolean lyrics;
     private NativeLyricsHost(){}
     public static void captureController(Object value){
@@ -36,10 +38,16 @@ public final class NativeLyricsHost {
         try{
             byte[] original=nativeDefinition(owner,ID);
             if(original!=null&&videoId.equals(prepared.get(owner))){ready=true;continue;}
-            boolean related=original==null||new ProtoWire(original).one(3)==null;
+            // A first native Lyrics definition is valid even before its content loads.
+            // Only a previously prepared empty definition needs our fallback template.
+            boolean related=original==null||(prepared.containsKey(owner)&&new ProtoWire(original).one(3)==null);
+            if(!related&&original.length<=1_000_000)nativeLyricsPresentation=NativePanelWire.presentation(original);
             if(related)original=nativeDefinition(owner,"music-related-panel");
             if(original==null)continue;
-            registerNative(owner,NativePanelWire.definition(original,ResourceUtils.getString("lyrics_tab_title"),related));
+            byte[] definition=related&&nativeLyricsPresentation!=null
+                ?NativePanelWire.fromPresentation(nativeLyricsPresentation,original,ResourceUtils.getString("lyrics_tab_title"))
+                :NativePanelWire.definition(original,ResourceUtils.getString("lyrics_tab_title"),related);
+            registerNative(owner,definition);
             prepared.put(owner,videoId);ready=true;
             LyricsDiagnostics.record("Lyrics panel","Prepared native Music Lyrics with mini-player snap and native palette");
         }catch(Exception ex){LyricsDiagnostics.record("Lyrics panel","Native Music setup failed: "+ex.getClass().getSimpleName());}
@@ -63,7 +71,10 @@ public final class NativeLyricsHost {
     }
     public static void onNativeLayout(){if(isOpen())attach(epoch,0);}
     private static void attach(int expected,int attempt){
+        if(queuedEpoch==expected)return;
+        queuedEpoch=expected;
         main.postDelayed(()->{
+            if(queuedEpoch==expected)queuedEpoch=-1;
             if(expected!=epoch||!isOpen()||!Settings.LYRICS_ENABLED.get())return;
             try{
                 View root=panelRoot(panel.get());

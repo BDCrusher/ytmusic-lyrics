@@ -47,7 +47,18 @@ function updateDock(){
   if(menu.classList.contains('open'))positionSources();
 }
 function setCollapsed(value,persist=false){collapsed=value===true;$('dock').classList.toggle('collapsed',collapsed);$('collapse').setAttribute('aria-expanded',String(!collapsed));$('collapse').setAttribute('aria-label',collapsed?'Expand lyrics controls':'Collapse lyrics controls');$('dock-content').inert=collapsed;closeSources();if(persist)native?.dock(collapsed);}
-const dockResize=new ResizeObserver(()=>{document.documentElement.style.setProperty('--dock-clearance',`${$('dock').getBoundingClientRect().height+12}px`);if($('source-menu').classList.contains('open'))positionSources();renderer.relayout();});
+let dockLayoutTimer,lastDockClearance=-1;
+function settleDockLayout(){
+  clearTimeout(dockLayoutTimer);
+  const height=Math.round($('dock').getBoundingClientRect().height+12);
+  if(height===lastDockClearance)return;
+  lastDockClearance=height;document.documentElement.style.setProperty('--dock-clearance',`${height}px`);renderer.relayout();
+}
+const dockResize=new ResizeObserver(()=>{
+  if($('source-menu').classList.contains('open'))positionSources();
+  clearTimeout(dockLayoutTimer);dockLayoutTimer=setTimeout(settleDockLayout,64);
+});
+$('dock-content').addEventListener('transitionend',event=>{if(event.propertyName==='grid-template-rows')settleDockLayout();});
 const enrichmentRequested=new Set();
 let renderer = createLyricsRenderer({document,window,mount:$('lyrics'),host:{
   getScrollElement:()=>$('scroll'),
@@ -223,7 +234,7 @@ window.BDC = {
     renderer.noteVisibilityChange();startClock();
   },
   visible(visible){
-    active=visible===true;
+    const next=visible===true;if(active===next)return;active=next;
     if(!active){cancelAnimationFrame(raf);raf=0;}
     renderer.noteVisibilityChange();if(active){renderer.relayout();startClock();}
   },
@@ -264,7 +275,7 @@ window.BDC = {
     $('connection').hidden=!!selected||!/connect|expired|HTTP|failed|unavailable/i.test(message);
     if(finished&&!selected)native?.noLyrics(generation);
   },
-  dispose(){cancelAnimationFrame(raf);renderer.destroy();},
+  dispose(){cancelAnimationFrame(raf);clearTimeout(dockLayoutTimer);dockResize.disconnect();renderer.destroy();},
 };
 $('sources').addEventListener('change',()=>{pinned=$('sources').value;native?.pin(generation,pinned);choose(true);});
 $('source-label').onclick=()=>{$('source-label').getAttribute('aria-expanded')==='true'?closeSources():openSources();};
