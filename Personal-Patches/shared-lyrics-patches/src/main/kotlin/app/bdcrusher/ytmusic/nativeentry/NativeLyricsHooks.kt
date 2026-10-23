@@ -103,39 +103,26 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
    m.addInstruction(index+1,"return-void")
   }}
  val assignment=setter.implementation!!.instructions.withIndex().singleOrNull {(_,i)->i.opcode==Opcode.IPUT_OBJECT&&((i as? ReferenceInstruction)?.reference as? FieldReference)?.let {it.definingClass==controller.type&&it.type==panelType}==true}?.index?:fail("native panel assignment")
- setter.addInstruction(assignment+1,"invoke-static { p1 }, ${OWN}NativeLyricsHost;->onNativePanelChanged(Ljava/lang/Object;)V")
+ setter.addInstruction(assignment+1,"invoke-static { p0, p1 }, ${OWN}NativeLyricsHost;->onNativePanelChanged(Ljava/lang/Object;Ljava/lang/Object;)V")
  // Intercept only Music's own action-bar model renderer, before native Elements runs.
  MusicActionPresenter.clearMatch();val presenter=MusicActionPresenter.classDef
  val render=presenter.methods.singleOrNull {m->m.returnType=="V"&&m.parameterTypes.size==2&&m.calls().any {it.definingClass==m.parameterTypes[0]&&it.parameterTypes==listOf(m.parameterTypes[1],"Z")}}?:fail("Music action-bar render model")
  val elementType=render.parameterTypes[1].toString()
  val refresh=presenter.methods.singleOrNull {m->m.returnType=="V"&&m.parameterTypes.size==2&&m.parameterTypes[0]=="Ljava/lang/String;"&&m.calls().any {it.definingClass==presenter.type&&it.name==render.name}}?:fail("Music action-bar refresh")
  val responseType=refresh.parameterTypes[1].toString()
- val response=presenter.fields.singleOrNull {it.type==responseType&&!AccessFlags.STATIC.isSet(it.accessFlags)}?:fail("Music action-bar response")
- val responseClass=classDefBy(responseType)
- val videoField=responseClass.methods.filter {it.name=="<init>"}.flatMap {it.implementation?.instructions?.toList()?:emptyList()}.firstNotNullOfOrNull {
-  val f=((it as? ReferenceInstruction)?.reference as? FieldReference)
-  if(it.opcode==Opcode.IPUT_OBJECT&&f?.definingClass==responseType&&f.type=="Ljava/lang/String;")f else null
- }?:fail("committed native response video identity")
- val reset=presenter.methods.singleOrNull {it.returnType=="V"&&it.parameterTypes.isEmpty()&&!AccessFlags.STATIC.isSet(it.accessFlags)}?:fail("Music action-bar cache reset")
+ val rendererField=presenter.fields.singleOrNull {it.type==render.parameterTypes[0]&&!AccessFlags.STATIC.isSet(it.accessFlags)}?:fail("Music action-bar renderer field")
+ val identityMethods=presenter.methods.filter {it.returnType=="V"&&!AccessFlags.STATIC.isSet(it.accessFlags)&&it.parameterTypes.map {p->p.toString()} in listOf(listOf("Ljava/lang/String;"),listOf("Ljava/lang/String;","Z"),listOf("Ljava/lang/String;",responseType))}
+ if(identityMethods.size!=4)fail("Music action-bar server/client identity inputs")
  val entry=mutableClassDefBy(OWN+"LyricsEntryButton;")
  fun entryBody(name:String,count:Int,code:String){val old=entry.methods.single {it.name==name};val m=MutableMethod(ImmutableMethod(old.definingClass,old.name,old.parameters,old.returnType,old.accessFlags,old.annotations,old.hiddenApiRestrictions,MutableMethodImplementation(count)));entry.methods.remove(old);m.addInstructions(0,code);entry.methods.add(m)}
- entryBody("nativeVideoId",3,"""
-  check-cast p0, ${presenter.type}
-  iget-object v0, p0, ${response.definingClass}->${response.name}:${response.type}
-  if-eqz v0, :missing
-  iget-object v0, v0, ${videoField.definingClass}->${videoField.name}:${videoField.type}
-  return-object v0
-  :missing
-  const-string v0, ""
-  return-object v0
- """)
  entryBody("refreshNative",4,"""
   check-cast p0, ${presenter.type}
-  iget-object v1, p0, ${response.definingClass}->${response.name}:${response.type}
-  if-eqz v1, :done
-  iget-object v0, v1, ${videoField.definingClass}->${videoField.name}:${videoField.type}
-  invoke-virtual { p0 }, ${reset.ref()}
-  invoke-virtual { p0, v0, v1 }, ${refresh.ref()}
+  invoke-static { p0 }, ${OWN}LyricsEntryButton;->originalModel(Ljava/lang/Object;)Ljava/lang/Object;
+  move-result-object v0
+  if-eqz v0, :done
+  check-cast v0, $elementType
+  iget-object v1, p0, ${rendererField.definingClass}->${rendererField.name}:${rendererField.type}
+  invoke-virtual { p0, v1, v0 }, ${render.ref()}
   :done
   return-void
  """)
@@ -144,6 +131,7 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
   check-cast p1, $elementType
   invoke-interface { p1 }, Lcom/google/protobuf/MessageLite;->toByteArray()[B
   move-result-object v1
+  invoke-static { p0, p1, v1 }, ${OWN}LyricsEntryButton;->captureModel(Ljava/lang/Object;Ljava/lang/Object;[B)V
   invoke-static { p0, v1 }, ${OWN}LyricsEntryButton;->rewrite(Ljava/lang/Object;[B)[B
   move-result-object v0
   if-eq v0, v1, :unchanged
@@ -158,6 +146,10 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
  """)
  if(render.implementation!!.registerCount>16)fail("Music model register range")
  render.addInstructions(0,"invoke-static { p0, p2 }, ${OWN}LyricsEntryButton;->rewriteNative(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;\nmove-result-object p2\ncheck-cast p2, $elementType")
+ for(m in identityMethods){
+  if(m.implementation!!.registerCount>16)fail("Music identity register range")
+  m.addInstruction(0,"invoke-static { p0, p1 }, ${OWN}LyricsEntryButton;->captureIdentity(Ljava/lang/Object;Ljava/lang/String;)V")
+ }
  for(m in presenter.methods.filter {it.name=="<init>"}){
   val returns=m.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_VOID}.map {it.index}
   val receiver=m.implementation!!.registerCount-m.parameterTypes.sumOf {if(it.toString() in listOf("J","D"))2 else 1}-1

@@ -1,5 +1,15 @@
 plugins { kotlin("jvm") version "2.4.21" }
 repositories { mavenLocal(); mavenCentral(); google(); maven { url=uri("https://jitpack.io") } }
+
+tasks.register<JavaExec>("inspectMusicActions") {
+ dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath
+ mainClass.set("app.bdcrusher.lyrics.InspectMusicActionsKt");workingDir=rootDir;maxHeapSize="4g"
+}
+
+tasks.register<JavaExec>("inspectNativeProtocol") {
+ dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath
+ mainClass.set("app.bdcrusher.lyrics.InspectNativeProtocolKt");workingDir=rootDir
+}
 dependencies {
     implementation("app.morphe:morphe-patcher:2.0.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
@@ -20,3 +30,31 @@ tasks.register<JavaExec>("verifyBundle") {
         ) + (providers.gradleProperty("officialPath").orNull?.let {listOf(it)} ?: emptyList()))
     }
 }
+
+tasks.register<JavaExec>("auditEntry") {
+    dependsOn("classes")
+    classpath=sourceSets["main"].runtimeClasspath
+    mainClass.set("app.bdcrusher.lyrics.AuditEntryKt")
+    workingDir=rootDir
+    doFirst { setArgs(listOf(providers.gradleProperty("auditManifest").get())) }
+}
+tasks.register<JavaExec>("inspectEntryHost") {
+    dependsOn("classes")
+    classpath=sourceSets["main"].runtimeClasspath
+    mainClass.set("app.bdcrusher.lyrics.InspectEntryHostKt")
+    workingDir=rootDir
+}
+tasks.register<JavaExec>("inspectEntryBindings") {
+    dependsOn("classes")
+    classpath=sourceSets["main"].runtimeClasspath
+    mainClass.set("app.bdcrusher.lyrics.InspectEntryBindingsKt")
+    workingDir=rootDir
+}
+
+tasks.register<JavaExec>("inspectMusicEngagement") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectMusicEngagementKt");workingDir=rootDir;maxHeapSize="4g" }
+
+tasks.register<JavaExec>("inspectButtonSchemas") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectButtonSchemasKt");workingDir=rootDir;maxHeapSize="4g" }
+
+tasks.register<JavaExec>("auditModelEntry") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.AuditModelEntryKt");workingDir=rootDir;doFirst {setArgs(listOf(providers.gradleProperty("auditManifest").get()))} }
+tasks.register<JavaExec>("inspectModelContracts") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectModelContractsKt");workingDir=rootDir }
+tasks.register<JavaExec>("inspectActionReplay") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectActionReplayKt");workingDir=rootDir }

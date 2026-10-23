@@ -13,28 +13,46 @@ import app.morphe.extension.shared.ResourceUtils;
 /** Attaches only to the content returned by the active native engagement-panel model. */
 public final class NativeLyricsHost {
     static final String ID="music_watch_lyrics_panel";
-    private static String preparedVideo="";
+    private static final java.util.ArrayList<WeakReference<Object>> controllers=new java.util.ArrayList<>();
+    private static final java.util.WeakHashMap<Object,String> prepared=new java.util.WeakHashMap<>();
     private static final Handler main=new Handler(Looper.getMainLooper());
     private static WeakReference<Object> controller=new WeakReference<>(null),panel=new WeakReference<>(null);
     private static WeakReference<BetterLyricsPanelView> renderer=new WeakReference<>(null);
     private static int epoch;
     private static boolean lyrics;
     private NativeLyricsHost(){}
-    public static void captureController(Object value){controller=new WeakReference<>(value);preparedVideo="";}
+    public static void captureController(Object value){
+        controllers.removeIf(ref->ref.get()==null);
+        for(var ref:controllers)if(ref.get()==value)return;
+        if(controllers.size()>=8)controllers.remove(0);
+        controllers.add(new WeakReference<>(value));
+        if(!isOpen())controller=new WeakReference<>(value);
+    }
     public static boolean isOpen(){return lyrics&&panel.get()!=null;}
     public static boolean prepare(String videoId){
-        Object owner=controller.get();if(owner==null)return false;
+        boolean ready=false;
+        for(var reference:new java.util.ArrayList<>(controllers)){
+        Object owner=reference.get();if(owner==null)continue;
         try{
             byte[] original=nativeDefinition(owner,ID);
-            if(original!=null&&preparedVideo.equals(videoId))return true;
+            if(original!=null&&videoId.equals(prepared.get(owner))){ready=true;continue;}
             boolean related=original==null||new ProtoWire(original).one(3)==null;
             if(related)original=nativeDefinition(owner,"music-related-panel");
-            if(original==null){LyricsDiagnostics.record("Lyrics panel","Native Music presentation is not ready");return false;}
+            if(original==null)continue;
             registerNative(owner,NativePanelWire.definition(original,ResourceUtils.getString("lyrics_tab_title"),related));
-            preparedVideo=videoId;
+            prepared.put(owner,videoId);ready=true;
             LyricsDiagnostics.record("Lyrics panel","Prepared native Music Lyrics with mini-player snap and native palette");
-            return true;
-        }catch(Exception ex){LyricsDiagnostics.record("Lyrics panel","Native Music setup failed: "+ex.getClass().getSimpleName());return false;}
+        }catch(Exception ex){LyricsDiagnostics.record("Lyrics panel","Native Music setup failed: "+ex.getClass().getSimpleName());}
+        }
+        if(!ready)LyricsDiagnostics.record("Lyrics panel","Native Music presentation is not ready; retrying without blocking the action model");
+        return ready;
+    }
+    public static void onNativePanelChanged(Object owner,Object value){
+        captureController(owner);
+        if(owner!=controller.get()&&isOpen()){
+            try{if(value==null||!ID.equals(panelId(value)))return;}catch(Exception ignored){return;}
+        }
+        controller=new WeakReference<>(owner);onNativePanelChanged(value);
     }
     public static void onNativePanelChanged(Object value){
         epoch++;panel=new WeakReference<>(value);lyrics=false;

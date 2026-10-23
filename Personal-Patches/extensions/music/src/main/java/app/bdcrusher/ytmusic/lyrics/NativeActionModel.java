@@ -10,9 +10,52 @@ final class NativeActionModel {
     private static final int[] ACTION_PATH={172660663,1,168777401,5,389155117};
     private static final int[] BUTTON_PATH={10,461054335};
     static byte[] enable(byte[] element){
-        if(!contains(element,"video_action_bar.eml"))return element;
-        try{return ProtoWire.at(element,ACTION_PATH,0,NativeActionModel::update);}
+        // The typed VideoActionBarPresenter hook supplies scope. Client-generated
+        // Elements need not repeat the server template URI in their serialized model.
+        try{
+            try{return ProtoWire.at(element,ACTION_PATH,0,NativeActionModel::update);}
+            catch(IllegalArgumentException fixedShape){
+                List<int[]> matches=new ArrayList<>();findRows(element,new ArrayList<>(),matches,new int[]{192},0);
+                if(matches.size()!=1)throw new IllegalArgumentException("expected one native Lyrics/Like row, found "+matches.size());
+                return ProtoWire.at(element,matches.get(0),0,NativeActionModel::update);
+            }
+        }
         catch(IllegalArgumentException ex){LyricsDiagnostics.record("Lyrics action model","Unsupported native button model: "+ex.getMessage());return element;}
+    }
+    /** Native LikeEndpoint target, when present; do not infer identity from labels or URLs. */
+    static String recording(byte[] element){
+        java.util.Set<String> ids=new java.util.HashSet<>();
+        collectRecording(element,ids,new int[]{192},0);
+        return ids.size()==1?ids.iterator().next():ids.size()>1?"ambiguous":null;
+    }
+    private static void collectRecording(byte[] bytes,java.util.Set<String> ids,int[] budget,int depth){
+        if(depth>22||--budget[0]<0)return;
+        ProtoWire message;try{message=new ProtoWire(bytes);}catch(IllegalArgumentException notMessage){return;}
+        for(ProtoWire.Field f:message.fields)if(f.wire==2){
+            if(f.number==63158558){
+                try{String id=new String(path(f.data,new int[]{2,1}),StandardCharsets.US_ASCII);if(id.matches("[A-Za-z0-9_-]{11}"))ids.add(id);}
+                catch(IllegalArgumentException unsupported){}
+            }else if(f.data.length>4)collectRecording(f.data,ids,budget,depth+1);
+        }
+    }
+    /** Client-generated Elements may wrap the same native button VMs differently. */
+    private static void findRows(byte[] bytes,List<Integer> path,List<int[]> matches,int[] budget,int depth){
+        if(depth>18||--budget[0]<0||matches.size()>1)return;
+        ProtoWire message;
+        try{message=new ProtoWire(bytes);}catch(IllegalArgumentException notMessage){return;}
+        int buttons=0;boolean like=false,lyrics=false;
+        for(ProtoWire.Field f:message.fields)if(f.number==4&&f.wire==2){
+            buttons++;like|=contains(f.data,"_thumb_up_");
+            try{ProtoWire.Field icon=new ProtoWire(path(f.data,BUTTON_PATH)).one(2);lyrics|=icon!=null&&icon.wire==2&&contains(icon.data,"_quote_");}
+            catch(IllegalArgumentException otherAction){}
+        }
+        if(buttons>=2&&buttons<=32&&like&&lyrics){matches.add(path.stream().mapToInt(Integer::intValue).toArray());return;}
+        for(ProtoWire.Field f:message.fields)if(f.wire==2&&f.data.length>4){
+            // ProtoWire.at edits singular message fields only. Repeated wrappers are ambiguous.
+            int count=0;for(ProtoWire.Field other:message.fields)if(other.number==f.number)count++;
+            if(count!=1)continue;
+            path.add(f.number);findRows(f.data,path,matches,budget,depth+1);path.remove(path.size()-1);
+        }
     }
     private static byte[] update(byte[] input){
         ProtoWire row=new ProtoWire(input);List<ProtoWire.Field> buttons=new ArrayList<>();
