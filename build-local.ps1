@@ -5,10 +5,8 @@ if (-not (Test-Path -LiteralPath "$scope\BuildCache\Maven\com\github\MorpheApp\s
     & "$scope\build-smali.ps1"
     if ($LASTEXITCODE -ne 0) { throw 'Pinned Smali dependency build failed' }
 }
-if (-not (Test-Path -LiteralPath "$scope\Personal-Patches\web\tools\esbuild\esbuild.exe")) {
-    & python -B "$scope\scripts\prepare_tools.py"
-    if ($LASTEXITCODE -ne 0) { throw 'Web dependency preparation failed' }
-}
+& python -B "$scope\scripts\prepare_tools.py"
+if ($LASTEXITCODE -ne 0) { throw "Web dependency preparation failed" }
 & python -B "$scope\Personal-Patches\web\patch_braccato.py"
 if ($LASTEXITCODE -ne 0) { throw 'Pinned Braccato correction failed' }
 Push-Location "$scope\Personal-Patches"

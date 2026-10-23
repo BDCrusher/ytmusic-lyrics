@@ -1,43 +1,44 @@
 # BDCrusher YT-Music Lyrics
 
-Personal Better Lyrics integration for Morphe and YouTube Music. Unofficial derivative; not an official Morphe or Better Lyrics release.
+Personal Better Lyrics sources, rendering, vocal agents and background vocals for YouTube Music. Unofficial derivative. Current prerelease: **0.2.3-beta.3**, for original **9.42.52 / 94252240 arm64-v8a** only. Phone acceptance is pending.
 
-**[Add the lyrics add-on to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)**
+## Choose your Morphe source tab
 
-Or paste **https://github.com/BDCrusher/ytmusic-lyrics** in Morphe → Sources → + → Remote.
+| Tab | Source address | Use it with |
+| --- | --- | --- |
+| **BDCrusher Full Collection** | [Full source metadata](https://raw.githubusercontent.com/BDCrusher/ytmusic-lyrics/main/full/patches-bundle.json) | Use alone; disable official Morphe and the lyrics-only add-on for this patch run. |
+| **BDCrusher Lyrics-only Add-on** | [Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20Lyrics-only%20Add-on&app=com.google.android.apps.youtube.music) or `https://github.com/BDCrusher/ytmusic-lyrics` | Official Morphe 1.48.0 default Music patches, with official **Third-party lyrics OFF**. |
 
-## Setup
+Both sources live in this repository and download separate MPP files. Morphe Expert mode makes a tab for each source you add. Adding the repository once adds only Lyrics-only; add Full separately if you want that alternative available too. Keep only the appropriate combination selected for a patch run.
 
-1. Use Morphe Manager 2.0.0 and official Morphe Patches **1.48.0**. Enable Expert mode to select both sources in the same patch run.
-2. On this source, enable **Pre-release patches**, then **Experimental app versions**. The personal release is a beta even with stable Manager.
-3. Select an original **YouTube Music 9.42.52 / 94252240, arm64-v8a** APK. Other versions are unverified.
-4. Keep the official default Music patches, turn **official Third-party lyrics OFF**, and enable **Third-party lyrics — Better Lyrics add-on** here. Keep official Litho/settings/playback infrastructure selected.
-5. Disable/remove the earlier local copy of this add-on and any personal Full collection source so it is injected once. Patch the original APK again to apply updates.
+### Add both tabs
 
-Open **YouTube Music → Settings → Morphe → Lyrics** for settings and normal source connection. Source updates download patch bundles; they do not automatically repatch or reinstall YouTube Music.
+1. Enable **Expert mode** in Morphe Manager 2.0.0.
+2. [Add Lyrics-only Add-on](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20Lyrics-only%20Add-on&app=com.google.android.apps.youtube.music). If this repository is already added, reuse it and rename its source card **BDCrusher Lyrics-only Add-on**.
+3. For Full, open **Sources ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ + ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Remote** and paste this exact second address:
 
-## What it adds
+   ```text
+   https://raw.githubusercontent.com/BDCrusher/ytmusic-lyrics/main/full/patches-bundle.json
+   ```
 
-Braccato word/syllable highlights, background vocals, singer placement and letter wave; the 16 Better Lyrics provider variants and preference order; native inline sliders/switches; transparent lyrics over the song theme; floating glass controls and an animated source flyout. Seeking resumes lyric follow without the Android touch rectangle.
+4. Rename that source card **BDCrusher Full Collection**. Morphe's one-tap GitHub links address only a repository's root feed; the Full subfolder uses this direct JSON address instead.
+5. On each personal source, enable **Pre-release patches**, then **Experimental app versions**, and update it. Latest beta feeds live on dev; main retains the earlier bootstrap version until a stable release. Morphe recognizes branch switching even for the Full JSON URL.
+6. Select the original APK. Choose **Full alone**, or **official patches plus Lyrics-only**, with official Third-party lyrics disabled. Never combine both personal editions. Repatching is required; refreshing a source does not change an installed app.
 
-The three control layers are Copy / Translate / Romanize / Refresh, delay − / source / delay +, then the collapse chevron. Shaders, Tacet and floating windows are excluded.
+[Latest release](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.3-beta.3) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· [Direct add-on MPP](https://github.com/BDCrusher/ytmusic-lyrics/releases/download/v0.2.3-beta.3/bdcrusher-ytmusic-lyrics-addon-0.2.3-beta.3.mpp) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· [Direct Full MPP](https://github.com/BDCrusher/ytmusic-lyrics/releases/download/v0.2.3-beta.3/bdcrusher-ytmusic-lyrics-full-0.2.3-beta.3.mpp)
 
-## Full edition alternative
+## Changes in this release
 
-The default repository feed is **add-on only**. [Full collection download](https://github.com/BDCrusher/ytmusic-lyrics/releases/download/v0.2.1-beta.1/bdcrusher-ytmusic-lyrics-full-0.2.1-beta.1.mpp) is an alternative used by itself, with the official overlapping collection and add-on disabled. Its applied collection baseline remains Morphe dev.19. For a separate remotely updating Full source, paste this exact metadata URL into Morphe:
-
-`https://raw.githubusercontent.com/BDCrusher/ytmusic-lyrics/main/full/patches-bundle.json`
-
-Do not enable both editions together.
+- Native Lyrics action model: enablement, original Music command, and placement immediately after Like/Dislike. No additional Lyrics label or personal click overlay.
+- Native Music Lyrics presentation: existing panel preferred, with native palette/header contracts and mini-player snap retained; transparent Better Lyrics rendering stays inside native content.
+- Collapsed controls opener at the bottom. Opening expands upward with collapse above the source/delay and four action buttons. Glass controls, centered icons, source flyout and reduced motion remain supported.
 
 ## Verification and limitations
 
-Version **0.2.1-beta.1** passed stable Patcher 2.0.0 APK/DEX verification: Full defaults, Full lyrics alone, add-on + official stable patches in both source orders, and expected conflict/missing-runtime rejections. Browser tests cover 16 provider variants and UI interactions. The exact supplied music-video recording MYal8NoVQXs retrieves Unison TTML and decodes 50 lines in Java/browser checks.
+Exact released MPP bytes passed four positive original-APK applications, both add-on source orders, SDK DEX/reference/hierarchy audits, native hook audits and duplicate-class checks. Conflicting lyrics integration and missing official runtime reject explicitly. JVM tests: 6 executed,5 APK-dependent skipped. Android lint:0 errors,6 warnings. Native model/host/entry Java:45 checks with real native fixtures and explicitly simulated proxies. Fresh browser checks cover all 16 provider variants, voices/background vocals/highlighting, live Better Lyrics and exact-recording Unison, source controls, seek/follow and dock behavior.
 
-**Phone acceptance remains pending:** native settings appearance/accessibility, WebView compositing/lifecycle, real audio synchronization, Android source authentication and performance. Automatic audio/video counterpart segment-map conversion is not implemented. Provider availability varies; use Source diagnostics when a lookup differs.
+**Phone behavior is not yet verified.** Native button appearance, actual panel extent/theme/mini-player, Android authentication, accessibility/rotation and timing need phone acceptance. Native app experiments/palette can affect presentation. Alternate audio/video timeline conversion is not implemented. Nothing is signed or installed by this repository.
 
-[Release and checksums](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.1-beta.1) · [Compatibility](COMPATIBILITY.md) · [Build source](BUILDING.md) · [Publication](PUBLISHING.md)
+Settings: **YouTube Music ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Settings ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Morphe ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ Lyrics**. Existing preferences/private connection data remain in the app. APKs, private credentials and device state are excluded from this repository and releases.
 
-## Credits
-
-MorpheApp/morphe-patches and Better Lyrics contributors; Braccato core/parsers; BDCrusher's personal Android integration. GPL-3.0 and retained Morphe Section 7 notices apply to their respective derivatives; third-party MIT/font notices are retained. See [LICENSE](LICENSE), [NOTICE](NOTICE), [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt) and Personal-Patches/third-party-notices.
+[Build](BUILDING.md) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· [Compatibility](COMPATIBILITY.md) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· [Source pins](SOURCE-PINS.json) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· [Verification](verification.json) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· [Notices](NOTICE) ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â· [Third-party notices](THIRD-PARTY-NOTICES.txt)

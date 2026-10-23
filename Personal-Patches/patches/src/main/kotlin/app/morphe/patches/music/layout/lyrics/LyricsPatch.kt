@@ -8,6 +8,7 @@
 
 package app.morphe.patches.music.layout.lyrics
 
+import app.bdcrusher.ytmusic.nativeentry.installNativeLyricsHooks
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.patch.bytecodePatch
@@ -106,6 +107,7 @@ val lyricsPatch = bytecodePatch(
     ))
 
     execute {
+        installNativeLyricsHooks()
         PreferenceScreen.LYRICS.addPreferences(
             SwitchPreference("morphe_music_lyrics_enabled", summary = true),
         )

@@ -3,6 +3,7 @@
  * MediaSession/engagement fingerprints adapted from Morphe v1.48.0-dev.19; its NOTICE applies.
  */
 package app.bdcrusher.ytmusic.addon
+import app.bdcrusher.ytmusic.nativeentry.installNativeLyricsHooks
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.fieldAccess
 import app.morphe.patcher.methodCall
@@ -63,6 +64,25 @@ val lyricsAddon=bytecodePatch(
         required(PREFIX+"settings/preference/MusicPreferenceFragment;")
         val manager=required(PREFIX+"patches/lyrics/LyricsManager;")
         val installer=required(PREFIX+"patches/lyrics/ui/LyricsPanelInstaller;")
+        if(manager.fields.none {it.name=="currentVideoId"&&it.type=="Ljava/lang/String;"})
+            throw PatchException("Unsupported official lyrics track identity contract")
+        if(manager.methods.none {it.name=="getCommittedVideoId"}){
+            val getter=MutableMethod(ImmutableMethod(manager.type,"getCommittedVideoId",emptyList(),"Ljava/lang/String;",AccessFlags.PUBLIC.value,null,null,MutableMethodImplementation(2)))
+            getter.addInstructions(0,"iget-object v0, p0, "+manager.type+"->currentVideoId:Ljava/lang/String;\nreturn-object v0")
+            manager.methods.add(getter)
+        }
+        val callbacks=required(PREFIX+"patches/lyrics/LyricsPatch;")
+        for(name in listOf("onSetMetadata","onSetPlaybackState")){
+            val callback=callbacks.methods.singleOrNull {it.name==name&&it.returnType=="V"&&it.parameterTypes.size==1}
+                ?:throw PatchException("Unsupported official playback callback: "+name)
+            val returns=callback.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_VOID}.map {it.index}
+            if(returns.isEmpty())throw PatchException("Missing official callback return: "+name)
+            for(index in returns.reversed()){
+                // Replace the branch target itself; inserting before a labelled return can be skipped.
+                callback.replaceInstruction(index,BuilderInstruction35c(Opcode.INVOKE_STATIC,0,0,0,0,0,0,ImmutableMethodReference(OWN+"LyricsEntryCoordinator;","onPlaybackEvent",emptyList(),"V")))
+                callback.addInstruction(index+1,"return-void")
+            }
+        }
         val meta=Metadata.method
         if(meta.implementation!!.instructions.any { ((it as? ReferenceInstruction)?.reference as? MethodReference)?.definingClass==PREFIX+"patches/lyrics/LyricsPatch;"})
             throw PatchException("Two lyrics patches selected. Disable official Third-party lyrics; do not combine the Full edition with this add-on.")
@@ -126,6 +146,7 @@ val lyricsAddon=bytecodePatch(
         val index=set.implementation!!.instructions.indexOfFirst {val f=((it as? ReferenceInstruction)?.reference as? FieldReference);it.opcode==Opcode.IPUT_OBJECT&&f?.definingClass==clazz.type&&f.type==set.parameterTypes[0]}
         if(index<0)throw PatchException("Unsupported engagement panel assignment")
         set.addInstruction(index+1,"invoke-static { p1 }, "+PREFIX+"patches/lyrics/ui/LyricsPanelInstaller;->onEngagementPanelChanged(Ljava/lang/Object;)V")
+        installNativeLyricsHooks()
         // Verify every direct official method reference in the personal payload after both sources execute.
         fun resolves(type:String,ref:MethodReference,seen:MutableSet<String> = mutableSetOf()):Boolean {
             if(!seen.add(type))return false

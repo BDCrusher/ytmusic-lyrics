@@ -314,6 +314,8 @@ public final class LyricsManager {
         return currentTrack;
     }
 
+    public String getCommittedVideoId() { return currentVideoId; }
+
     @Nullable
     public String getCurrentRawTitle() {
         return currentRawTitle;

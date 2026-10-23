@@ -221,12 +221,7 @@ public final class LyricsPanelInstaller {
      * Called by the litho filter when the lyrics panel is being built.
      */
     public static void onLyricsPanelDetected() {
-        try {
-            detectLyricsPanel();
-        } catch (Exception ex) {
-            Logger.printException(() -> "onLyricsPanelDetected failure", ex);
-            installPending = false;
-        }
+        app.bdcrusher.ytmusic.lyrics.NativeLyricsHost.onNativeLayout();
     }
 
     private static void detectLyricsPanel() {

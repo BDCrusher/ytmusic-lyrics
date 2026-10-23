@@ -1,3 +1,3 @@
-# BDCrusher YT-Music Lyrics
+# YT-Music patch sources
 
-Current: 0.2.1-beta.1. [Guide](PERSONAL-README.md) · [Delivery](dist/0.2.1-beta.1) · [Compatibility](COMPATIBILITY.md) · [Build](BUILDING.md)
+See [public setup and the two source tabs](../README.md), [build guide](../BUILDING.md), [compatibility](../COMPATIBILITY.md) and [verification](../verification.json).

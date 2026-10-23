@@ -1,10 +1,9 @@
 # Changelog
 
-## 0.2.1-beta.1 — 2026-10-22
+## 0.2.3-beta.3
 
-- Floating glass dock with lyrics visible underneath and centered arrows.
-- Extension-style animated source flyout and native numeric sliders.
-- Seek resumes follow; actual scroll events and wall-clock samples follow the extension host contract.
-- Hash-bounded correction to Braccato expired scroll suppression; upstream easing/layout retained.
-- Recording-ID-first Unison retrieval and clearer source errors.
-- Verified with stable Patcher 2.0.0 and official patches 1.48.0 in both source orders; device acceptance pending.
+Correct the native Lyrics action model and normal Music command/position. Preserve native Music palette/header and request mini-player presentation. Restore the bottom collapsed opener and top expanded collapse control. Publish Full Collection and Lyrics-only as separate Morphe source feeds/tabs. Existing Better Lyrics renderer, providers, preferences and connection data are retained. Exact compiled/SDK/browser evidence is described in README and verification.json; phone acceptance remains pending.
+
+## 0.2.1-beta.1
+
+Initial public Full and Lyrics-only editions. Superseded by the current native model/panel correction.

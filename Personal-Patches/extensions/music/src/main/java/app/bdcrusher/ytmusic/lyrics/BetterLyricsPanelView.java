@@ -27,7 +27,6 @@ import app.morphe.extension.music.patches.lyrics.model.Lyrics;
 import app.morphe.extension.music.patches.lyrics.model.LyricsLine;
 import app.morphe.extension.music.patches.lyrics.model.Word;
 import app.morphe.extension.music.patches.lyrics.model.TrackInfo;
-import app.morphe.extension.music.patches.lyrics.ui.LyricsPanelInstaller;
 import app.morphe.extension.music.settings.Settings;
 import app.morphe.extension.music.shared.VideoInformation;
 import app.morphe.extension.shared.Logger;
@@ -47,7 +46,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private TrackInfo track;
     private final java.util.Map<View,Integer> covered=new java.util.IdentityHashMap<>();
     private final android.view.ViewTreeObserver.OnGlobalLayoutListener layoutListener=()->{if(hasDisplay)syncOverlay();};
-    private LyricsCatalog catalog;
+    private LyricsCatalog.Sink catalogSink;
     private LyricsNetwork enrichmentNetwork;
     private java.util.concurrent.ExecutorService enrichmentExecutor;
     private final List<JSONObject> pending=new ArrayList<>();
@@ -57,12 +56,12 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private final Runnable tick=new Runnable(){public void run(){
         if(!attached)return;
         try{
-            updateTrack();
+            updateTrack();syncOverlay();
             if(ready){
                 LyricsManager manager=LyricsManager.getInstance();
                 JSONObject sample=new JSONObject().put("generation",generation)
                     .put("position",manager.getVideoPositionMs()-Settings.LYRICS_OFFSET_MS.get()-manager.getTemporaryOffsetMs()).put("playing",manager.isPlaybackPlaying())
-                    .put("rate",manager.getPlaybackSpeed()).put("visible",isShown()&&LyricsPanelInstaller.isLyricsPanelOpen());
+                    .put("rate",manager.getPlaybackSpeed()).put("visible",isShown()&&NativeLyricsHost.isOpen());
                 call("state",sample.toString());
             }
         }catch(Exception ex){Logger.printException(()->"BDCrusher lyric clock",ex);}
@@ -82,7 +81,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         restoreNativeContent();
         attached=false;handler.removeCallbacksAndMessages(null);
         LyricsConfig.preferences(getContext()).unregisterOnSharedPreferenceChangeListener(listener);
-        LyricsManager.getInstance().removeListener(this);if(catalog!=null){catalog.close();catalog=null;}
+        LyricsManager.getInstance().removeListener(this);if(catalogSink!=null){LyricsRepository.unsubscribe(catalogSink);catalogSink=null;}
         if(enrichmentNetwork!=null)enrichmentNetwork.close();if(enrichmentExecutor!=null)enrichmentExecutor.shutdownNow();
         if(web!=null){web.removeJavascriptInterface("BDNative");web.stopLoading();removeView(web);web.destroy();web=null;}
         ready=false;identity="";pending.clear();super.onDetachedFromWindow();
@@ -150,18 +149,28 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         TrackInfo next=LyricsManager.getInstance().getCurrentTrack();
         if(next==null)return;
         String nextId=VideoInformation.getVideoId();
-        String key=nextId+"\u0000"+next.title()+"\u0000"+next.artist()+"\u0000"+next.durationSeconds()+"\u0000"+next.album();
+        if(nextId==null||!nextId.equals(LyricsManager.getInstance().getCommittedVideoId())){
+            if(!identity.isEmpty()){
+                identity="";generation++;hasDisplay=false;track=null;pending.clear();restoreNativeContent();setVisibility(View.INVISIBLE);
+                if(catalogSink!=null)LyricsRepository.unsubscribe(catalogSink);catalogSink=null;
+                if(ready)call("track","{\"generation\":"+generation+",\"title\":\"\",\"artist\":\"\",\"album\":\"\",\"duration\":0,\"videoId\":\"\"}");
+            }
+            return;
+        }
+        String key=LyricsRepository.identity(next,nextId);
         if(key.equals(identity))return;
         identity=key;track=next;generation++;hasDisplay=false;pending.clear();
-        restoreNativeContent();setVisibility(View.INVISIBLE);if(catalog!=null)catalog.close();
+        restoreNativeContent();setVisibility(View.INVISIBLE);if(catalogSink!=null)LyricsRepository.unsubscribe(catalogSink);
         if(ready)sendTrack();
         int expected=generation;
         boolean refresh=forceRefresh;forceRefresh=false;
-        catalog=new LyricsCatalog(getContext().getApplicationContext(),track,nextId,refresh,new LyricsCatalog.Sink(){
-            public void reconnect(){handler.postDelayed(()->{if(attached&&generation==expected&&LyricsPanelInstaller.isLyricsPanelOpen())ServiceConnection.renew(getContext());},700);}
+        LyricsRepository.ensure(getContext(),track,nextId,refresh);
+        catalogSink=new LyricsCatalog.Sink(){
+            public void reconnect(){handler.postDelayed(()->{if(attached&&generation==expected&&NativeLyricsHost.isOpen())ServiceConnection.renew(getContext());},700);}
             public void result(JSONObject payload){handler.post(()->receive(expected,payload));}
             public void notice(String message,boolean finished){handler.post(()->{if(attached&&generation==expected&&ready)call("notice",expected+","+JSONObject.quote(message)+","+finished);});}
-        });
+        };
+        LyricsRepository.subscribe(catalogSink);
     }
     private void sendTrack(){
         if(track==null)return;
@@ -203,7 +212,8 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     // settings -> render -> displayed -> settings forever through the JS bridge.
     private void restoreNativeContent(){for(var entry:covered.entrySet())entry.getKey().setVisibility(entry.getValue());covered.clear();}
     public void syncOverlay(){
-        boolean show=hasDisplay&&!LyricsPanelInstaller.isOtherPanelForeground();
+        boolean show=Settings.LYRICS_ENABLED.get()&&hasDisplay&&NativeLyricsHost.owns(this);
+        setKeepScreenOn(show&&Settings.LYRICS_KEEP_SCREEN_ON.get());
         if(show&&getParent() instanceof android.view.ViewGroup parent){for(int i=0;i<parent.getChildCount();i++){View child=parent.getChildAt(i);if(child!=this){covered.putIfAbsent(child,child.getVisibility());child.setVisibility(View.INVISIBLE);}}}
         else restoreNativeContent();
         setVisibility(show?View.VISIBLE:View.INVISIBLE);

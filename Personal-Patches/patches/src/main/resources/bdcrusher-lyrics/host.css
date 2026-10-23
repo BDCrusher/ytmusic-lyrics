@@ -10,10 +10,13 @@ button svg,button img{width:24px;height:24px;display:block;flex:none;margin:0}
 #scroll{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;padding:12px 24px var(--dock-clearance);scrollbar-width:none;contain:layout style;scroll-padding-bottom:var(--dock-clearance)}
 #scroll::-webkit-scrollbar{display:none}#empty{font-size:15px;opacity:.65;padding:24px 0;line-height:1.5}
 /* The lyrics continue behind the floating controls. Never paint a rectangular dock surface. */
-#dock{position:absolute;bottom:0;left:0;right:0;padding:0 20px max(10px,env(safe-area-inset-bottom));z-index:2;pointer-events:none}
+/* The native panel handles window insets. The collapsed opener sits at the
+   bottom; as controls expand upward, their collapse button rises above them. */
+#dock{position:absolute;bottom:0;left:0;right:0;padding:0 20px 4px;z-index:2;pointer-events:none}
 #dock button,.source-pill{pointer-events:auto}
 #collapse,.source-pill,.toolbar button,#resume,footer{background:linear-gradient(160deg,#ffffff0b,#ffffff02),var(--bd-pill);box-shadow:inset 0 1px 0 #ffffff20,0 4px 16px #00000010;backdrop-filter:blur(20px) saturate(1.3);-webkit-backdrop-filter:blur(20px) saturate(1.3)}
-#collapse{display:flex;margin:0 auto 5px;padding:0;min-width:46px;width:46px;min-height:32px;height:32px;transition:transform .24s ease,background-color .14s ease}
+#collapse{display:flex;margin:0 auto 5px;padding:0;min-width:46px;width:46px;min-height:44px;height:44px;transition:transform .24s ease,margin-bottom .24s ease,background-color .14s ease}
+#dock.collapsed #collapse{margin-bottom:0}
 #collapse svg{width:20px;height:20px}#dock.collapsed #collapse{transform:rotate(180deg)}
 #dock-content{display:grid;grid-template-rows:1fr;opacity:1;transition:grid-template-rows .24s ease,opacity .2s ease}
 #dock.collapsed #dock-content{grid-template-rows:0fr;opacity:0;pointer-events:none}#dock.collapsed #dock-content button{pointer-events:none}.dock-inner{min-height:0;overflow:hidden}

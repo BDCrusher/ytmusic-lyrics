@@ -35,5 +35,38 @@
     "upstreamSha256": "a3abca4640ef83edd4c5d2b34e7efb221e439365a24005051e34f92851c1f834",
     "patchedSha256": "6ea93232be38ac2082cc78680bb7e4314e5a629cc05a9afc010e027e8a987226",
     "change": "Clamp expired automatic scroll suppression at zero, allowing manual follow pause; retain upstream timing, layout and easing."
+  },
+  "nativeLyricsEntry": {
+    "target": "9.42.52 / 94252240 arm64-v8a",
+    "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+    "messageInfoSha256": [
+      "8fc64abc179f34880c1a844395f4702fc105499590740019c64949d8cf80b5d7",
+      "98c13c5c887d4193b35a5140491299e8f7c048f6d767bd501c6ec0e08cf826ef",
+      "d416323315ace3f553433540090546ab1bd38f76adffe582bd2603f630b5f8ed",
+      "7599e673ff8f5002e581cbca58445c8caf1d73ce9e0f51860ab05cde5fea0cf8",
+      "289ce2a3ce19fd3d6cbbf2f00e06c1d5305a77aff4bfdb06525c376c25a6b8e3",
+      "4e39c2f3040ef4c41496d06062ca6921803ae8e33ebc6393c983120ba7311cab"
+    ],
+    "bytecodeEvidence": "Verification/native-protocol-contracts.txt",
+    "report": "Research/NATIVE-MODEL-FIX-2026-10-22.md",
+    "deviceVerified": false,
+    "modelBytecodeEvidence": "Verification/native-model-contracts.txt",
+    "fixtureSha256": {
+      "Inputs\\native-video-actionbar-element.pb": "92cdef16a4263a467c6f48b3d3ddab2116dc35f683d1c4f895b7d12411ef8444",
+      "Inputs\\native-music-related-panel.pb": "8dcc9d2ec93edb3ef32dfd14da17bb938e06df65f8296d02c75e507d6158b273"
+    },
+    "modelPath": [
+      172660663,
+      1,
+      168777401,
+      5,
+      389155117
+    ],
+    "buttonPath": [
+      10,
+      461054335
+    ],
+    "lyricsEndpoint": "music_watch_lyrics_panel",
+    "dockReport": "Research/DOCK-BOTTOM-FIX-2026-10-22.md"
   }
 }

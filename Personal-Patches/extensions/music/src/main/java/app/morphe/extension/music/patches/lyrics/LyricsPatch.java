@@ -28,6 +28,7 @@ public final class LyricsPatch {
         } catch (Exception ex) {
             Logger.printException(() -> "onSetMetadata failure", ex);
         }
+        app.bdcrusher.ytmusic.lyrics.LyricsEntryCoordinator.onPlaybackEvent();
     }
 
     /**
@@ -39,6 +40,7 @@ public final class LyricsPatch {
         } catch (Exception ex) {
             Logger.printException(() -> "onSetPlaybackState failure", ex);
         }
+        app.bdcrusher.ytmusic.lyrics.LyricsEntryCoordinator.onPlaybackEvent();
         try {
             LockScreenLyrics.onPlaybackState(playbackState);
         } catch (Exception ex) {

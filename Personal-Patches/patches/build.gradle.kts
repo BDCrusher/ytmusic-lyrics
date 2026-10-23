@@ -123,3 +123,5 @@ tasks {
     }
 }
 
+
+kotlin.sourceSets.named("main") { kotlin.srcDir(rootProject.file("shared-lyrics-patches/src/main/kotlin")) }

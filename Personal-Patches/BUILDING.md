@@ -1,11 +1,3 @@
-# Build and verify both editions
+# BUILDING
 
-Run app-home build-local.ps1. It applies the hash-checked local Braccato correction before bundling at the fixed repository working directory, then builds :patches:buildAndroid and :lyrics-addon:buildAndroid. Caches, user/temp/Android state and output stay inside YT-Music. Reuse installed JDK25/JDK17, SDK36, pinned local Gradle/dependencies; no SDK/JDK auto-install is enabled.
-
-Outputs: patches/build/libs/patches-0.2.1-beta.1.mpp and lyrics-addon/build/libs/lyrics-addon-0.2.1-beta.1.mpp. Add-on D8 program input contains only personal classes; official contracts are classpath-only and excluded from its single raw-DEX MPE.
-
-Checks: :patches:test :patches:generatePatchesList :extensions:music:lintRelease. Use verify-stable.ps1 with an unused -PverificationDir=../scratch/NAME, explicit -PbundlePath, and -Pmode=defaults|lyrics|addon-first|official-first|conflict|missing-official. Add-on modes also need -PofficialPath=<official 1.48.0 MPP>. Verification/verify_revision3.ps1 records the exact six current runs; its existing folders cannot be reused. Verification/prepare_stable.py pins public stable inputs without changing beta dependencies. The stable engine's local settings adaptation reuses the retained exact ARSCLib/Smali dependencies.
-
-Browser: app-home playwright-local.ps1 with web/serve.py, then web/browser-check.js, provider-check.js, controls-check.js and interaction-check.js; reload between independent checks. Screenshots contain local synthetic text/palette. Verification/check_catalog_transport.py compiles actual Catalog/Network/TrackInfo with explicitly listed Android storage/UI stubs and retrieves the supplied exact public video recording. It does not verify Android runtime authentication.
-
-Stage with Verification/stage_revision3.py only. Earlier staging scripts target older releases. Delivery: dist/0.2.1-beta.1. Source ZIP includes prepared pinned packages and public build dependencies, local correction/hash receipt, stable verifier and build wrappers. It excludes inputs, APKs, credentials, Git, caches and verification scratch. Full applied baseline remains dev.19 over preserved dev.18 history; no rebase to stable official collection is claimed.
+See the [current public document](../BUILDING.md).

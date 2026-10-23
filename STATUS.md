@@ -1,3 +1,3 @@
 # Status
 
-Public source and exact verified release 0.2.1-beta.1. Phone acceptance remains pending; see README.md and COMPATIBILITY.md.
+Public 0.2.3-beta.3 source with separate Full and Lyrics-only feeds. Exact compiled/static/browser checks passed; phone acceptance remains pending. See README.md and verification.json.
