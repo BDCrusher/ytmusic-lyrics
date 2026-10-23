@@ -5,7 +5,7 @@ Inputs/
 **/dist/
 **/output/
 **/node_modules/
-Personal-Patches/web/tools/esbuild/*.exe
+Personal-Patches/web/tools/esbuild/
 Verification/scratch/
 **/local.properties
 *.apk

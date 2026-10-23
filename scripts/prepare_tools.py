@@ -18,7 +18,7 @@ for entry in pins['packages']:
  if esbuild and (target/'esbuild.exe').is_file():continue
  if not esbuild and manifest.is_file():
   actual=json.loads(manifest.read_text(encoding='utf-8'));assert actual['name']==entry['name'] and actual['version']==entry['version'];continue
- assert not target.exists(),'Incomplete dependency directory; inspect before replacing it'
+ assert not target.exists() or esbuild and all(x.is_file() and x.name in {'README.md','registry.json','package.json'} for x in target.iterdir()),'Incomplete dependency directory; inspect before replacing it'
  request=urllib.request.Request(entry['url'],headers={'User-Agent':'BDCrusher-YTMusic-build/1.0'})
  with urllib.request.urlopen(request,timeout=90) as response:raw=response.read(32*1024*1024+1)
  assert len(raw)<=32*1024*1024 and 'sha512-'+base64.b64encode(hashlib.sha512(raw).digest()).decode()==entry['integrity'],'Package integrity mismatch'
@@ -34,7 +34,7 @@ for entry in pins['packages']:
    total+=item.size;assert item.size<=16*1024*1024 and total<=64*1024*1024 and len(seen)<=10000
    if esbuild and relative.as_posix() not in ('esbuild.exe','README.md','package.json'):continue
    rows.append((relative,archive.extractfile(item).read()))
- target.mkdir(parents=True)
+ target.mkdir(parents=True,exist_ok=esbuild)
  for relative,data in rows:
   output=safe(target/relative.as_posix());output.parent.mkdir(parents=True,exist_ok=True);output.write_bytes(data)
  print('Prepared '+entry['name']+'@'+entry['version'])

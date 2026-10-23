@@ -196,6 +196,7 @@
     "freshIntegrityPinnedDependencies": true,
     "rendererMatchesTestedBytes": true,
     "rendererSha256": "eaaaac50f748ed811f6821eabb7fadabd5796dfe123747cc4f34c24a3a323b8f",
-    "fullCleanAndroidRebuildClaimed": false
+    "fullCleanAndroidRebuildClaimed": false,
+    "trackedToolMetadataShapeVerified": true
   }
 }
