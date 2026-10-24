@@ -18,6 +18,7 @@ final class LyricsRepository {
     private static String identity = "", notice = "";
     private static int generation;
     private static boolean finished;
+    private static Boolean definitelyNotFound;
 
     static String identity(TrackInfo track, String id) {
         return id + "\u0000" + track.title() + "\u0000" + track.artist() + "\u0000"
@@ -44,6 +45,7 @@ final class LyricsRepository {
             public void reconnect() { main.post(() -> {
                 if (expected == generation) for (var sink : new ArrayList<>(sinks)) sink.reconnect();
             }); }
+            public void completion(boolean notFound){main.post(()->{if(expected!=generation)return;definitelyNotFound=notFound;for(var sink:new ArrayList<>(sinks))sink.completion(notFound);});}
         });
     }
 
@@ -51,6 +53,7 @@ final class LyricsRepository {
         if (sinks.contains(sink)) return;
         sinks.add(sink);
         for (var payload : new ArrayList<>(results)) sink.result(payload);
+        if(definitelyNotFound!=null)sink.completion(definitelyNotFound);
         if (!notice.isEmpty()) sink.notice(notice, finished);
     }
 
@@ -59,6 +62,6 @@ final class LyricsRepository {
     static void clear() {
         generation++;
         if (catalog != null) catalog.close();
-        catalog = null; identity = ""; results.clear(); sinks.clear(); notice = ""; finished = false;
+        catalog = null; identity = ""; results.clear(); sinks.clear(); notice = ""; finished = false;definitelyNotFound=null;
     }
 }

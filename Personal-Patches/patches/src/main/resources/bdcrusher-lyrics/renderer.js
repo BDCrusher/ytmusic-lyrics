@@ -2789,9 +2789,13 @@
           }
           scrollTop = scrollPos;
           engine.scrollPos = scrollTop;
-          tabRenderer.scrollTop = scrollTop;
-          engine.skipScrolls += 1;
-          engine.skipScrollsDecayTimes.push(Date.now() + 2e3);
+          if (typeof tabRenderer.__bdScrollTo === "function") {
+            tabRenderer.__bdScrollTo(scrollTop);
+          } else {
+            tabRenderer.scrollTop = scrollTop;
+            engine.skipScrolls += 1;
+            engine.skipScrollsDecayTimes.push(Date.now() + 2e3);
+          }
         }
       }
       if (engine.wasUserScrolling && engine.scrollResumeTime < Date.now()) {
@@ -8839,6 +8843,88 @@
   var catalog = { "providers": [{ "key": "bLyrics-richsynced", "name": "Better Lyrics", "type": "syllable" }, { "key": "unison-richsynced", "name": "Unison", "type": "syllable" }, { "key": "binimum-richsynced", "name": "BiniLyrics", "type": "syllable" }, { "key": "unison-wordsynced", "name": "Unison", "type": "word" }, { "key": "portato-richsynced", "name": "Better Lyrics Portato", "type": "word" }, { "key": "musixmatch-richsync", "name": "Musixmatch", "type": "word" }, { "key": "bLyrics-synced", "name": "Better Lyrics", "type": "line" }, { "key": "unison-synced", "name": "Unison", "type": "line" }, { "key": "yt-captions", "name": "YouTube Captions", "type": "line" }, { "key": "binimum-synced", "name": "BiniLyrics", "type": "line" }, { "key": "lrclib-synced", "name": "LRCLib", "type": "line" }, { "key": "legato-synced", "name": "Better Lyrics Legato", "type": "line" }, { "key": "musixmatch-synced", "name": "Musixmatch", "type": "line" }, { "key": "yt-lyrics", "name": "YouTube", "type": "unsynced" }, { "key": "unison-plain", "name": "Unison", "type": "unsynced" }, { "key": "lrclib-plain", "name": "LRCLib", "type": "unsynced" }], "icons": { "syllable": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z" fill-opacity="0.5"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "word": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "line": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "unsynced": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z" fill-opacity="0.5"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z" fill-opacity="0.5"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>' }, "colors": { "syllable": "#fde69b", "word": "#aad1ff", "line": "#c9f8da", "unsynced": "#b3b3b3" } };
   var controls = { "translate": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path fill="currentColor" d="M9 3a1 1 0 0 1 .993.883L10 4v1h4a1 1 0 0 1 .116 1.993L14 7h-1.055c-.223 2.032-1.116 3.99-2.545 5.688q.785.683 1.735 1.266l.386.228l2.067-4.592a1 1 0 0 1 1.763-.115l.06.115l4.5 10a1 1 0 0 1-1.77.924l-.053-.104L18.003 18h-5.007l-1.084 2.41a1 1 0 0 1-1.866-.711l.042-.11l1.61-3.576a15.2 15.2 0 0 1-2.7-1.894c-1.287 1.136-2.848 2.098-4.627 2.81a1 1 0 1 1-.743-1.857c1.557-.623 2.887-1.441 3.972-2.382a11.5 11.5 0 0 1-1.978-3.34a1 1 0 0 1 1.873-.702A9.4 9.4 0 0 0 9 11.244c.989-1.227 1.625-2.576 1.877-3.931L10.928 7H4a1 1 0 0 1-.117-1.993L4 5h4V4a1 1 0 0 1 1-1m8.103 13L15.5 12.437L13.898 16z"/></svg>', "romanize": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path fill="currentColor" d="M17 11a1 1 0 0 1 1 1v1h1.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H18v1a1 1 0 1 1-2 0v-1h-1.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H16v-1a1 1 0 0 1 1-1M5 15a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1h3a1 1 0 1 1 0 2H7a3 3 0 0 1-3-3v-1a1 1 0 0 1 1-1m14 0h-1v2h1zm-3 0h-1v2h1zM9.5 3a1 1 0 1 1 0 2H5v2h4a1 1 0 0 1 0 2H5v2h5a1 1 0 1 1 0 2H4.1A1.1 1.1 0 0 1 3 11.9V4.1A1.1 1.1 0 0 1 4.1 3ZM17 4a3 3 0 0 1 3 3v2a1 1 0 1 1-2 0V7a1 1 0 0 0-1-1h-3a1 1 0 1 1 0-2Z"/></svg>', "refresh": '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg>', "chevron": '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>' };
 
+  // web/src/viewport-motion.js
+  function createViewportMotion(element) {
+    const native2 = Object.getOwnPropertyDescriptor(Element.prototype, "scrollTop");
+    if (!native2?.get || !native2?.set) return null;
+    let timed = false, reduced = false, moving = false;
+    let from = 0, target = 0, started = 0, physicalWrite = NaN, writeTime = -Infinity;
+    const read = () => native2.get.call(element);
+    function write(value) {
+      physicalWrite = value;
+      writeTime = performance.now();
+      native2.set.call(element, value);
+    }
+    function ease(t2) {
+      let u = t2;
+      for (let i = 0; i < 7; i++) {
+        const x = 3 * (1 - u) * (1 - u) * u * 0.25 + 3 * (1 - u) * u * u * 0.5 + u * u * u;
+        const dx = 0.75 * (1 - u) * (1 - u) + 1.5 * (1 - u) * u + 1.5 * u * u;
+        u = Math.max(0, Math.min(1, u - (x - t2) / Math.max(1e-3, dx)));
+      }
+      return 1 - Math.pow(1 - u, 3);
+    }
+    function cancel() {
+      moving = false;
+      physicalWrite = NaN;
+      writeTime = -Infinity;
+    }
+    Object.defineProperty(element, "scrollTop", {
+      configurable: true,
+      get() {
+        return read();
+      },
+      set(value) {
+        cancel();
+        if (timed) write(value);
+        else native2.set.call(element, value);
+      }
+    });
+    Object.defineProperty(element, "__bdScrollTo", {
+      configurable: true,
+      value(value) {
+        const next = Math.max(0, Math.min(Number(value) || 0, element.scrollHeight - element.clientHeight));
+        if (moving && Math.abs(next - target) < 0.5) return;
+        from = read();
+        target = next;
+        started = performance.now();
+        moving = !reduced && Math.abs(target - from) > 1;
+        if (!moving) write(target);
+      }
+    });
+    return {
+      configure(isTimed, reduce) {
+        timed = isTimed;
+        reduced = reduce;
+        if (!timed) cancel();
+        if (reduced && moving) {
+          moving = false;
+          write(target);
+        }
+      },
+      advance(now) {
+        if (!moving) return;
+        const p = Math.max(0, Math.min(1, (now - started) / 750));
+        write(from + (target - from) * ease(p));
+        if (p === 1) moving = false;
+      },
+      ignoreScrollEvent() {
+        return performance.now() - writeTime < 100 && Math.abs(read() - physicalWrite) < 1.1;
+      },
+      settle() {
+        moving = false;
+        physicalWrite = read();
+        writeTime = performance.now();
+      },
+      cancel,
+      destroy() {
+        cancel();
+        delete element.scrollTop;
+        delete element.__bdScrollTo;
+      }
+    };
+  }
+
   // web/src/main.js
   var PRIORITY = [
     "bLyrics-richsynced",
@@ -8880,12 +8966,14 @@
   var selected = "";
   var pinned = "";
   var currentResult;
-  var clock = { position: 0, playing: false, rate: 1, received: Date.now() };
+  var clock = { position: 0, playing: false, rate: 1, received: performance.now() };
   var active = true;
   var raf = 0;
   var enrichmentGeneration = 0;
   var availableKeys = [];
+  var autoPreferred = "";
   var collapsed = false;
+  var reportedMismatches = /* @__PURE__ */ new Set();
   var icon = (key) => catalog.icons[catalog.providers.find((p) => p.key === key)?.type] || "";
   var config = (key) => catalog.providers.find((p) => p.key === key);
   function svgInto(target, svg) {
@@ -8936,14 +9024,14 @@
     $("source-label").setAttribute("aria-expanded", "true");
   }
   function selectSource(key) {
-    pinned = key === availableKeys[0] ? "" : key;
+    pinned = key === autoPreferred ? "" : key;
     native?.pin(generation, pinned);
     closeSources();
     choose(true);
   }
   function updateDock() {
     const entry = config(selected), i = availableKeys.indexOf(selected);
-    $("source-name").textContent = entry?.name || "Looking for lyrics\u2026";
+    $("source-name").textContent = entry?.name || (availableKeys.length ? "Choose a source" : "Looking for lyrics\u2026");
     $("source-position").textContent = i < 0 ? "" : `${i + 1}/${availableKeys.length}`;
     svgInto($("source-icon"), icon(selected));
     $("source-icon").style.color = catalog.colors[entry?.type] || "inherit";
@@ -9000,12 +9088,19 @@
     setResumeAffordanceVisible: (visible) => $("resume").hidden = !visible,
     seek: (seconds) => {
       if (settings.tapSeek) {
+        viewportMotion?.settle();
         native?.seek(Math.round(seconds * 1e3));
         renderer.resumeAutoscroll();
       }
     },
     log: (message) => native?.diagnostic(generation, "Renderer", String(message).slice(0, 240))
   } });
+  var viewportMotion = createViewportMotion($("scroll"));
+  var systemReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  function configureMotion() {
+    viewportMotion?.configure(renderer.syncType !== "none" && renderer.syncType !== "plain", settings.reducedMotion || systemReducedMotion.matches);
+  }
+  systemReducedMotion.addEventListener("change", configureMotion);
   function theme() {
     const css = `/* blyrics-letter-wave = ${settings.letterWave && !settings.reducedMotion && !window.matchMedia("(prefers-reduced-motion: reduce)").matches};
     blyrics-disable-richsync = ${!settings.wordSync}; */`;
@@ -9047,12 +9142,16 @@
     const order = [.../* @__PURE__ */ new Set([...custom, ...PRIORITY])].filter((key2) => !disabled.has(key2));
     const baseline = params.sourceMap["yt-lyrics"]?.lyricSourceResult?.lyrics;
     const reference = baseline?.map((line) => line.words).join("\n");
-    const available = order.filter((key2) => {
+    const available = order.filter((key2) => params.sourceMap[key2]?.lyricSourceResult?.lyrics?.length);
+    const automatic = available.filter((key2) => {
       const result2 = params.sourceMap[key2]?.lyricSourceResult;
       if (!result2?.lyrics?.length) return false;
       if (!reference || key2 === "yt-lyrics" || key2.startsWith("unison-")) return true;
       const accepted = stringSimilarity(result2.lyrics.map((line) => line.words + "\n").join(""), reference) >= 0.5;
-      if (!accepted) native?.diagnostic(generation, key2, "Rejected: lyric text differs from native baseline");
+      if (!accepted && !reportedMismatches.has(key2)) {
+        reportedMismatches.add(key2);
+        native?.diagnostic(generation, key2, "Automatic match rejected; received lyrics remain available for manual selection");
+      }
       return accepted;
     });
     $("sources").replaceChildren(...available.map((key2) => {
@@ -9061,14 +9160,22 @@
       option.textContent = params.sourceMap[key2].lyricSourceResult.source + " \xB7 " + key2.split("-").slice(1).join("-");
       return option;
     }));
-    const key = available.includes(pinned) ? pinned : available[0];
+    autoPreferred = automatic[0] || "";
+    const key = available.includes(pinned) ? pinned : autoPreferred;
     availableKeys = available;
     if (!key) {
       selected = "";
       currentResult = null;
+      viewportMotion?.cancel();
       renderer.clear();
+      configureMotion();
       updateDock();
-      native?.noLyrics(generation);
+      $("sources").value = "";
+      if (available.length) {
+        $("empty").textContent = "These lyrics differ from YouTube Music. Choose a source to use them.";
+        $("empty").hidden = false;
+        native?.displayed(generation, "choose-source");
+      } else native?.noLyrics(generation);
       return;
     }
     $("sources").value = key;
@@ -9079,8 +9186,10 @@
     }
     selected = key;
     currentResult = result;
+    viewportMotion?.cancel();
     updateDock();
     renderer.setLyrics(result.lyrics, { language: result.language, songwriters: result.songwriters });
+    configureMotion();
     decorate();
     $("status").textContent = result.source;
     $("status").title = key;
@@ -9127,13 +9236,15 @@
   function renderFrame(now) {
     raf = 0;
     if (!active || document.hidden) return;
-    renderer.tick(clock.position / 1e3, {
-      eventCreationTime: clock.received,
+    const position = clock.position + (clock.playing ? Math.max(0, now - clock.received) * clock.rate : 0);
+    renderer.tick(position / 1e3, {
+      eventCreationTime: Date.now(),
       isPlaying: clock.playing,
       playbackRate: clock.rate,
       passiveScrollEnabled: settings.passive,
-      smoothScroll: !settings.reducedMotion
+      smoothScroll: !viewportMotion && !settings.reducedMotion
     });
+    viewportMotion?.advance(now);
     raf = requestAnimationFrame(renderFrame);
   }
   function startClock() {
@@ -9141,6 +9252,9 @@
   }
   window.BDC = {
     track(track) {
+      viewportMotion?.cancel();
+      reportedMismatches.clear();
+      autoPreferred = "";
       generation = track.generation;
       selected = "";
       pinned = track.preferredSource || "";
@@ -9167,9 +9281,10 @@
     },
     async source(id, payload) {
       if (id !== generation || !params) return;
+      const expected = params;
+      const previous = new Map(PRIORITY.filter((key) => expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length).map((key) => [key, expected.sourceMap[key].lyricSourceResult]));
       try {
         if (payload.event) {
-          const expected = params;
           await processStreamData(payload.event, payload.data, expected);
           if (id !== generation || params !== expected) return;
         } else if (payload.kind === "unison") {
@@ -9188,15 +9303,21 @@
           }
           put(key, { ...payload, lyrics });
         }
+        for (const [key, result] of previous) if (!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length) expected.sourceMap[key].lyricSourceResult = result;
         choose();
       } catch (error) {
-        $("status").textContent = "A lyric source could not be decoded";
+        if (id !== generation || params !== expected) return;
+        for (const [key, result] of previous) if (!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length) expected.sourceMap[key].lyricSourceResult = result;
+        choose();
         native?.diagnostic(generation, payload.key || payload.event || payload.kind || "unknown", String(error?.message || error).slice(0, 240));
+        if (!selected) $("status").textContent = "A lyric source could not be decoded";
       }
     },
     state(sample) {
       if (sample.generation !== generation) return;
-      clock = { position: sample.position, playing: sample.playing, rate: sample.rate || 1, received: Date.now() };
+      const age = Number.isFinite(sample.sampledAt) ? Math.max(0, Math.min(1e4, Date.now() - sample.sampledAt)) : 0;
+      clock = { position: sample.position, playing: sample.playing, rate: sample.rate || 1, received: performance.now() - age };
+      if (sample.visible === false) viewportMotion?.cancel();
       active = sample.visible !== false;
       renderer.noteVisibilityChange();
       startClock();
@@ -9206,6 +9327,7 @@
       if (active === next) return;
       active = next;
       if (!active) {
+        viewportMotion?.cancel();
         cancelAnimationFrame(raf);
         raf = 0;
       }
@@ -9221,6 +9343,7 @@
       const themeRebuild = theme();
       choose(rebuild || themeRebuild);
       renderer.relayout();
+      configureMotion();
       setCollapsed(settings.dockCollapsed);
       for (const [key, url] of Object.entries(next.buttonIcons || {})) {
         if (!$(key) || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(url)) continue;
@@ -9261,17 +9384,19 @@
     },
     notice(id, message, finished = false) {
       if (id !== generation) return;
-      if (!selected) {
+      if (!selected && !availableKeys.length) {
         $("empty").textContent = finished ? "No lyrics found. YouTube Music\u2019s lyrics remain available behind this panel." : message;
       }
       $("notice").textContent = message;
       $("connection").hidden = !!selected || !/connect|expired|HTTP|failed|unavailable/i.test(message);
-      if (finished && !selected) native?.noLyrics(generation);
+      if (finished && !selected && !availableKeys.length) native?.noLyrics(generation);
     },
     dispose() {
       cancelAnimationFrame(raf);
       clearTimeout(dockLayoutTimer);
       dockResize.disconnect();
+      systemReducedMotion.removeEventListener("change", configureMotion);
+      viewportMotion?.destroy();
       renderer.destroy();
     }
   };
@@ -9309,11 +9434,20 @@
   $("refresh").addEventListener("click", () => native?.refresh());
   $("connect").addEventListener("click", () => native?.connect());
   $("configure").addEventListener("click", () => native?.configure());
-  $("resume").addEventListener("click", () => renderer.resumeAutoscroll());
+  $("resume").addEventListener("click", () => {
+    viewportMotion?.settle();
+    renderer.resumeAutoscroll();
+  });
   for (const kind of ["translate", "romanize"]) $(kind).addEventListener("click", () => native?.toggle(kind));
   $("earlier").addEventListener("click", () => native?.offset(-100));
   $("later").addEventListener("click", () => native?.offset(100));
-  $("scroll").addEventListener("scroll", () => renderer.noteUserScroll(), { passive: true });
+  $("scroll").addEventListener("scroll", () => {
+    if (!viewportMotion?.ignoreScrollEvent()) renderer.noteUserScroll();
+  }, { passive: true });
+  for (const type of ["pointerdown", "touchstart", "wheel"]) $("scroll").addEventListener(type, () => viewportMotion?.cancel(), { passive: true });
+  $("scroll").addEventListener("keydown", (event) => {
+    if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) viewportMotion?.cancel();
+  });
   document.addEventListener("visibilitychange", () => {
     renderer.noteVisibilityChange();
     if (!document.hidden) startClock();

@@ -19,7 +19,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final LyricsEntryButton entry = new LyricsEntryButton();
     private String identity = "";
-    private boolean started, available;
+    private boolean started, available,definitelyNotFound;
     private SharedPreferences preferences;
     private final SharedPreferences.OnSharedPreferenceChangeListener preferencesListener = (p, key) -> {
         if ("serviceJwt".equals(key)) main.post(() -> sync(true));
@@ -32,6 +32,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
             }
         }
         public void notice(String message, boolean finished) {}
+        public void completion(boolean notFound){definitelyNotFound=notFound&&!available;updateEntry();}
     };
     private final Runnable tick = new Runnable() {
         public void run() {
@@ -87,7 +88,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
         }
         String next = LyricsRepository.identity(track, id);
         if (!next.equals(identity) || refresh) {
-            identity = next; available = false; entry.trackChanged(next);
+            identity = next; available = false;definitelyNotFound=false; entry.trackChanged(next);
             LyricsDiagnostics.record("Lyrics entry", "Discovering video=" + id + " before panel attachment");
         }
         LyricsRepository.ensure(activity, track, id, refresh);
@@ -99,25 +100,14 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
     private void updateEntry() {
         Activity activity = Utils.getActivity();
         String id = VideoInformation.getVideoId();
-        if (available && Settings.LYRICS_ENABLED.get() && activity != null
+        if ((available||LyricsManager.getInstance().hasLyrics()) && Settings.LYRICS_ENABLED.get() && activity != null
                 && id != null && id.equals(LyricsManager.getInstance().getCommittedVideoId())) {
             entry.update(activity, identity);
-        } else entry.hideButton();
+        } else if(!definitelyNotFound&&Settings.LYRICS_ENABLED.get()&&activity!=null)entry.orderWhilePending(identity);
+        else entry.hideButton();
     }
 
     static boolean hasLyricsPayload(JSONObject payload) {
-        if (!payload.optString("raw").trim().isEmpty()) return true;
-        if ("unison".equals(payload.optString("kind"))) {
-            JSONObject response = payload.optJSONObject("data");
-            JSONObject data = response == null ? null : response.optJSONObject("data");
-            return data != null && !data.optString("lyrics").trim().isEmpty();
-        }
-        if (!"provider".equals(payload.optString("event"))) return false;
-        JSONObject data = payload.optJSONObject("data");
-        JSONObject results = data == null ? null : data.optJSONObject("results");
-        if (results == null) return false;
-        for (String key : new String[]{"lyrics", "synced", "plain", "wordByWord"})
-            if (!results.optString(key).trim().isEmpty()) return true;
-        return false;
+        return LyricsCatalog.hasLyricsPayload(payload);
     }
 }

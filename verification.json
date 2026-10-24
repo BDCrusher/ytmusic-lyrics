@@ -1,6 +1,6 @@
 {
-  "version": "0.2.6-beta.1",
-  "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+  "version": "0.2.7-beta.1",
+  "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
   "experimentalTarget": {
     "package": "com.google.android.apps.youtube.music",
     "version": "9.42.52",
@@ -18,7 +18,7 @@
   "runs": {
     "lyrics": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "mode": "lyrics",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -28,15 +28,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 119,
+      "personalClassDefinitions": 121,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "22bb7a83500a156a680d8a60a10e11482b96e5dac370520526b54c9bcb885c69",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\follow-native-final-lyrics\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "cedd1685f1d7f824a30118a87aa364f07a1a8efe8def409ad5a60ed59fa96bc0",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision27-final-lyrics\\verified-unsigned.apk"
     },
     "defaults": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "mode": "defaults",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -93,15 +93,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 119,
+      "personalClassDefinitions": 121,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "333afa56dd1cd17633afe60281c834452fd846329b4cad79b198eec293918070",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\follow-native-final-defaults\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "72efa164127afec73dd8bd31c3a21ca5bc4194b0294814f06b6e0e56d1bf135b",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision27-final-defaults\\verified-unsigned.apk"
     },
     "addon-first": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "mode": "addon-first",
       "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
       "duplicateClasses": 0,
@@ -158,15 +158,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 105,
+      "personalClassDefinitions": 107,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "b9427fb38c18b3fc491cf39c0cdd17b0463ebfafafb0e98a3ae5e1654072cd71",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\follow-native-final-addon-first\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "827b16d11fcf73be9672151fd437e150e11f51f771e84de6925cd5c1b93a14cb",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision27-final-addon-first\\verified-unsigned.apk"
     },
     "official-first": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "mode": "official-first",
       "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
       "duplicateClasses": 0,
@@ -223,44 +223,44 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 105,
+      "personalClassDefinitions": 107,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "e859bfcc2a0b98319c22bdb0ce3936978206e44e46e3462381b644460cc39576",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\follow-native-final-official-first\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "52dcc6a25350e5b7196f47d2f219177416ca9147d5cf64131c70655b386ff0df",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision27-final-official-first\\verified-unsigned.apk"
     },
     "editions-both": {
       "expectedFailure": true,
       "mode": "editions-both",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "officialSha256": "",
       "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" depends on \"BytecodePatch@1796488937\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n"
     },
     "editions-reverse": {
       "expectedFailure": true,
       "mode": "editions-reverse",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "officialSha256": "",
       "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" depends on \"BytecodePatch@1796488937\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n"
     },
     "addon-full-other": {
       "expectedFailure": true,
       "mode": "addon-full-other",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "officialSha256": "",
       "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" depends on \"BytecodePatch@1796488937\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n"
     },
     "conflict": {
       "expectedFailure": true,
       "mode": "conflict",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
       "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" raised an exception: app.morphe.patcher.patch.PatchException: Two lyrics patches selected. Disable official Third-party lyrics; do not combine the Full edition with this add-on.\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1(LyricsAddon.kt:90)\r\n\tat app.morphe.patcher.patch.Patch.finalize(Patch.kt:164)\r\n\tat app.morphe.patcher.patch.BytecodePatch.finalize$morphe_patcher(Patch.kt:295)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:164)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n | Two lyrics patches selected. Disable official Third-party lyrics; do not combine the Full edition with this add-on."
     },
     "missing-official": {
       "expectedFailure": true,
       "mode": "missing-official",
-      "bundleSha256": "06df4eb3a6b76bfeccf2c3a0871f408ea27ecd48f812b4ccfccfaf3f6529c756",
+      "bundleSha256": "88b11336f38ec163e6cbf03e8d2de34be39db6420aa836808dc716bc6201d255",
       "officialSha256": "",
       "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" raised an exception: app.morphe.patcher.patch.PatchException: Missing official Morphe runtime: Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;. Select compatible official default Music patches, disabling their Third-party lyrics.\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1$required(LyricsAddon.kt:65)\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1(LyricsAddon.kt:66)\r\n\tat app.morphe.patcher.patch.Patch.finalize(Patch.kt:164)\r\n\tat app.morphe.patcher.patch.BytecodePatch.finalize$morphe_patcher(Patch.kt:295)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:164)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n | Missing official Morphe runtime: Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;. Select compatible official default Music patches, disabling their Third-party lyrics."
     }
@@ -268,7 +268,8 @@
   "nativeCompiledAudits": {
     "lyrics": {
       "passed": true,
-      "apkSha256": "22bb7a83500a156a680d8a60a10e11482b96e5dac370520526b54c9bcb885c69",
+      "apkSha256": "cedd1685f1d7f824a30118a87aa364f07a1a8efe8def409ad5a60ed59fa96bc0",
+      "nativeActionModes": 2,
       "nativeIdentityInputs": 4,
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
@@ -282,7 +283,8 @@
     },
     "defaults": {
       "passed": true,
-      "apkSha256": "333afa56dd1cd17633afe60281c834452fd846329b4cad79b198eec293918070",
+      "apkSha256": "72efa164127afec73dd8bd31c3a21ca5bc4194b0294814f06b6e0e56d1bf135b",
+      "nativeActionModes": 2,
       "nativeIdentityInputs": 4,
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
@@ -296,7 +298,8 @@
     },
     "addon-first": {
       "passed": true,
-      "apkSha256": "b9427fb38c18b3fc491cf39c0cdd17b0463ebfafafb0e98a3ae5e1654072cd71",
+      "apkSha256": "827b16d11fcf73be9672151fd437e150e11f51f771e84de6925cd5c1b93a14cb",
+      "nativeActionModes": 2,
       "nativeIdentityInputs": 4,
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
@@ -310,7 +313,8 @@
     },
     "official-first": {
       "passed": true,
-      "apkSha256": "e859bfcc2a0b98319c22bdb0ce3936978206e44e46e3462381b644460cc39576",
+      "apkSha256": "52dcc6a25350e5b7196f47d2f219177416ca9147d5cf64131c70655b386ff0df",
+      "nativeActionModes": 2,
       "nativeIdentityInputs": 4,
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
@@ -323,217 +327,192 @@
       "phoneVerified": false
     }
   },
-  "addonPayloadIsolation": {
-    "uniqueClasses": 105,
-    "duplicates": 0,
-    "outsideOwnedPrefix": 0,
-    "reportSha256": "333df40981706f1d3cab544b66ae586b3a498b4b664fd9afd633cbeea26ae2b0"
-  },
-  "actualJavaReplayChecks": {
-    "passed": true,
-    "checks": 29,
-    "nativeProxiesSimulated": true,
-    "phoneVerified": false,
-    "actualSourceSha256": {
-      "NativeActionModel.java": "cc57cb2837d32de6bc946bbdf57f571661b8de8c3194d9cce7f38f1920d734aa",
-      "ProtoWire.java": "d333d51895d63ee06aee1e78fc1d876b56fa6beae77ca49e6e3c48e4cf179f20",
-      "NativePanelWire.java": "4d345301e1bbf8a4993f3c37a8405a1c5805b2d702a20aa577cb44b29a2fd7d2",
-      "NativeLyricsHost.java": "c21db7f1c3955656d20d3b92b72bd5df8e980fe0f5dde023904ffce26129d645",
-      "LyricsEntryButton.java": "69234873ca8ec5070be151f62964e1ee10bba08bf02c1bdfca7e05135289b0ad"
-    }
-  },
-  "actualJavaNavigationChecks": {
-    "passed": true,
-    "checks": 24,
-    "androidStateAndDrawingSimulated": true,
-    "phoneVerified": false,
-    "actualSourceSha256": "62f0ea9f0443e0a761a9f46a7f7fa3776e3000fe8492e3f1705aab80fb0cfa1f"
-  },
-  "jvmTests": [
-    {
-      "name": "app.morphe.patches.music.interaction.jam.JamPatchRegressionTest",
-      "tests": "7",
-      "skipped": "5",
-      "errors": "0",
-      "failures": "0"
-    },
-    {
-      "name": "app.morphe.patches.music.interaction.jam.JamQueueCommandTest",
-      "tests": "1",
-      "skipped": "0",
-      "errors": "0",
-      "failures": "0"
-    },
-    {
-      "name": "app.morphe.patches.util.resource.RawXmlResourcesTest",
-      "tests": "3",
-      "skipped": "0",
-      "errors": "0",
-      "failures": "0"
-    }
-  ],
-  "lint": {
-    "errors": 0,
-    "warnings": 6
-  },
-  "rendererAssets": [
-    {
-      "entry": "bdcrusher-lyrics/NOTICE.txt",
-      "sha256": "70982a53b87fb630323a7f866eaf367fab9b5c7deee669ed2c66983ddf87153c",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/Satoshi-Variable.woff2",
-      "sha256": "e739aff9b4d02c264341d6d4872edcda28e79373aeda936f659566a1cd3eb47f",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_line.xml",
-      "sha256": "a6a86e8d055bbb0bbd9fcec2d61dcc050a5751d40d688666328a4dd2f6a2109a",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_syllable.xml",
-      "sha256": "d33ee78eab04530e082c3017e256e9420b711d50252c24dc9cf1b2a94e1250cd",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_unsynced.xml",
-      "sha256": "5d0d1c98eca5379e343f5e8e06140d2492ef6acf154f52e399d4dd4a5f88c187",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_word.xml",
-      "sha256": "1872ea451834262347689765ab572d2f0e374069288d2f1998fc50e30b0debc2",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/host.css",
-      "sha256": "4634d2788e49ab0e6625652886ca08a0b31fec6e782befd632cc8038faef053b",
-      "changed": true
-    },
-    {
-      "entry": "bdcrusher-lyrics/image-highlights.css",
-      "sha256": "d21ece4181f104cfc8e012242b7cb47cca6f9f3b4041b6e4061294f830537e94",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/index.html",
-      "sha256": "2a791ed54ac6314e0fe1fd32fd2555e88fb1d81bae59f0b7c1eaf4f861310be3",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/instrumental.css",
-      "sha256": "5f059474105380860565fcbc8cca67576fa4799753f6e13baeef08fb274805c0",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/lyrics.css",
-      "sha256": "aa2859f3be1f4e73e1d8609584fff6c276955c230c7652add22ea40477d32f7d",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/providers.json",
-      "sha256": "2b07b69360b95814567bac1e03bac78347bc19a10e77578f4afd9ad194ab678d",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/renderer.js",
-      "sha256": "a9620e5e1e56c4645c632e2456e6cd2c4d5471c84abea78ad00ac6f0144c01a8",
-      "changed": true
-    },
-    {
-      "entry": "bdcrusher-lyrics/stage.css",
-      "sha256": "bc3005988ec02216263c708ef6502b21079dc4257fe93b1349b4fc8112893399",
-      "changed": false
-    },
-    {
-      "entry": "bdcrusher-lyrics/variables.css",
-      "sha256": "590dc9abaadecbc99586afec6c06007b10d99929b71199df6b4296a72532e892",
-      "changed": false
-    }
-  ],
-  "originalDexLifecycleEvidenceSha256": "5bcf73ad28e7adc56c1061900cac39f6847e6aea9ec2ceffc0735dd5a270a0ec",
-  "phoneVerified": false,
-  "deviceOperations": false,
-  "globalToolsCopied": false,
-  "navigationChange": "Drawn native Lyrics background is used only in visible navigation insets; previous style restored on close. No content layout/touch interception.",
-  "sourceSha256": {
-    "LyricsEntryButton.java": "69234873ca8ec5070be151f62964e1ee10bba08bf02c1bdfca7e05135289b0ad",
-    "NativeActionModel.java": "cc57cb2837d32de6bc946bbdf57f571661b8de8c3194d9cce7f38f1920d734aa",
-    "NativeLyricsHost.java": "c21db7f1c3955656d20d3b92b72bd5df8e980fe0f5dde023904ffce26129d645",
-    "LyricsSystemBars.java": "62f0ea9f0443e0a761a9f46a7f7fa3776e3000fe8492e3f1705aab80fb0cfa1f",
-    "BetterLyricsPanelView.java": "26b9a2ec37eef07c029e186997568a2b60d77ee408e146f0e264c4b4d19aaad7",
-    "NativePanelWire.java": "4d345301e1bbf8a4993f3c37a8405a1c5805b2d702a20aa577cb44b29a2fd7d2"
-  },
-  "nativeHooksSha256": "6b5822661af9beec7886f1d06d0cdd21dd120ebd478aee5b5df776cc14caab23",
-  "browser": {
-    "follow": {
+  "javaChecks": {
+    "host": {
       "passed": true,
-      "previousMeasures": 930,
-      "currentMeasures": 0,
-      "dockMeasures": 62,
-      "hiddenBars": [
+      "checks": 34,
+      "nativeProxiesSimulated": true,
+      "phoneVerified": false,
+      "actualSourceSha256": {
+        "NativeActionModel.java": "23413995b86d02ef08cbcf8a383ab9e80e9b2338a9606ec912efc9f6c2707e90",
+        "ProtoWire.java": "d333d51895d63ee06aee1e78fc1d876b56fa6beae77ca49e6e3c48e4cf179f20",
+        "NativePanelWire.java": "4d345301e1bbf8a4993f3c37a8405a1c5805b2d702a20aa577cb44b29a2fd7d2",
+        "NativeLyricsHost.java": "c21db7f1c3955656d20d3b92b72bd5df8e980fe0f5dde023904ffce26129d645",
+        "LyricsEntryButton.java": "3b1878f27ffc9ce8616406ba54d001a884c79ee53366b6a6c8d42b76ec82fcd7"
+      }
+    },
+    "navigation": {
+      "passed": true,
+      "checks": 31,
+      "androidStateAndDrawingSimulated": true,
+      "phoneVerified": false,
+      "actualSourceSha256": "0e608c416f75b3fe1a463989e983e77dbc4d9438696f85c48561a81b36721ac1"
+    },
+    "catalog": {
+      "checks": 23,
+      "phoneVerified": false,
+      "passed": true,
+      "httpSimulated": true,
+      "actualSourceSha256": {
+        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "17873cda374ecb1ffe2631e2a406a5881583c2860c9c5e5701878c971315b214",
+        "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
+      }
+    },
+    "lifecycle": {
+      "checks": 23,
+      "passed": true,
+      "androidPhoneVerified": false,
+      "actualSourceSha256": {
+        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsRepository.java": "cc7f1e0cf74553854e083fd53f7d44fe290cee044bd0986296f9d65a554115a2",
+        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsEntryCoordinator.java": "13c4812fb0c46cf43352c45839b08dd1701ce88af6d3dc7f84a2bb75952f6472"
+      },
+      "stubs": [
+        "android/content/Context.java",
+        "android/content/SharedPreferences.java",
+        "android/app/Activity.java",
+        "android/os/Looper.java",
+        "android/os/Handler.java",
+        "app/morphe/extension/shared/Utils.java",
+        "app/morphe/extension/music/settings/Settings.java",
+        "app/morphe/extension/music/shared/VideoInformation.java",
+        "app/morphe/extension/music/patches/lyrics/model/TrackInfo.java",
+        "app/morphe/extension/music/patches/lyrics/model/Lyrics.java",
+        "app/morphe/extension/music/patches/lyrics/LyricsManager.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsEntryButton.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsConfig.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsCatalog.java",
+        "app/bdcrusher/ytmusic/lyrics/EntryCheck.java"
+      ]
+    },
+    "liveTransport": {
+      "cases": [
         {
-          "selector": "#scroll",
-          "width": "none",
-          "webkit": "none"
+          "characters": 3700,
+          "videoId": "gF2KuOJLEQE",
+          "source": "LRCLib synced",
+          "passed": true
         },
         {
-          "selector": "#source-menu",
-          "width": "none",
-          "webkit": "none"
-        },
-        {
-          "selector": "footer span",
-          "width": "none",
-          "webkit": "none"
+          "characters": 23376,
+          "videoId": "MYal8NoVQXs",
+          "source": "Unison",
+          "passed": true
         }
       ],
-      "motion": {
-        "frames": 271,
-        "reverseSteps": 0,
-        "maxForwardStep": 15.525146484375,
-        "active": 1
-      },
-      "manualAndResume": true,
-      "reducedMotion": true,
-      "phoneVerified": false
-    },
-    "renderer": {
       "passed": true,
-      "initial": {
-        "agents": [
-          "v1",
-          "v2",
-          "v1000",
-          "v1"
-        ],
-        "alignment": [
-          "start",
-          "right",
-          "center",
-          "start"
-        ],
-        "background": 1,
-        "letters": 120,
-        "translation": "Embedded translation",
-        "animations": 87,
-        "overflow": false
+      "androidPhoneVerified": false,
+      "actualSourceSha256": {
+        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "17873cda374ecb1ffe2631e2a406a5881583c2860c9c5e5701878c971315b214",
+        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsNetwork.java": "734625cafe9f4d9b4a4426d55d4242c0be054ee4ec50fe987cad21e7819370c3",
+        "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
       },
-      "customized": {
-        "alignment": [
-          "right",
-          "left",
-          "center",
-          "right"
-        ],
-        "letters": 0,
-        "bgDisplay": "none"
+      "stubs": [
+        "android/content/Context.java",
+        "android/content/SharedPreferences.java",
+        "androidx/annotation/Nullable.java",
+        "androidx/annotation/NonNull.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsConfig.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsDiskCache.java",
+        "app/bdcrusher/ytmusic/lyrics/ServiceConnection.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java",
+        "app/bdcrusher/ytmusic/lyrics/CatalogCheck.java"
+      ]
+    },
+    "liveWake": {
+      "characters": 18125,
+      "relaxedMetadata": false,
+      "videoId": "sN_tJ8d3c0I",
+      "passed": true,
+      "source": "Better Lyrics",
+      "androidPhoneVerified": false,
+      "actualSourceSha256": {
+        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "17873cda374ecb1ffe2631e2a406a5881583c2860c9c5e5701878c971315b214",
+        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsNetwork.java": "734625cafe9f4d9b4a4426d55d4242c0be054ee4ec50fe987cad21e7819370c3",
+        "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
       },
-      "plainCount": 2,
-      "staleResponseRejected": true,
+      "stubs": [
+        "android/content/Context.java",
+        "android/content/SharedPreferences.java",
+        "androidx/annotation/Nullable.java",
+        "androidx/annotation/NonNull.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsConfig.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsDiskCache.java",
+        "app/bdcrusher/ytmusic/lyrics/ServiceConnection.java",
+        "app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java",
+        "app/bdcrusher/ytmusic/lyrics/CatalogCheck.java"
+      ]
+    }
+  },
+  "browser": {
+    "motion": {
+      "passed": true,
+      "cases": [
+        {
+          "videoId": "sN_tJ8d3c0I",
+          "key": "bLyrics-richsynced",
+          "lines": 51,
+          "letters": 2356,
+          "paused": false,
+          "motionDistance": 618,
+          "frames": 54,
+          "reversals": 0,
+          "lateRichPreserved": true,
+          "following": {
+            "frames": 347,
+            "reverse": 0,
+            "maxSpeed": 888.8888888888889,
+            "activeChanges": 5,
+            "falsePause": false
+          }
+        },
+        {
+          "videoId": "MYal8NoVQXs",
+          "key": "unison-richsynced",
+          "lines": 50,
+          "letters": 2730,
+          "paused": false,
+          "motionDistance": 296,
+          "frames": 54,
+          "reversals": 0,
+          "lateRichPreserved": true,
+          "following": {
+            "frames": 347,
+            "reverse": 0,
+            "maxSpeed": 614.5251396648794,
+            "activeChanges": 5,
+            "falsePause": false
+          }
+        }
+      ],
+      "wheelDuringMotion": true,
+      "seekMs": 44227,
+      "delayedRate2": [
+        "Clock line 14Clock line 14"
+      ],
+      "pausedBackSeek": [
+        "Clock line 4Clock line 4",
+        "Clock line 5Clock line 5"
+      ],
+      "plain": {
+        "scroll": 14,
+        "paused": false
+      },
+      "reducedMotion": true,
+      "phoneVerified": false,
       "errors": []
+    },
+    "selection": {
+      "passed": true,
+      "automatic": "yt-lyrics",
+      "offered": [
+        "bLyrics-richsynced",
+        "yt-lyrics"
+      ],
+      "manual": "bLyrics-richsynced",
+      "afterEmpty": "bLyrics-richsynced",
+      "disabled": "lrclib-synced",
+      "phoneVerified": false
     },
     "providers": {
       "passed": true,
@@ -612,6 +591,41 @@
       },
       "navigator": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
     },
+    "renderer": {
+      "passed": true,
+      "initial": {
+        "agents": [
+          "v1",
+          "v2",
+          "v1000",
+          "v1"
+        ],
+        "alignment": [
+          "start",
+          "right",
+          "center",
+          "start"
+        ],
+        "background": 1,
+        "letters": 120,
+        "translation": "Embedded translation",
+        "animations": 87,
+        "overflow": false
+      },
+      "customized": {
+        "alignment": [
+          "right",
+          "left",
+          "center",
+          "right"
+        ],
+        "letters": 0,
+        "bgDisplay": "none"
+      },
+      "plainCount": 2,
+      "staleResponseRejected": true,
+      "errors": []
+    },
     "dock": {
       "passed": true,
       "expanded": {
@@ -660,18 +674,18 @@
         "width": 412,
         "height": 800,
         "toggle": {
-          "x": 177.96063232421875,
-          "y": 697.7568359375,
-          "w": 56.0787353515625,
-          "h": 57.361328125,
-          "bottom": 44.8818359375
+          "x": 176.22674560546875,
+          "y": 701.1782836914062,
+          "w": 59.5465087890625,
+          "h": 60.4871826171875,
+          "bottom": 38.33453369140625
         },
-        "dockHeight": 95.5625,
+        "dockHeight": 90.578125,
         "centerOffset": 0,
         "iconDx": 0,
         "iconDy": 0,
-        "sourceTop": 750.421875,
-        "toolbarTop": 802.421875,
+        "sourceTop": 755.203125,
+        "toolbarTop": 807.203125,
         "clearance": 179,
         "transparent": "rgba(0, 0, 0, 0)",
         "blur": "blur(20px) saturate(1.3)",
@@ -836,13 +850,164 @@
       "androidPhoneVerified": false
     }
   },
-  "inheritedEntryBridge": "Availability depended on optional server-response object and initialized panel registry. Native client-generated bar has its own video input/model; native refresh also went through fetch deduplication. The new bridge captures four native identity inputs and replays the original native model.",
-  "rootCause": "Phone jitter was not reproduced. Confirmed issues: duplicate visibility caused full lyric measurements; native sync allocated bitmaps and repeated window writes; dock animation remeasured per frame; content-presence heuristic rejected an initial native Lyrics presentation before content loaded.",
-  "change": "Hide native/Web scrollbars; coalesce native attachment and dock/visibility layout work; reuse pixel sampler and unchanged window styles; prefer captured real native Lyrics presentation with current native palette.",
-  "nativeTemplateLimit": "A cold session without a real native Lyrics definition still uses the Related-derived native fallback. Warm templates contain presentation only, never prior lyric content.",
+  "jvmTests": [
+    {
+      "name": "app.morphe.patches.music.interaction.jam.JamPatchRegressionTest",
+      "tests": "7",
+      "skipped": "5",
+      "errors": "0",
+      "failures": "0"
+    },
+    {
+      "name": "app.morphe.patches.music.interaction.jam.JamQueueCommandTest",
+      "tests": "1",
+      "skipped": "0",
+      "errors": "0",
+      "failures": "0"
+    },
+    {
+      "name": "app.morphe.patches.util.resource.RawXmlResourcesTest",
+      "tests": "3",
+      "skipped": "0",
+      "errors": "0",
+      "failures": "0"
+    }
+  ],
+  "lint": {
+    "errors": 0,
+    "warnings": 6
+  },
+  "rendererAssets": [
+    {
+      "entry": "bdcrusher-lyrics/NOTICE.txt",
+      "sha256": "70982a53b87fb630323a7f866eaf367fab9b5c7deee669ed2c66983ddf87153c",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/Satoshi-Variable.woff2",
+      "sha256": "e739aff9b4d02c264341d6d4872edcda28e79373aeda936f659566a1cd3eb47f",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/bd_lyrics_line.xml",
+      "sha256": "a6a86e8d055bbb0bbd9fcec2d61dcc050a5751d40d688666328a4dd2f6a2109a",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/bd_lyrics_syllable.xml",
+      "sha256": "d33ee78eab04530e082c3017e256e9420b711d50252c24dc9cf1b2a94e1250cd",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/bd_lyrics_unsynced.xml",
+      "sha256": "5d0d1c98eca5379e343f5e8e06140d2492ef6acf154f52e399d4dd4a5f88c187",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/bd_lyrics_word.xml",
+      "sha256": "1872ea451834262347689765ab572d2f0e374069288d2f1998fc50e30b0debc2",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/host.css",
+      "sha256": "bdb31085222f8889f23d619ba2200afc589c6afdbc8f2bae9c36192ae4c63377",
+      "changed": true
+    },
+    {
+      "entry": "bdcrusher-lyrics/image-highlights.css",
+      "sha256": "d21ece4181f104cfc8e012242b7cb47cca6f9f3b4041b6e4061294f830537e94",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/index.html",
+      "sha256": "2a791ed54ac6314e0fe1fd32fd2555e88fb1d81bae59f0b7c1eaf4f861310be3",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/instrumental.css",
+      "sha256": "5f059474105380860565fcbc8cca67576fa4799753f6e13baeef08fb274805c0",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/lyrics.css",
+      "sha256": "aa2859f3be1f4e73e1d8609584fff6c276955c230c7652add22ea40477d32f7d",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/providers.json",
+      "sha256": "2b07b69360b95814567bac1e03bac78347bc19a10e77578f4afd9ad194ab678d",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/renderer.js",
+      "sha256": "e14493fd159cd00ad43f81a6d9e8b7d69c80d55c5b0e2d9f7f991be648c92d94",
+      "changed": true
+    },
+    {
+      "entry": "bdcrusher-lyrics/stage.css",
+      "sha256": "bc3005988ec02216263c708ef6502b21079dc4257fe93b1349b4fc8112893399",
+      "changed": false
+    },
+    {
+      "entry": "bdcrusher-lyrics/variables.css",
+      "sha256": "590dc9abaadecbc99586afec6c06007b10d99929b71199df6b4296a72532e892",
+      "changed": false
+    }
+  ],
+  "addonPayloadIsolation": {
+    "uniqueClasses": 107,
+    "duplicates": 0,
+    "outsideOwnedPrefix": 0,
+    "reportSha256": "5905deffb525cf4fa0acd8a20c9f85b49c2c5aaa878f7cc4b0f155d0582f793f"
+  },
+  "phoneVerified": false,
+  "deviceOperations": false,
+  "globalToolsCopied": false,
+  "changes": [
+    "Host-owned timed viewport animation replaces per-line scroll transforms; source switching and resize reticks do not accumulate expected-scroll counters.",
+    "Monotonic playback extrapolation uses native sampling timestamp and rate once.",
+    "Keep valid rich results across empty/less-detailed late replies; retain manual candidates while automatic native-text matching guard remains.",
+    "One public title/artist-only retry for Better Lyrics404/empty exact metadata; no access/rate/auth bypass.",
+    "Native Lyrics second during pending lookup; enable on positive result, restore original placement only after definite all-empty completion. Failures/auth-required are unknown.",
+    "Transparent navigation default, no solid protection, normal icon style and original window restored; optional matching mode retained."
+  ],
+  "limitations": [
+    "No actual Samsung/phone performance acceptance.",
+    "Native cold fallback still uses Related-derived presentation if no real Lyrics definition exists in the process.",
+    "Transparency reveals whatever native host draws below the lyrics body; no global inset/layout change.",
+    "Public Better Lyrics returned401 for some video metadata; ordinary combined-service connection/verification remains required.",
+    "No alternate audio/video timeline conversion. Shaders only investigated, not implemented."
+  ],
+  "sourceSha256": {
+    "BetterLyricsPanelView.java": "ab67f352b6e5bbd5130f363612745625307ebe59fe7b3f2822f297c746662289",
+    "BetterLyricsPreference.java": "dc20b2dab63589eabbc38418a23616dd58168fd0deda1439925c5ae0d926a90a",
+    "LyricsCatalog.java": "17873cda374ecb1ffe2631e2a406a5881583c2860c9c5e5701878c971315b214",
+    "LyricsConfig.java": "007bc5d7a2d6d6a46c21699d851d2ffcaf02f7a561f317ced808cef44602ce9b",
+    "LyricsDiagnostics.java": "2b0b9d4c1939ae1d8676408e4703e986a4eedca1bac57fa29ef82213e12596a4",
+    "LyricsDiskCache.java": "0bb6be05304233dffb8c38a2fcf489e7ebd8d9975717f4702d978bd3456205e6",
+    "LyricsEnrichment.java": "d6719203a607a339677b982d2dffbe6ef7a977fd2cf8b1f6d19b4bf91e0b71a0",
+    "LyricsEntryButton.java": "3b1878f27ffc9ce8616406ba54d001a884c79ee53366b6a6c8d42b76ec82fcd7",
+    "LyricsEntryCoordinator.java": "13c4812fb0c46cf43352c45839b08dd1701ce88af6d3dc7f84a2bb75952f6472",
+    "LyricsNetwork.java": "734625cafe9f4d9b4a4426d55d4242c0be054ee4ec50fe987cad21e7819370c3",
+    "LyricsRepository.java": "cc7f1e0cf74553854e083fd53f7d44fe290cee044bd0986296f9d65a554115a2",
+    "LyricsSettingsPage.java": "cdcee19916ccef364b1e34dbc416ff30d330ebcb04f2858fbf72805f0afb4113",
+    "LyricsSliderPreference.java": "1e9cbdf156888b49c103d8d28d9d59c05abd4bdf3e6ac92479d9129168b1dabf",
+    "LyricsSourceOrderPreference.java": "cf107b3d6bd02ed7a01b63875209e8b19686acc0a5b207af448ef5653e12c947",
+    "LyricsSystemBars.java": "0e608c416f75b3fe1a463989e983e77dbc4d9438696f85c48561a81b36721ac1",
+    "NativeActionModel.java": "23413995b86d02ef08cbcf8a383ab9e80e9b2338a9606ec912efc9f6c2707e90",
+    "NativeLyricsBridge.java": "770a9cfafcfaa254a5e5a1f19a4b3259a64097187bde8deae321e7add7cb6327",
+    "NativeLyricsHost.java": "c21db7f1c3955656d20d3b92b72bd5df8e980fe0f5dde023904ffce26129d645",
+    "NativePanelWire.java": "4d345301e1bbf8a4993f3c37a8405a1c5805b2d702a20aa577cb44b29a2fd7d2",
+    "ProtoWire.java": "d333d51895d63ee06aee1e78fc1d876b56fa6beae77ca49e6e3c48e4cf179f20",
+    "ServiceConnection.java": "5364f59a46d60f2d9083872aad02d8b24dc7468365353918a8afa5b67dcd5275",
+    "TokenExpiry.java": "ed4fd184147120b6a5c3355179106974e5a7a3eefe5c1cfda1629ef021ab38cd"
+  },
   "webSourceSha256": {
-    "web\\src\\main.js": "62a0b1ba8d5d6c0b070fc3aa1ec8c6876276dd155bfb2c29d94defaacf1ada3c",
-    "patches\\src\\main\\resources\\bdcrusher-lyrics\\renderer.js": "a9620e5e1e56c4645c632e2456e6cd2c4d5471c84abea78ad00ac6f0144c01a8",
-    "patches\\src\\main\\resources\\bdcrusher-lyrics\\host.css": "4634d2788e49ab0e6625652886ca08a0b31fec6e782befd632cc8038faef053b"
+    "web\\src\\main.js": "1834a404f41be4ec8b088c8425209f960d026b8583306a2697cac8eb5ef1d973",
+    "web\\src\\viewport-motion.js": "a58530cd014a6acdecbe4c46424ff51aaac79604a339f99cac4bd095a4d26572",
+    "web\\patch_braccato.py": "d195ad5bc93207576ddf3f3cc5f8d89f5748d71163f3ee90d82561cb5fbd1f08",
+    "web\\braccato-local-patch.json": "4f56bfa2ce853dba6fc2377d12482323cce292995e1f75f44d3483f4fd7eb68a",
+    "patches\\src\\main\\resources\\bdcrusher-lyrics\\renderer.js": "e14493fd159cd00ad43f81a6d9e8b7d69c80d55c5b0e2d9f7f991be648c92d94",
+    "patches\\src\\main\\resources\\bdcrusher-lyrics\\host.css": "bdb31085222f8889f23d619ba2200afc589c6afdbc8f2bae9c36192ae4c63377"
   }
 }

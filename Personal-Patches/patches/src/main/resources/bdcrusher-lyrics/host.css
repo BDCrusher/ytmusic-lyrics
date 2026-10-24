@@ -9,7 +9,7 @@ body{color:var(--bd-foreground);font-family:Satoshi,Roboto,sans-serif}
 button{font:inherit;color:inherit;border:0;border-radius:999px;background:transparent;padding:8px 14px;touch-action:manipulation;cursor:pointer;min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:background-color .14s ease,scale .14s ease}
 button:active{scale:.95}button:disabled{opacity:.35;cursor:default}button:focus-visible{outline:2px solid currentColor;outline-offset:-3px}
 button svg,button img{width:24px;height:24px;display:block;flex:none;margin:0}
-#scroll{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;padding:12px 24px var(--dock-clearance);scrollbar-width:none;contain:layout style;scroll-padding-bottom:var(--dock-clearance)}
+#scroll{position:absolute;inset:0;overflow:auto;overscroll-behavior:contain;padding:12px 24px var(--dock-clearance);scrollbar-width:none;contain:layout style;scroll-padding-bottom:var(--dock-clearance);scroll-behavior:auto!important}
 #scroll::-webkit-scrollbar{display:none}#empty{font-size:15px;opacity:.65;padding:24px 0;line-height:1.5}
 /* The lyrics continue behind the floating controls. Never paint a rectangular dock surface. */
 /* The native panel handles window insets. The collapsed opener sits at the

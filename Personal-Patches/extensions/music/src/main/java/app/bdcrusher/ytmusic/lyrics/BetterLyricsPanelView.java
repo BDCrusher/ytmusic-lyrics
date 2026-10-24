@@ -59,7 +59,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             updateTrack();syncOverlay();
             if(ready){
                 LyricsManager manager=LyricsManager.getInstance();
-                JSONObject sample=new JSONObject().put("generation",generation)
+                JSONObject sample=new JSONObject().put("generation",generation).put("sampledAt",System.currentTimeMillis())
                     .put("position",manager.getVideoPositionMs()-Settings.LYRICS_OFFSET_MS.get()-manager.getTemporaryOffsetMs()).put("playing",manager.isPlaybackPlaying())
                     .put("rate",manager.getPlaybackSpeed()).put("visible",isShown()&&NativeLyricsHost.isOpen());
                 call("state",sample.toString());
@@ -219,7 +219,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         if(show&&getParent() instanceof android.view.ViewGroup parent){for(int i=0;i<parent.getChildCount();i++){View child=parent.getChildAt(i);if(child!=this){covered.putIfAbsent(child,child.getVisibility());child.setVisibility(View.INVISIBLE);}}}
         else restoreNativeContent();
         setVisibility(show?View.VISIBLE:View.INVISIBLE);
-        LyricsSystemBars.sync(this,Settings.LYRICS_ENABLED.get()&&NativeLyricsHost.owns(this)&&getWindowVisibility()==View.VISIBLE);
+        LyricsSystemBars.sync(this,Settings.LYRICS_ENABLED.get()&&NativeLyricsHost.owns(this)&&getWindowVisibility()==View.VISIBLE,LyricsConfig.preferences(getContext()).getBoolean("transparentNavigation",true));
     }
     // Preserve the installer's settings callbacks while the personal controls own rendering.
     public void applyToolbarButtonSettings(){applySettings();}public void applyTextSize(){applySettings();}

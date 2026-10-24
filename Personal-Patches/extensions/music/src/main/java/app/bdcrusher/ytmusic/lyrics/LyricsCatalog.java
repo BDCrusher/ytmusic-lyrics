@@ -11,11 +11,12 @@ import app.morphe.extension.music.patches.lyrics.model.TrackInfo;
 
 /** Native transport for the extension provider pipeline; all outcomes have bounded diagnostics. */
 final class LyricsCatalog implements AutoCloseable {
-    interface Sink {void result(JSONObject payload);void notice(String message,boolean finished);default void reconnect(){}}
+    interface Sink {void result(JSONObject payload);void notice(String message,boolean finished);default void reconnect(){}default void completion(boolean definitelyNotFound){}}
     private final LyricsNetwork network=new LyricsNetwork();
     private final ExecutorService executor=Executors.newFixedThreadPool(4);
     private final AtomicInteger remaining=new AtomicInteger(1);
     private final java.util.Set<String> requested=ConcurrentHashMap.newKeySet();
+    private final AtomicBoolean resultSeen=new AtomicBoolean(),lookupFailed=new AtomicBoolean();
     private volatile boolean closed,connectionNeeded;
     private final Context context;private final String videoId;private final boolean refresh;
     private final LyricsDiskCache cache;private final Sink sink;
@@ -56,13 +57,18 @@ final class LyricsCatalog implements AutoCloseable {
         if(!t.album().isEmpty())q+="&al="+LyricsNetwork.encode(t.album());if(t.durationSeconds()>0)q+="&d="+t.durationSeconds();return q;
     }
     private void direct(TrackInfo t){
-        String q=query(t);if(!requested.add(q)||closed)return;
+        String q=query(t);if(requested.size()>=4||!requested.add(q)||closed)return;
         String cacheKey="v2|"+videoId+"|"+q;
         task("Better Lyrics",()->{
             JSONObject cached=refresh?null:cache.get(cacheKey+"|ttml");if(cached!=null){LyricsDiagnostics.record("Better Lyrics","Positive cache");send(cached);return;}
-            JSONObject data=new JSONObject(network.request("https://api.betterlyrics.org/getLyrics?"+q,"GET",null,null));String raw=data.optString("ttml");
+            String relaxed="s="+LyricsNetwork.encode(t.title())+"&a="+LyricsNetwork.encode(t.artist());
+            boolean retried=false;JSONObject data;
+            try{data=new JSONObject(network.request("https://api.betterlyrics.org/getLyrics?"+q,"GET",null,null));}
+            catch(LyricsNetwork.HttpFailure ex){if(ex.status!=404||q.equals(relaxed))throw ex;retried=true;LyricsDiagnostics.record("Better Lyrics","Exact metadata not found; retrying title and artist without album/duration");data=new JSONObject(network.request("https://api.betterlyrics.org/getLyrics?"+relaxed,"GET",null,null));}
+            String raw=data.optString("ttml");
+            if(raw.isEmpty()&&!retried&&!q.equals(relaxed)){retried=true;LyricsDiagnostics.record("Better Lyrics","Empty exact result; retrying title and artist without album/duration");data=new JSONObject(network.request("https://api.betterlyrics.org/getLyrics?"+relaxed,"GET",null,null));raw=data.optString("ttml");}
             if(raw.isEmpty()){LyricsDiagnostics.record("Better Lyrics","No TTML in response");return;}
-            JSONObject payload=new JSONObject().put("key","bLyrics-richsynced").put("source","Better Lyrics").put("format","ttml").put("raw",raw);
+            JSONObject payload=new JSONObject().put("key","bLyrics-richsynced").put("source","Better Lyrics").put("format","ttml").put("raw",raw).put("relaxedMetadata",retried);
             cache.put(cacheKey+"|ttml",payload);send(payload);LyricsDiagnostics.record("Better Lyrics","HTTP 200; TTML chars="+raw.length());
         });
         task("LRCLib",()->{
@@ -80,13 +86,22 @@ final class LyricsCatalog implements AutoCloseable {
     private void task(String source,Work work){
         if(closed)return;remaining.incrementAndGet();
         try{executor.execute(()->{try{if(!closed)work.run();}catch(LyricsNetwork.HttpFailure ex){
+            if(ex.status!=404)lookupFailed.set(true);
             String result=ex.status==404?"Not found":ex.status==401?"Service authorization required":ex.status==403?"Access denied":ex.status==429?"Rate limited":"HTTP "+ex.status;
             LyricsDiagnostics.record(source,result);if(ex.status!=404&&!closed)sink.notice(source+" unavailable: "+result,false);
-        }catch(Exception ex){if(!closed){LyricsDiagnostics.record(source,"Failed: "+ex.getClass().getSimpleName());sink.notice(source+" lookup failed",false);}}finally{finished();}});
+        }catch(Exception ex){lookupFailed.set(true);if(!closed){LyricsDiagnostics.record(source,"Failed: "+ex.getClass().getSimpleName());sink.notice(source+" lookup failed",false);}}finally{finished();}});
         }catch(RejectedExecutionException canceled){finished();}
     }
-    private void finished(){if(remaining.decrementAndGet()==0&&!closed)sink.notice(connectionNeeded?"Connect sources to enable or renew the combined service":"Source lookup complete",true);}
-    private void send(JSONObject payload){if(!closed)sink.result(payload);}
+    private void finished(){if(remaining.decrementAndGet()==0&&!closed){sink.completion(!resultSeen.get()&&!lookupFailed.get()&&!connectionNeeded);sink.notice(connectionNeeded?"Connect sources to enable or renew the combined service":lookupFailed.get()?"Some sources failed; available lyrics have been kept":"Source lookup complete",true);}}
+    private void send(JSONObject payload){if(!closed){if(hasLyricsPayload(payload))resultSeen.set(true);sink.result(payload);}}
+    static boolean hasLyricsPayload(JSONObject payload){
+        if(!payload.optString("raw").trim().isEmpty())return true;
+        if("unison".equals(payload.optString("kind"))){JSONObject data=payload.optJSONObject("data");if(data!=null&&data.optJSONObject("data")!=null)data=data.optJSONObject("data");return data!=null&&!data.optString("lyrics").trim().isEmpty();}
+        if(!"provider".equals(payload.optString("event")))return false;
+        JSONObject data=payload.optJSONObject("data"),results=data==null?null:data.optJSONObject("results");if(results==null)return false;
+        for(String key:new String[]{"lyrics","synced","plain","wordByWord"})if(!results.optString(key).trim().isEmpty())return true;
+        return false;
+    }
     private void event(String event,JSONObject data)throws Exception{
         if("metadata".equals(event)){
             String song=data.optString("song"),artist=data.optString("artist");

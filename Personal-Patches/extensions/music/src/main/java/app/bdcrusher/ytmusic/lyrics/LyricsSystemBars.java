@@ -24,11 +24,15 @@ final class LyricsSystemBars {
     private static final ColorDrawable protection=new ColorDrawable();
     private static int previousColor,previousDivider,previousAppearance,appliedColor;
     private static boolean previousContrast;
+    private static boolean protectionAdded;
     private static Bitmap samplePixel;
     private static Canvas sampleCanvas;
     private LyricsSystemBars(){}
 
     static void sync(View view,boolean active){
+        sync(view,active,false);
+    }
+    static void sync(View view,boolean active,boolean transparent){
         if(!active){release(view);return;}
         Activity activity=Utils.getActivity();
         if(activity==null||activity.isFinishing()||activity.isDestroyed()||!(view.getParent() instanceof View body)){
@@ -37,22 +41,30 @@ final class LyricsSystemBars {
         Window window=activity.getWindow();View decor=window.getDecorView();
         if(view.getWindowToken()==null||!view.getWindowToken().equals(decor.getWindowToken())){release(view);return;}
         Rect navigation=navigationBounds(decor);
-        Integer color=panelColor(body);
+        Integer color=transparent?Integer.valueOf(Color.TRANSPARENT):panelColor(body);
         if(!body.isShown()||!decor.hasWindowFocus()||navigation.isEmpty()||color==null){release(view);return;}
         if(owner.get()!=view||windowRef.get()!=window){
             release(null);owner=new WeakReference<>(view);decorRef=new WeakReference<>(decor);windowRef=new WeakReference<>(window);
             previousColor=window.getNavigationBarColor();previousAppearance=appearance(window,decor);
             previousDivider=Build.VERSION.SDK_INT>=28?window.getNavigationBarDividerColor():0;
             previousContrast=Build.VERSION.SDK_INT>=29&&window.isNavigationBarContrastEnforced();
-            appliedColor=previousColor;decor.getOverlay().add(protection);
+            appliedColor=previousColor;protectionAdded=false;
         }else if(window.getNavigationBarColor()!=appliedColor){
             // Preserve a newer native theme update for restoration after closing Lyrics.
             previousColor=window.getNavigationBarColor();
         }
-        appliedColor=color;protection.setColor(color);protection.setBounds(navigation);
+        if(transparent){if(protectionAdded)decor.getOverlay().remove(protection);protectionAdded=false;}
+        else{if(!protectionAdded){decor.getOverlay().add(protection);protectionAdded=true;}protection.setColor(color);protection.setBounds(navigation);}
+        appliedColor=color;
         if(window.getNavigationBarColor()!=color)window.setNavigationBarColor(color);
         if(Build.VERSION.SDK_INT>=28&&window.getNavigationBarDividerColor()!=Color.TRANSPARENT)window.setNavigationBarDividerColor(Color.TRANSPARENT);
         if(Build.VERSION.SDK_INT>=29&&window.isNavigationBarContrastEnforced())window.setNavigationBarContrastEnforced(false);
+        // Native icon appearance already matches the native window underneath transparency.
+        if(transparent){
+            if(Build.VERSION.SDK_INT>=30){WindowInsetsController c=window.getInsetsController();if(c!=null&&(c.getSystemBarsAppearance()&WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)!=previousAppearance)c.setSystemBarsAppearance(previousAppearance,WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);}
+            else{int flags=decor.getSystemUiVisibility(),desired=(flags&~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)|previousAppearance;if(flags!=desired)decor.setSystemUiVisibility(desired);}
+            return;
+        }
         boolean light=Color.red(color)*299+Color.green(color)*587+Color.blue(color)*114>=160000;
         if(Build.VERSION.SDK_INT>=30){
             WindowInsetsController controller=window.getInsetsController();
@@ -66,7 +78,8 @@ final class LyricsSystemBars {
     static void release(View view){
         if(view!=null&&owner.get()!=view)return;
         Window window=windowRef.get();View decor=decorRef.get();
-        if(decor!=null)decor.getOverlay().remove(protection);
+        if(decor!=null&&protectionAdded)decor.getOverlay().remove(protection);
+        protectionAdded=false;
         if(window!=null&&decor!=null){
             if(window.getNavigationBarColor()==appliedColor)window.setNavigationBarColor(previousColor);
             if(Build.VERSION.SDK_INT>=28&&window.getNavigationBarDividerColor()==Color.TRANSPARENT)window.setNavigationBarDividerColor(previousDivider);

@@ -4,6 +4,7 @@ import { parseTTMLContent, parseLRC, parseQRC, PlainParser } from '@braccato/par
 import { processStreamData, fillTtml } from './upstream-providers.ts';
 import { stringSimilarity } from './lyric-parse-utils.ts';
 import { catalog, controls } from './catalog.js';
+import { createViewportMotion } from './viewport-motion.js';
 
 export const PRIORITY = ['bLyrics-richsynced','unison-richsynced','binimum-richsynced',
   'unison-wordsynced','portato-richsynced','musixmatch-richsync','bLyrics-synced',
@@ -15,9 +16,10 @@ let settings = {fontSize:28, letterWave:true, wordSync:true, background:true,
   bgSize:0.65, bgOpacity:0.7, agents:{}, translation:false, romanization:false,
   language:'en', passive:false, tapSeek:true, reducedMotion:false};
 let generation = -1, params, selected = '', pinned = '', currentResult;
-let clock = {position:0,playing:false,rate:1,received:Date.now()};
+let clock = {position:0,playing:false,rate:1,received:performance.now()};
 let active = true, raf = 0, enrichmentGeneration = 0;
-let availableKeys = [], collapsed = false;
+let availableKeys = [], autoPreferred='', collapsed = false;
+const reportedMismatches=new Set();
 const icon = (key) => catalog.icons[catalog.providers.find(p=>p.key===key)?.type] || '';
 const config = key => catalog.providers.find(p=>p.key===key);
 function svgInto(target,svg){target.replaceChildren();if(!svg)return;const doc=new DOMParser().parseFromString(svg,'image/svg+xml');if(!doc.querySelector('parsererror'))target.appendChild(document.importNode(doc.documentElement,true));}
@@ -33,10 +35,10 @@ let menuCloseTimer,menuEpoch=0;
 function closeSources(){const menu=$('source-menu');menuEpoch++;clearTimeout(menuCloseTimer);menu.classList.remove('open');menu.inert=true;$('source-label').setAttribute('aria-expanded','false');menuCloseTimer=setTimeout(()=>{menu.hidden=true;},settings.reducedMotion?0:160);}
 function positionSources(){const menu=$('source-menu'),rect=$('source-label').getBoundingClientRect();menu.style.maxHeight=`${Math.max(48,Math.min(240,rect.top-16))}px`;menu.style.left=`${Math.max(8,Math.min(rect.left-4,innerWidth-menu.offsetWidth-8))}px`;menu.style.bottom=`${innerHeight-rect.top+8}px`;}
 function openSources(){if(!availableKeys.length)return;clearTimeout(menuCloseTimer);const epoch=++menuEpoch,menu=$('source-menu');menu.hidden=false;menu.inert=false;positionSources();requestAnimationFrame(()=>{if(epoch===menuEpoch)menu.classList.add('open');});$('source-label').setAttribute('aria-expanded','true');}
-function selectSource(key){pinned=key===availableKeys[0]?'':key;native?.pin(generation,pinned);closeSources();choose(true);}
+function selectSource(key){pinned=key===autoPreferred?'':key;native?.pin(generation,pinned);closeSources();choose(true);}
 function updateDock(){
   const entry=config(selected),i=availableKeys.indexOf(selected);
-  $('source-name').textContent=entry?.name||'Looking for lyrics…';
+  $('source-name').textContent=entry?.name||(availableKeys.length?'Choose a source':'Looking for lyrics…');
   $('source-position').textContent=i<0?'':`${i+1}/${availableKeys.length}`;
   svgInto($('source-icon'),icon(selected));$('source-icon').style.color=catalog.colors[entry?.type]||'inherit';
   $('previous').disabled=$('next').disabled=availableKeys.length<2;
@@ -64,9 +66,13 @@ let renderer = createLyricsRenderer({document,window,mount:$('lyrics'),host:{
   getScrollElement:()=>$('scroll'),
   isViewVisible:()=>active && !document.hidden,
   setResumeAffordanceVisible:visible=>$('resume').hidden=!visible,
-  seek:seconds=>{if(settings.tapSeek){native?.seek(Math.round(seconds*1000));renderer.resumeAutoscroll();}},
+  seek:seconds=>{if(settings.tapSeek){viewportMotion?.settle();native?.seek(Math.round(seconds*1000));renderer.resumeAutoscroll();}},
   log:message=>native?.diagnostic(generation,'Renderer',String(message).slice(0,240)),
 }});
+const viewportMotion=createViewportMotion($('scroll'));
+const systemReducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
+function configureMotion(){viewportMotion?.configure(renderer.syncType!=='none'&&renderer.syncType!=='plain',settings.reducedMotion||systemReducedMotion.matches);}
+systemReducedMotion.addEventListener('change',configureMotion);
 
 function theme() {
   const css = `/* blyrics-letter-wave = ${settings.letterWave&&!settings.reducedMotion&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -113,12 +119,13 @@ function choose(force=false) {
   const order=[...new Set([...custom,...PRIORITY])].filter(key=>!disabled.has(key));
   const baseline=params.sourceMap['yt-lyrics']?.lyricSourceResult?.lyrics;
   const reference=baseline?.map(line=>line.words).join('\n');
-  const available=order.filter(key=>{
+  const available=order.filter(key=>params.sourceMap[key]?.lyricSourceResult?.lyrics?.length);
+  const automatic=available.filter(key=>{
     const result=params.sourceMap[key]?.lyricSourceResult;
     if(!result?.lyrics?.length)return false;
     if(!reference||key==='yt-lyrics'||key.startsWith('unison-'))return true;
     const accepted=stringSimilarity(result.lyrics.map(line=>line.words+'\n').join(''),reference)>=0.5;
-    if(!accepted)native?.diagnostic(generation,key,'Rejected: lyric text differs from native baseline');
+    if(!accepted&&!reportedMismatches.has(key)){reportedMismatches.add(key);native?.diagnostic(generation,key,'Automatic match rejected; received lyrics remain available for manual selection');}
     return accepted;
   });
   $('sources').replaceChildren(...available.map(key=>{
@@ -126,15 +133,23 @@ function choose(force=false) {
     option.textContent=params.sourceMap[key].lyricSourceResult.source+' · '+key.split('-').slice(1).join('-');
     return option;
   }));
-  const key=available.includes(pinned)?pinned:available[0];
+  autoPreferred=automatic[0]||'';
+  const key=available.includes(pinned)?pinned:autoPreferred;
   availableKeys=available;
-  if(!key){selected='';currentResult=null;renderer.clear();updateDock();native?.noLyrics(generation);return;}
+  if(!key){
+    selected='';currentResult=null;viewportMotion?.cancel();renderer.clear();configureMotion();updateDock();$('sources').value='';
+    if(available.length){$('empty').textContent='These lyrics differ from YouTube Music. Choose a source to use them.';$('empty').hidden=false;native?.displayed(generation,'choose-source');}
+    else native?.noLyrics(generation);
+    return;
+  }
   $('sources').value=key;
   const result=params.sourceMap[key].lyricSourceResult;
   if(!force&&key===selected&&result===currentResult){updateDock();return;}
   selected=key;currentResult=result;
+  viewportMotion?.cancel();
   updateDock();
   renderer.setLyrics(result.lyrics,{language:result.language,songwriters:result.songwriters});
+  configureMotion();
   decorate();
   $('status').textContent=result.source;
   $('status').title=key;
@@ -186,15 +201,20 @@ function decorate() {
 function renderFrame(now) {
   raf=0;
   if(!active||document.hidden)return;
-  // Braccato extrapolates the wall-clock sample itself, just as in the extension.
-  renderer.tick(clock.position/1000,{eventCreationTime:clock.received,isPlaying:clock.playing,
-    playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!settings.reducedMotion});
+  // Android delivers asynchronous snapshots, not a synchronous HTML media element.
+  // Extrapolate once at the supplied rate on a monotonic clock; hand Braccato "now".
+  const position=clock.position+(clock.playing?Math.max(0,now-clock.received)*clock.rate:0);
+  renderer.tick(position/1000,{eventCreationTime:Date.now(),isPlaying:clock.playing,
+    playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!viewportMotion&&!settings.reducedMotion});
+  viewportMotion?.advance(now);
   raf=requestAnimationFrame(renderFrame);
 }
 function startClock(){if(!raf&&active&&!document.hidden)raf=requestAnimationFrame(renderFrame);}
 
 window.BDC = {
   track(track) {
+    viewportMotion?.cancel();
+    reportedMismatches.clear();autoPreferred='';
     generation=track.generation;selected='';pinned=track.preferredSource||'';currentResult=null;enrichmentGeneration++;enrichmentRequested.clear();
     params={song:track.title,artist:track.artist,album:track.album,duration:track.duration,
       videoId:track.videoId,sourceMap:Object.fromEntries([...PRIORITY,'metadata'].map(key=>[key,{filled:false,lyricSourceResult:null}]))};
@@ -205,9 +225,10 @@ window.BDC = {
   },
   async source(id,payload) {
     if(id!==generation||!params)return;
+    const expected=params;
+    const previous=new Map(PRIORITY.filter(key=>expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length).map(key=>[key,expected.sourceMap[key].lyricSourceResult]));
     try {
       if(payload.event) {
-        const expected=params;
         await processStreamData(payload.event,payload.data,expected);
         if(id!==generation||params!==expected)return;
       }else if(payload.kind==='unison'){
@@ -224,23 +245,33 @@ window.BDC = {
         }
         put(key,{...payload,lyrics});
       }
+      // A slower provider response may be empty or less detailed than an earlier
+      // public result. Only a track change or explicit refresh clears good lyrics.
+      for(const [key,result] of previous)if(!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length)expected.sourceMap[key].lyricSourceResult=result;
       choose();
-    } catch(error){$('status').textContent='A lyric source could not be decoded';native?.diagnostic(generation,payload.key||payload.event||payload.kind||'unknown',String(error?.message||error).slice(0,240));}
+    } catch(error){
+      if(id!==generation||params!==expected)return;
+      for(const [key,result] of previous)if(!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length)expected.sourceMap[key].lyricSourceResult=result;
+      choose();native?.diagnostic(generation,payload.key||payload.event||payload.kind||'unknown',String(error?.message||error).slice(0,240));
+      if(!selected)$('status').textContent='A lyric source could not be decoded';
+    }
   },
   state(sample) {
     if(sample.generation!==generation)return;
-    clock={position:sample.position,playing:sample.playing,rate:sample.rate||1,received:Date.now()};
-    active=sample.visible!==false;
+    const age=Number.isFinite(sample.sampledAt)?Math.max(0,Math.min(10000,Date.now()-sample.sampledAt)):0;
+    clock={position:sample.position,playing:sample.playing,rate:sample.rate||1,received:performance.now()-age};
+    if(sample.visible===false)viewportMotion?.cancel();active=sample.visible!==false;
     renderer.noteVisibilityChange();startClock();
   },
   visible(visible){
     const next=visible===true;if(active===next)return;active=next;
-    if(!active){cancelAnimationFrame(raf);raf=0;}
+    if(!active){viewportMotion?.cancel();cancelAnimationFrame(raf);raf=0;}
     renderer.noteVisibilityChange();if(active){renderer.relayout();startClock();}
   },
   settings(next) {
     const rebuild=['translation','romanization','language'].some(key=>key in next&&next[key]!==settings[key]);
     settings={...settings,...next};const themeRebuild=theme();choose(rebuild||themeRebuild);renderer.relayout();
+    configureMotion();
     setCollapsed(settings.dockCollapsed);
     for(const [key,url] of Object.entries(next.buttonIcons||{})){if(!$(key)||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(url))continue;const img=document.createElement('img');img.src=url;img.alt='';$(key).replaceChildren(img);}
     if(next.pillColor)document.documentElement.style.setProperty('--bd-pill',next.pillColor);
@@ -270,12 +301,12 @@ window.BDC = {
   },
   notice(id,message,finished=false){
     if(id!==generation)return;
-    if(!selected){$('empty').textContent=finished?'No lyrics found. YouTube Music’s lyrics remain available behind this panel.':message;}
+    if(!selected&&!availableKeys.length){$('empty').textContent=finished?'No lyrics found. YouTube Music’s lyrics remain available behind this panel.':message;}
     $('notice').textContent=message;
     $('connection').hidden=!!selected||!/connect|expired|HTTP|failed|unavailable/i.test(message);
-    if(finished&&!selected)native?.noLyrics(generation);
+    if(finished&&!selected&&!availableKeys.length)native?.noLyrics(generation);
   },
-  dispose(){cancelAnimationFrame(raf);clearTimeout(dockLayoutTimer);dockResize.disconnect();renderer.destroy();},
+  dispose(){cancelAnimationFrame(raf);clearTimeout(dockLayoutTimer);dockResize.disconnect();systemReducedMotion.removeEventListener('change',configureMotion);viewportMotion?.destroy();renderer.destroy();},
 };
 $('sources').addEventListener('change',()=>{pinned=$('sources').value;native?.pin(generation,pinned);choose(true);});
 $('source-label').onclick=()=>{$('source-label').getAttribute('aria-expanded')==='true'?closeSources():openSources();};
@@ -295,12 +326,14 @@ $('copy').onclick=()=>native?.copy(generation,(currentResult?.lyrics||[]).map(li
 $('refresh').addEventListener('click',()=>native?.refresh());
 $('connect').addEventListener('click',()=>native?.connect());
 $('configure').addEventListener('click',()=>native?.configure());
-$('resume').addEventListener('click',()=>renderer.resumeAutoscroll());
+$('resume').addEventListener('click',()=>{viewportMotion?.settle();renderer.resumeAutoscroll();});
 for(const kind of ['translate','romanize'])$(kind).addEventListener('click',()=>native?.toggle(kind));
 $('earlier').addEventListener('click',()=>native?.offset(-100));
 $('later').addEventListener('click',()=>native?.offset(100));
 // The core counts programmatic scroll events; feed actual scrolling so its skip counter
 // is consumed by those events, rather than swallowing the next user's touch/wheel gesture.
-$('scroll').addEventListener('scroll',()=>renderer.noteUserScroll(),{passive:true});
+$('scroll').addEventListener('scroll',()=>{if(!viewportMotion?.ignoreScrollEvent())renderer.noteUserScroll();},{passive:true});
+for(const type of ['pointerdown','touchstart','wheel'])$('scroll').addEventListener(type,()=>viewportMotion?.cancel(),{passive:true});
+$('scroll').addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))viewportMotion?.cancel();});
 document.addEventListener('visibilitychange',()=>{renderer.noteVisibilityChange();if(!document.hidden)startClock();});
 dockResize.observe($('dock'));theme();startClock();native?.ready();

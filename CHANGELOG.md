@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7-beta.1
+
+Use one timed viewport animation; preserve rich results; retry404/empty Better Lyrics metadata once without album/duration; retain manual candidates; order native Lyrics second while pending; add transparent system navigation. Check upstream3.0.1 and research Shaders. Four APK combinations and source/browser/compiled checks passed. Phone acceptance remains pending.
+
 ## 0.2.6-beta.1
 
 Hide native/Web scrollbars. Deduplicate visible notifications, settle dock remeasurement, coalesce native attachment and reuse native navigation sampling. Prefer a real session-native Lyrics presentation with current palette and no old lyric content. Cold fallback still requires the native Related template. Browser/source/compiled checks passed; actual Samsung jitter remains unverified.

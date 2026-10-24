@@ -3,6 +3,6 @@
   "version": "1.16.11",
   "file": "dist/engine.js",
   "upstreamSha256": "a3abca4640ef83edd4c5d2b34e7efb221e439365a24005051e34f92851c1f834",
-  "patchedSha256": "6ea93232be38ac2082cc78680bb7e4314e5a629cc05a9afc010e027e8a987226",
-  "change": "Clamp expired automatic scroll suppression at zero, allowing manual follow pause; retain upstream timing, layout and easing."
+  "patchedSha256": "9935a88764210171ebbf6d260d5a44b84c92ace301ee8003eb24c90074eb7101",
+  "change": "Clamp expired scroll suppression at zero; delegate timed viewport scroll to the optional Android host sink without accumulating native-event skips. Other hosts retain the original path; timing/highlighting/agents are unchanged."
 }
