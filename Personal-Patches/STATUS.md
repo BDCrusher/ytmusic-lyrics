@@ -1,3 +1,23 @@
+# Current build - 0.2.10-beta.1
+
+Replace automatic source banners with a typed green/orange/red dot right of delay; tap for details. Use a separate timestamp-aware native renderer clock and continuous bridge clock, retain actual Braccato curves, reduce native polling/window work, avoid repeated parsing/DOM resets and premature noLyrics hides, reset follow on tracks and respect hidden windows. Normal verification supports the service's message callback and Retry-After. Bounded Frame-timing summaries are in existing Source diagnostics without recording.
+
+Exact original9.42.52/94252240 arm64, official1.48.0, engine2.0.0/inherited1.15.1 semantics. Four final APK combinations/both source orders, five conflicts, native hook/SDK/isolation audits, JVM/lint,143 fresh Java and81 JS checks pass. Each edition has exactly one timestamped clock hook;113 owned add-on classes, no foreign/duplicate definitions. All16 formats and fresh renderer/dock/selection/seek checks pass. Actual Java HTTP plus normal verification returned all six backends,9 positive payloads and healthy completed state; no credentials persisted. Desktop rich/clock stress evidence is retained, including an84ms concurrent-load case and later uncontended0-long-task cases. **No universal zero-stutter or Android phone/WebView acceptance claim.**
+
+Read [QUIET-SOURCE-STATUS-AND-TIMING-2026-10-25.md](../Research/QUIET-SOURCE-STATUS-AND-TIMING-2026-10-25.md) and app-home Personal-Patches/dist/0.2.10-beta.1/verification.json. MPP SHA256 ebeb65e0016c61271c8346b295366e03e42225c30dacd171c449f56118790533. Authoritative application evidence uses revision30-delivery; earlier revision30 scratch/candidate MPP is not delivery. Current checks: verify_revision30_delivery.ps1, check_revision30_*.py/js and web/revision30-*.js; use new output paths, not completed generators. Existing public history is reviewed/exported with Toolkit in place; never push private Personal-Patches. Publication receipts, once complete: Verification/publication/v0.2.10-beta.1/publication-result.json.
+
+Use Full alone OR deselect every Full patch and use Lyrics-only Add-on with official defaults, official Third-party lyrics OFF. Same root source/categories; enable Pre-release patches/Experimental app versions, refresh and repatch original APK. Settings: Morphe > Lyrics. Existing cold native presentation/alternate timeline limits remain. MuMu/devices/sign/install untouched, no copied globals. Two bounded matrices/CPU artifacts remain retained and regenerable; cleanup was not authorized.
+
+## Historical record
+
+# Published - 0.2.9-beta.1
+
+[0.2.9-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.9-beta.1) is published and the public assets/source/dev feed were verified. Source `0f9e028862f517b8580be981f4525691ec60d0de`, feed `08082caa55aa5d698c5ceba12ee191d4f321e25b`. All 10 release assets and 7396 source files match the reviewed preparation. MPP SHA256 `623e9a05734145b9f948e74df4ecd9227a453cd16bd469d48aa322afcec243ce`. Exact receipt: Verification/publication/v0.2.9-beta.1/publication-result.json.
+
+Automatic source verification, one-hour renewal, retained lyrics/selection and bounded retries are shared by both editions. Four APK combinations and five rejected conflicts, native/SDK/payload audits, JVM/lint,114 fresh simulated Java checks,11 verification-script checks and three live song lookups pass. Inherited browser/native-host/navigation evidence is explicitly tied to unchanged source hashes. **Live Android verification and phone stutter remain unverified.** No device/MuMu/sign/install operations or copied globals. Refresh the existing Morphe source with Pre-release patches and Experimental app versions enabled, then repatch the original APK. Settings: Morphe > Lyrics.
+
+## Build and prior records
+
 # Current build - 0.2.9-beta.1
 
 Additional sources verify quietly during active foreground playback UI, before opening Lyrics. Tokens renew with one hour left while keeping the valid token. The normal same-origin browser exchange preserves cookies and browser identity without a native JS bridge. Connect sources reveals the same challenge when requested. Renewal adds broker results without clearing lyrics, resetting selection or rebuilding the native entry. Temporary failures have up to three attempts with Retry-After; malformed stream events cannot block later providers and duplicate results are suppressed.

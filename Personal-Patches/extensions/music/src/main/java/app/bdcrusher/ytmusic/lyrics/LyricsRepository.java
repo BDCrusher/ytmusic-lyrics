@@ -19,6 +19,7 @@ final class LyricsRepository {
     private static int generation;
     private static boolean finished;
     private static Boolean definitelyNotFound;
+    private static JSONObject health;
 
     static String identity(TrackInfo track, String id) {
         return id + "\u0000" + track.title() + "\u0000" + track.artist() + "\u0000"
@@ -32,6 +33,7 @@ final class LyricsRepository {
         identity = next;
         int expected = generation;
         catalog = new LyricsCatalog(context.getApplicationContext(), track, id, refresh, new LyricsCatalog.Sink() {
+            public void health(JSONObject value){main.post(()->{if(expected!=generation)return;health=value;for(var sink:new ArrayList<>(sinks))sink.health(value);});}
             public void result(JSONObject payload) { main.post(() -> {
                 if (expected != generation) return;
                 if (results.size() < 64) results.add(payload);
@@ -55,6 +57,7 @@ final class LyricsRepository {
         if (sinks.contains(sink)) return;
         sinks.add(sink);
         for (var payload : new ArrayList<>(results)) sink.result(payload);
+        if(health!=null)sink.health(health);
         if(definitelyNotFound!=null)sink.completion(definitelyNotFound);
         if (!notice.isEmpty()) sink.notice(notice, finished);
     }
@@ -64,6 +67,6 @@ final class LyricsRepository {
     static void clear() {
         generation++;
         if (catalog != null) catalog.close();
-        catalog = null; identity = ""; results.clear(); sinks.clear(); notice = ""; finished = false;definitelyNotFound=null;
+        catalog = null; identity = ""; results.clear(); sinks.clear(); notice = ""; finished = false;definitelyNotFound=null;health=null;
     }
 }

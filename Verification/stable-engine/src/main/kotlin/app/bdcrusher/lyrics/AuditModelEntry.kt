@@ -15,7 +15,7 @@ fun main(args:Array<String>){
   val file=File(path).canonicalFile;require(file.toPath().startsWith(permitted.toPath())&&file.name=="verified-unsigned.apk")
   val classes=mutableSetOf<String>();val callbackNames=mutableSetOf<String>();var callbackReturns=0;var entryHooks=0;var identityGetters=0;var catalogConstructors=0;var panelConstructors=0
   var controllerCapture=0;var presenterCapture=0;var nativeModel=0;var nativePanel=0;var parsers=0;var root=0;var id=0;var definitions=0;var nativeRefresh=0;var nativeVideoFields=0;var modelCalls=0;var scoped=false;var legacyDisabled=false;var publicModel=false
-  var nativeIdentityInputs=0;var originalModelCaptures=0;var nativeRendererFields=0;var navigationSync=0;var navigationRelease=0;var hasNavigationProtection=false;var hiddenNativeScrollbars=0;var definitionCapture=0
+  var nativeIdentityInputs=0;var originalModelCaptures=0;var nativeRendererFields=0;var navigationSync=0;var navigationRelease=0;var hasNavigationProtection=false;var hiddenNativeScrollbars=0;var definitionCapture=0;var rendererClockHooks=0
   ZipFile(file).use {z->for(e in z.entries().asSequence().filter {it.name.matches(Regex("classes[0-9]*\\.dex"))}){
    val dex=DexBackedDexFile.fromInputStream(null,z.getInputStream(e).buffered())
    for(c in dex.classes){require(classes.add(c.type)){"Duplicate ${c.type}"}
@@ -74,6 +74,7 @@ fun main(args:Array<String>){
      for(i in code){val r=(i as? ReferenceInstruction)?.reference
       if(c.type==own+"LyricsEntryButton;"&&m.name=="refreshNative"&&r is FieldReference&&!r.definingClass.startsWith(own)){nativeRendererFields++;require(r.type.startsWith("L")&&r.type!="Ljava/lang/String;")}
       if(r !is MethodReference)continue
+      if(r.definingClass==own+"RendererPlayback;"&&r.name=="sample"){rendererClockHooks++;require(c.type=="Lapp/morphe/extension/music/patches/lyrics/LyricsPatch;"&&m.name=="onSetPlaybackState"&&code.first()==i)}
       if(r.definingClass==own+"NativeLyricsHost;"&&!c.type.startsWith(own))when(r.name){"captureController"->controllerCapture++;"onNativePanelChanged"->nativePanel++;"observeNativeDefinition"->definitionCapture++}
       if(r.definingClass==own+"LyricsEntryButton;"&&!c.type.startsWith(own))when(r.name){"capturePresenter"->presenterCapture++;"captureIdentity"->{nativeIdentityInputs++;require(code.first()==i&&m.returnType=="V"&&m.parameterTypes.firstOrNull()=="Ljava/lang/String;")};"rewriteNative"->{nativeModel++;require(m.returnType=="V"&&m.parameterTypes.size==2&&code.first()==i){"Model hook must precede native renderer"}};else->error("Obsolete native view hook $r")}
       if(c.type==own+"LyricsEntryButton;"){
@@ -102,13 +103,14 @@ fun main(args:Array<String>){
     }
    }
   }}
+  require(rendererClockHooks==1){"Missing or duplicate personal renderer clock hook"}
   require(callbackNames==setOf("onSetMetadata","onSetPlaybackState")&&callbackReturns>=2&&identityGetters==1&&catalogConstructors==1&&panelConstructors==0)
   require(controllerCapture==1&&presenterCapture==1&&nativeModel==1&&nativePanel==1&&parsers==2&&root==1&&id==1&&definitions==1&&nativeRefresh==1&&nativeRendererFields==1&&nativeVideoFields==0&&nativeIdentityInputs==4&&originalModelCaptures==1&&navigationSync==1&&navigationRelease==1&&hasNavigationProtection&&hiddenNativeScrollbars==2&&modelCalls==3&&definitionCapture==1&&scoped&&legacyDisabled&&publicModel){"Native replay audit counts: controller=$controllerCapture presenter=$presenterCapture model=$nativeModel panel=$nativePanel parsers=$parsers root=$root id=$id definitions=$definitions refresh=$nativeRefresh renderer=$nativeRendererFields identity=$nativeIdentityInputs original=$originalModelCaptures navigation=$navigationSync/$navigationRelease scrollbars=$hiddenNativeScrollbars calls=$modelCalls scoped=$scoped legacy=$legacyDisabled public=$publicModel"}
-  for(name in listOf("LyricsEntryCoordinator;","LyricsRepository;","LyricsEntryButton;","NativeLyricsHost;","NativePanelWire;","NativeActionModel;","ProtoWire;"))require(own+name in classes)
+  for(name in listOf("LyricsEntryCoordinator;","LyricsRepository;","LyricsEntryButton;","NativeLyricsHost;","NativePanelWire;","NativeActionModel;","ProtoWire;","RendererPlayback;"))require(own+name in classes)
   val hash=java.security.MessageDigest.getInstance("SHA-256").digest(file.readBytes()).joinToString(""){"%02x".format(it)}
   file.parentFile.resolve("entry-bytecode-audit.json").writeText("""{"passed":true,"apkSha256":"$hash","entryPlaybackHooks":$entryHooks,"callbackReturnSites":$callbackReturns,"allCallbackReturnsCovered":true,"controlFlowAndHandlersChecked":true,"nativeControllerCaptures":$controllerCapture,"nativePresenterCaptures":$presenterCapture,"nativeModelHooks":$nativeModel,"nativePanelHooks":$nativePanel,"nativeParsers":$parsers,"nativeViewMutations":0,"overlayUiConstructors":0,"duplicateClasses":0,"typedNativeRoot":true,"typedNativeIdentity":true,"typedRegistryLookup":true,"typedNativeRefresh":true,"publicModelBridge":true,"installerScoped":true,"legacyButtonOverrideDisabled":true,"constructorReturnCaptureSafe":true,"phoneVerified":false}""")
   println("PASS: native model and Music host contracts: ${file.parentFile.name}")
-  file.parentFile.resolve("native-replay-audit.json").writeText("""{"passed":true,"apkSha256":"$hash","nativeActionModes":3,"nativeDefinitionCaptureSites":$definitionCapture,"nativeIdentityInputs":$nativeIdentityInputs,"originalNativeModelCaptureSites":$originalModelCaptures,"nativeRendererReplayCalls":$nativeRefresh,"optionalServerResponseIdentityGate":false,"nativeNavigationSyncSites":$navigationSync,"nativeNavigationReleaseSites":$navigationRelease,"navigationDecorationOnly":true,"nativeScrollbarSuppressionSites":$hiddenNativeScrollbars,"personalButtonViewOverrides":false,"phoneVerified":false}""")
+  file.parentFile.resolve("native-replay-audit.json").writeText("""{"passed":true,"apkSha256":"$hash","timestampedRendererClockHooks":$rendererClockHooks,"nativeActionModes":3,"nativeDefinitionCaptureSites":$definitionCapture,"nativeIdentityInputs":$nativeIdentityInputs,"originalNativeModelCaptureSites":$originalModelCaptures,"nativeRendererReplayCalls":$nativeRefresh,"optionalServerResponseIdentityGate":false,"nativeNavigationSyncSites":$navigationSync,"nativeNavigationReleaseSites":$navigationRelease,"navigationDecorationOnly":true,"nativeScrollbarSuppressionSites":$hiddenNativeScrollbars,"personalButtonViewOverrides":false,"phoneVerified":false}""")
  }
 }
 

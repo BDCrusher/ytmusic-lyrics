@@ -64,6 +64,7 @@ final class SourceVerification {
                     if(!request.isForMainFrame()&&("about:blank".equals(value)||"about:srcdoc".equals(value)))return false;
                     return !"https".equals(uri.getScheme())||!("lyrics.api.dacubeking.com".equals(uri.getHost())||!request.isForMainFrame()&&"challenges.cloudflare.com".equals(uri.getHost()));
                 }
+                @Override public void onPageFinished(WebView view,String url){if(!stopped&&url.startsWith(LyricsNetwork.BROKER+"challenge"))view.evaluateJavascript(PROBE,null);}
                 @Override public boolean onRenderProcessGone(WebView view,RenderProcessGoneDetail detail){finish(false,"Verification browser stopped; tap Connect sources to retry");return true;}
             });
         }
@@ -89,7 +90,7 @@ final class SourceVerification {
             dialog.setOnDismissListener(value->finish(false,"Verification canceled; public sources remain available"));dialog.show();
         }
         // Keep the challenge's browser identity and cookies for the normal same-origin exchange.
-        private static final String PROBE="(()=>{if(!window.__bdConnection){const token=window.turnstile&&window.turnstile.getResponse();if(!token)return JSON.stringify({waiting:true});window.__bdConnection={pending:true};fetch('/verify-turnstile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})}).then(async r=>{if(!r.ok){window.__bdConnection={status:r.status};return;}const data=await r.json();window.__bdConnection={jwt:data.jwt||'',status:200};}).catch(()=>window.__bdConnection={status:0});}return JSON.stringify(window.__bdConnection);})()";
+        private static final String PROBE="(()=>{if(!window.__bdListener){window.__bdListener=true;window.addEventListener('message',event=>{if(event.source!==window||event.origin!==location.origin)return;if(event.data?.type==='turnstile-token'&&typeof event.data.token==='string')window.__bdChallengeToken=event.data.token;});}if(!window.__bdConnection){let token=window.__bdChallengeToken;try{token||=window.turnstile&&window.turnstile.getResponse();}catch{}if(!token)return JSON.stringify({waiting:true});window.__bdConnection={pending:true};fetch('/verify-turnstile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({token})}).then(async r=>{if(!r.ok){window.__bdConnection={status:r.status,retryAfter:r.headers?.get('Retry-After')||''};return;}const data=await r.json();window.__bdConnection={jwt:typeof data.jwt==='string'?data.jwt:'',status:200};}).catch(()=>window.__bdConnection={status:0});}return JSON.stringify(window.__bdConnection);})()";
         void poll(){
             if(stopped||retrying)return;
             if(!usable(activity)){finish(false,"Verification paused");return;}
@@ -103,12 +104,14 @@ final class SourceVerification {
                         Object decoded=new JSONTokener(encoded).nextValue();if(!(decoded instanceof String text))return;
                         JSONObject state=new JSONObject(text);if(!state.has("status"))return;
                         int status=state.optInt("status",0);String jwt=state.optString("jwt","");
+                        long serverDelay=LyricsNetwork.retryAfter(state.optString("retryAfter",""));
+                        if(serverDelay>0)retryAt=Math.max(retryAt,SystemClock.elapsedRealtime()+serverDelay);
                         if(status==200&&!ServiceConnection.expired(jwt)){
                             LyricsConfig.preferences(activity).edit().putString("serviceJwt",jwt).apply();finish(true,"Additional lyric sources connected");return;
                         }
-                        if((status==0||status==408||status>=500)&&attempts<3){
+                        if((status==0||status==408||status>=500)&&attempts<3&&serverDelay<=15000){
                             attempts++;retrying=true;LyricsDiagnostics.record("Source connection","Temporary verification failure; retry "+attempts+"/3");
-                            main.removeCallbacks(poll);main.postDelayed(retry,attempts*1000L);return;
+                            main.removeCallbacks(poll);main.postDelayed(retry,Math.max(attempts*1000L,serverDelay));return;
                         }
                         finish(false,status==429?"Source verification rate limited; try Connect sources later":"Verification needs attention; tap Connect sources");
                     }catch(Exception ex){finish(false,"Verification response could not be read; tap Connect sources");}

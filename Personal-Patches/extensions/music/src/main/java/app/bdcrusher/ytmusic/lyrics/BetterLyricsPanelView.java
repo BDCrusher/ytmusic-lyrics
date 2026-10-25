@@ -50,26 +50,28 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private LyricsNetwork enrichmentNetwork;
     private java.util.concurrent.ExecutorService enrichmentExecutor;
     private final List<JSONObject> pending=new ArrayList<>();
+    private JSONObject sourceHealth;
     private final SharedPreferences.OnSharedPreferenceChangeListener listener=(preferences,key)->handler.post(()->{
         if(!"serviceJwt".equals(key))applySettings();
     });
     private final Runnable tick=new Runnable(){public void run(){
         if(!attached)return;
         try{
-            updateTrack();syncOverlay();
+            updateTrack();
             if(ready){
                 LyricsManager manager=LyricsManager.getInstance();
+                long[] clock=RendererPlayback.snapshot(VideoInformation.getVideoId(),manager.getVideoPositionMs(),manager.isPlaybackPlaying(),manager.getPlaybackSpeed());
                 JSONObject sample=new JSONObject().put("generation",generation).put("sampledAt",System.currentTimeMillis())
-                    .put("position",manager.getVideoPositionMs()-Settings.LYRICS_OFFSET_MS.get()-manager.getTemporaryOffsetMs()).put("playing",manager.isPlaybackPlaying())
-                    .put("rate",manager.getPlaybackSpeed()).put("visible",isShown()&&NativeLyricsHost.isOpen());
+                    .put("position",clock[0]-Settings.LYRICS_OFFSET_MS.get()-manager.getTemporaryOffsetMs()).put("playing",clock[1]!=0)
+                    .put("rate",Float.intBitsToFloat((int)clock[2])).put("revision",clock[3]).put("visible",isShown()&&getWindowVisibility()==View.VISIBLE&&NativeLyricsHost.isOpen());
                 call("state",sample.toString());
             }
         }catch(Exception ex){Logger.printException(()->"BDCrusher lyric clock",ex);}
-        handler.postDelayed(this,isShown()?100:500);
+        handler.postDelayed(this,isShown()&&getWindowVisibility()==View.VISIBLE?250:1000);
     }};
     public BetterLyricsPanelView(Context context){super(context);setVisibility(View.INVISIBLE);}
     @Override protected void onWindowVisibilityChanged(int visibility){super.onWindowVisibilityChanged(visibility);call("visible",String.valueOf(visibility==View.VISIBLE&&isShown()));}
-    @Override protected void onVisibilityChanged(View changed,int visibility){super.onVisibilityChanged(changed,visibility);call("visible",String.valueOf(isShown()));}
+    @Override protected void onVisibilityChanged(View changed,int visibility){super.onVisibilityChanged(changed,visibility);call("visible",String.valueOf(isShown()&&getWindowVisibility()==View.VISIBLE));}
     @Override protected void onAttachedToWindow(){
         super.onAttachedToWindow();attached=true;iconsLoading=false;createWebView();getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
         enrichmentNetwork=new LyricsNetwork();enrichmentExecutor=java.util.concurrent.Executors.newSingleThreadExecutor();
@@ -161,13 +163,14 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         }
         String key=LyricsRepository.identity(next,nextId);
         if(key.equals(identity))return;
-        identity=key;track=next;generation++;hasDisplay=false;pending.clear();
+        identity=key;track=next;generation++;hasDisplay=false;pending.clear();sourceHealth=null;
         restoreNativeContent();setVisibility(View.INVISIBLE);if(catalogSink!=null)LyricsRepository.unsubscribe(catalogSink);
         if(ready)sendTrack();
         int expected=generation;
         boolean refresh=forceRefresh;forceRefresh=false;
         LyricsRepository.ensure(getContext(),track,nextId,refresh);
         catalogSink=new LyricsCatalog.Sink(){
+            public void health(JSONObject status){handler.post(()->{if(attached&&generation==expected){sourceHealth=status;call("health",expected+","+status);}});}
             public void reconnect(){handler.postDelayed(()->{if(attached&&generation==expected&&NativeLyricsHost.isOpen())ServiceConnection.renew(getContext());},700);}
             public void result(JSONObject payload){handler.post(()->receive(expected,payload));}
             public void notice(String message,boolean finished){handler.post(()->{if(attached&&generation==expected&&ready)call("notice",expected+","+JSONObject.quote(message)+","+finished);});}
@@ -215,10 +218,10 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private void restoreNativeContent(){for(var entry:covered.entrySet())entry.getKey().setVisibility(entry.getValue());covered.clear();}
     public void syncOverlay(){
         boolean show=Settings.LYRICS_ENABLED.get()&&hasDisplay&&NativeLyricsHost.owns(this);
-        setKeepScreenOn(show&&Settings.LYRICS_KEEP_SCREEN_ON.get());
-        if(show&&getParent() instanceof android.view.ViewGroup parent){for(int i=0;i<parent.getChildCount();i++){View child=parent.getChildAt(i);if(child!=this){covered.putIfAbsent(child,child.getVisibility());child.setVisibility(View.INVISIBLE);}}}
+        boolean keep=show&&Settings.LYRICS_KEEP_SCREEN_ON.get();if(getKeepScreenOn()!=keep)setKeepScreenOn(keep);
+        if(show&&getParent() instanceof android.view.ViewGroup parent){for(int i=0;i<parent.getChildCount();i++){View child=parent.getChildAt(i);if(child!=this){covered.putIfAbsent(child,child.getVisibility());if(child.getVisibility()!=View.INVISIBLE)child.setVisibility(View.INVISIBLE);}}}
         else restoreNativeContent();
-        setVisibility(show?View.VISIBLE:View.INVISIBLE);
+        int visibility=show?View.VISIBLE:View.INVISIBLE;if(getVisibility()!=visibility)setVisibility(visibility);
         LyricsSystemBars.sync(this,Settings.LYRICS_ENABLED.get()&&NativeLyricsHost.owns(this)&&getWindowVisibility()==View.VISIBLE,LyricsConfig.preferences(getContext()).getBoolean("transparentNavigation",true));
     }
     // Preserve the installer's settings callbacks while the personal controls own rendering.
@@ -227,7 +230,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     public void applyHideInfo(){applySettings();}public void applyShowSection(){applySettings();}
     public void applyLineOverlaySettings(){applySettings();}
     public final class Bridge {
-        @JavascriptInterface public void ready(){handler.post(()->{if(!attached||web==null)return;ready=true;sendTrack();applySettings();for(JSONObject payload:pending)receive(generation,payload);pending.clear();});}
+        @JavascriptInterface public void ready(){handler.post(()->{if(!attached||web==null)return;ready=true;sendTrack();applySettings();for(JSONObject payload:pending)receive(generation,payload);pending.clear();if(sourceHealth!=null)call("health",generation+","+sourceHealth);});}
         @JavascriptInterface public void displayed(int id,String source){handler.post(()->{if(id==generation){hasDisplay=true;syncOverlay();}});}
         @JavascriptInterface public void noLyrics(int id){handler.post(()->{if(id==generation){hasDisplay=false;restoreNativeContent();setVisibility(View.INVISIBLE);}});}
         @JavascriptInterface public void dock(boolean collapsed){handler.post(()->LyricsConfig.preferences(getContext()).edit().putBoolean("dockCollapsed",collapsed).apply());}
@@ -238,7 +241,8 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             LyricsManager manager=LyricsManager.getInstance();
             long target=milliseconds+Settings.LYRICS_OFFSET_MS.get()+manager.getTemporaryOffsetMs();
             long duration=VideoInformation.getVideoLength();
-            VideoInformation.seekTo(Math.max(0,duration>0?Math.min(duration,target):target));
+            target=Math.max(0,duration>0?Math.min(duration,target):target);
+            RendererPlayback.seek(VideoInformation.getVideoId(),target);VideoInformation.seekTo(target);
         });}
         @JavascriptInterface public void refresh(){handler.post(()->{forceRefresh=true;reload();});}
         @JavascriptInterface public void pin(int id,String key){

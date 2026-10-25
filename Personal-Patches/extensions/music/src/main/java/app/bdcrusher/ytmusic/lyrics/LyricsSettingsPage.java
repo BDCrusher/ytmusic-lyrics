@@ -51,7 +51,7 @@ public final class LyricsSettingsPage {
         text(c,page,p,"language","Translation language","Language code",java.util.Locale.getDefault().getLanguage());
         category(c,page,"Sources");page.addPreference(new LyricsSourceOrderPreference(c));
         Preference connection=new Preference(c);connection.setTitle("Source connection");
-        String jwt=p.getString("serviceJwt","");connection.setSummary(jwt.isEmpty()?"Additional providers verify automatically while the app is active. Tap if interaction is needed.":ServiceConnection.expired(jwt)?"Additional-provider verification expired Â· tap to renew":"Additional providers connected Â· tap to reconnect");
+        String jwt=p.getString("serviceJwt","");connection.setSummary(jwt.isEmpty()?"Additional providers verify automatically while the app is active. Tap if interaction is needed.":ServiceConnection.expired(jwt)?"Additional-provider verification expired · tap to renew":"Additional providers connected · tap to reconnect");
         connection.setOnPreferenceClickListener(pref->{ServiceConnection.show(c);return true;});page.addPreference(connection);
         Preference diagnostics=new Preference(c);diagnostics.setTitle("Source diagnostics");diagnostics.setSummary("Request metadata and provider outcomes; credentials are excluded");
         diagnostics.setOnPreferenceClickListener(pref->{LyricsDiagnostics.show(c);return true;});page.addPreference(diagnostics);
@@ -64,8 +64,8 @@ public final class LyricsSettingsPage {
         control.setOnPreferenceChangeListener((pref,value)->{p.edit().putBoolean(key,(Boolean)value).apply();return true;});page.addPreference(control);
     }
     private static void text(Context c,PreferenceScreen page,SharedPreferences p,String key,String title,String help,String def){
-        EditTextPreference control=new EditTextPreference(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);control.setText(p.getString(key,def));control.setSummary(help+" Â· "+p.getString(key,def));
-        control.setOnPreferenceChangeListener((pref,value)->{String v=value.toString().trim();p.edit().putString(key,v).apply();control.setSummary(help+" Â· "+v);return true;});page.addPreference(control);
+        EditTextPreference control=new EditTextPreference(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);control.setText(p.getString(key,def));control.setSummary(help+" · "+p.getString(key,def));
+        control.setOnPreferenceChangeListener((pref,value)->{String v=value.toString().trim();p.edit().putString(key,v).apply();control.setSummary(help+" · "+v);return true;});page.addPreference(control);
     }
     private static void alignment(Context c,PreferenceScreen page,SharedPreferences p,String key,String title){
         ListPreference control=new ListPreference(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);

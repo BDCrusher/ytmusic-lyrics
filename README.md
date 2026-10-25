@@ -2,7 +2,7 @@
 
 One Morphe source with two expandable patch categories, like HushFeed's category layout. Personal Better Lyrics providers, Braccato rendering, vocal agents and background vocals for original YouTube Music **9.42.52 / 94252240 arm64-v8a**. Unofficial derivative; phone acceptance is pending.
 
-**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.9-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.9-beta.1)
+**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.10-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.10-beta.1)
 
 ## Expandable categories
 
@@ -26,14 +26,16 @@ Settings: **YouTube Music → Settings → Morphe → Lyrics**.
 
 ## What changed
 
-Additional lyric providers verify automatically while the app is active, without opening a connection dialog. Tokens renew with one hour left while the current token stays usable. A new token adds sources to the existing lyric session, preserving working lyrics and manual selection. Connect sources reveals the current verification if interaction is required.
+A small green/orange/red dot beside the delay replaces the automatic source warning banner. Green means checks completed without unresolved failures and usable lyrics exist; orange means loading/partial/verification needed; red means no usable lyrics. Tap for details, Connect sources or Settings. No automatic popup and no viewport jump when status changes.
 
-Temporary source/network failures have up to three attempts with bounded backoff and Retry-After handling. Denial and not-found responses do not loop. Malformed stream events are skipped so other providers can continue; repeated results after retry do not rebuild the current lyrics.
+Android callback positions now use their native timestamps through one isolated personal clock hook per edition. The bridge clock stays continuous through ordinary jitter; real seeks, pauses and rates stay immediate. Reduce bridge/window work, preserve equivalent lyric DOM, avoid repeated parsing and wait for parsing before noLyrics. Actual Braccato scroll curves, highlighting, BG vocals, agents and letter wave remain.
 
-## Verification
+## Sources and verification
 
-Four exact APK combinations and both official/add-on orders, five invalid-selection rejections, compiled native/SDK/isolation audits, JVM tests and lint pass.114 actual-source simulated Java checks plus11 verification-script checks pass. Fresh live requests retrieve Better Lyrics Wake Up, exact-recording Unison Love Me Dead and LRCLib Man Areas. Unchanged renderer/browser/native-host/navigation checks are explicitly inherited by source hash.
+Ordinary service verification now supports the page message callback plus getResponse fallback and Retry-After. Actual Java Catalog/Network access with a normally issued memory-only test JWT returned all six backends and9 positive payloads, with healthy completed state. Android storage was simulated; phone WebView verification still needs acceptance. No credentials were printed or saved by testing. Connecting cannot guarantee a recording exists at every provider.
 
-**Phone verification and stutter remain unverified.** Silent verification requires an active foreground app host; interactive verification may still be needed. There is no persistent background service and no guarantee every provider has a recording. Screen recording reportedly hides the stutter; no performance fix is claimed here. See [compatibility](COMPATIBILITY.md) and [exact evidence](verification.json).
+Four final APK combinations/both source orders and five rejected conflicts, compiled native/SDK/isolation audits, JVM/lint,143 fresh Java and81 JS checks pass. All16 provider variants and fresh rich-lyrics/control/selection/seek checks pass. A controlled desktop4x CPU comparison had0 reverse steps/long tasks; real-song runs and concurrent-load variability are retained in [exact evidence](verification.json).
+
+**No universal zero-stutter or phone acceptance claim.** Bounded Frame-timing summaries now appear in existing Source diagnostics without screen recording. They measure WebView callback gaps, not GPU/display dropped frames. Native cold presentation and alternate recording-time limits remain. [Compatibility](COMPATIBILITY.md).
 
 [Build](BUILDING.md) | [Compatibility](COMPATIBILITY.md) | [Patch metadata](patches-list.json) | [Source pins](SOURCE-PINS.json) | [Notices](NOTICE) | [Third-party notices](THIRD-PARTY-NOTICES.txt)

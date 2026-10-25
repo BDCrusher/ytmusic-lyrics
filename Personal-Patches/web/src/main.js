@@ -4,6 +4,8 @@ import { parseTTMLContent, parseLRC, parseQRC, PlainParser } from '@braccato/par
 import { processStreamData, fillTtml } from './upstream-providers.ts';
 import { stringSimilarity } from './lyric-parse-utils.ts';
 import { catalog, controls } from './catalog.js';
+import { PlaybackClock } from './playback-clock.js';
+import { FrameBudget } from './frame-budget.js';
 
 export const PRIORITY = ['bLyrics-richsynced','unison-richsynced','binimum-richsynced',
   'unison-wordsynced','portato-richsynced','musixmatch-richsync','bLyrics-synced',
@@ -15,7 +17,24 @@ let settings = {fontSize:28, letterWave:true, wordSync:true, background:true,
   bgSize:0.65, bgOpacity:0.7, agents:{}, translation:false, romanization:false,
   language:'en', passive:false, tapSeek:true, reducedMotion:false};
 let generation = -1, params, selected = '', pinned = '', currentResult;
-let clock = {position:0,playing:false,rate:1,received:performance.now()};
+const clock = new PlaybackClock();
+const frameBudget = new FrameBudget();
+let sourceHealth={pending:1,failed:false,connectionNeeded:false},parsing=0,lookupFinished=false,emptyReported=false,lastHealthLabel='';
+const resultSignatures=new WeakMap();
+let seenPayloads=new Set(),seenPayloadBytes=0;
+function signature(result){if(!resultSignatures.has(result))resultSignatures.set(result,JSON.stringify([result.source,result.language,result.songwriters,result.lyrics]));return resultSignatures.get(result);}
+function updateHealth(){
+ const pending=Math.max(0,sourceHealth.pending||0)+parsing,found=availableKeys.length>0;
+ const color=pending||sourceHealth.connectionNeeded||found&&sourceHealth.failed?'orange':found?'green':'red';
+ const message=pending?'Sources loading':color==='green'?'All source requests completed':found?'Some sources unavailable':'No lyrics available';
+ const label=`${message}. ${availableKeys.length} lyric formats available.${sourceHealth.connectionNeeded?' Verification may need attention.':''}`;
+ if(lookupFinished&&!pending&&!found&&!emptyReported){emptyReported=true;native?.noLyrics(generation);}
+ if(found||pending)emptyReported=false;
+ if(lastHealthLabel===color+'|'+label)return;lastHealthLabel=color+'|'+label;
+ $('source-health').dataset.state=color;$('source-health').setAttribute('aria-label',label);$('source-health').title=label;
+ $('source-summary').textContent=label;
+
+}
 let active = true, raf = 0, enrichmentGeneration = 0;
 let availableKeys = [], autoPreferred='', collapsed = false;
 const reportedMismatches=new Set();
@@ -35,7 +54,9 @@ function closeSources(){const menu=$('source-menu');menuEpoch++;clearTimeout(men
 function positionSources(){const menu=$('source-menu'),rect=$('source-label').getBoundingClientRect();menu.style.maxHeight=`${Math.max(48,Math.min(240,rect.top-16))}px`;menu.style.left=`${Math.max(8,Math.min(rect.left-4,innerWidth-menu.offsetWidth-8))}px`;menu.style.bottom=`${innerHeight-rect.top+8}px`;}
 function openSources(){if(!availableKeys.length)return;clearTimeout(menuCloseTimer);const epoch=++menuEpoch,menu=$('source-menu');menu.hidden=false;menu.inert=false;positionSources();requestAnimationFrame(()=>{if(epoch===menuEpoch)menu.classList.add('open');});$('source-label').setAttribute('aria-expanded','true');}
 function selectSource(key){pinned=key===autoPreferred?'':key;native?.pin(generation,pinned);closeSources();choose(true);}
+let dockSignature='';
 function updateDock(){
+  updateHealth();const key=selected+'|'+availableKeys.join('|');if(dockSignature===key)return;dockSignature=key;
   const entry=config(selected),i=availableKeys.indexOf(selected);
   $('source-name').textContent=entry?.name||(availableKeys.length?'Choose a source':'Looking for lyrics…');
   $('source-position').textContent=i<0?'':`${i+1}/${availableKeys.length}`;
@@ -125,7 +146,7 @@ function choose(force=false) {
     if(!accepted&&!reportedMismatches.has(key)){reportedMismatches.add(key);native?.diagnostic(generation,key,'Automatic match rejected; received lyrics remain available for manual selection');}
     return accepted;
   });
-  $('sources').replaceChildren(...available.map(key=>{
+  if(available.join('|')!==availableKeys.join('|'))$('sources').replaceChildren(...available.map(key=>{
     const option=document.createElement('option');option.value=key;
     option.textContent=params.sourceMap[key].lyricSourceResult.source+' · '+key.split('-').slice(1).join('-');
     return option;
@@ -136,12 +157,12 @@ function choose(force=false) {
   if(!key){
     selected='';currentResult=null;renderer.clear();updateDock();$('sources').value='';
     if(available.length){$('empty').textContent='These lyrics differ from YouTube Music. Choose a source to use them.';$('empty').hidden=false;native?.displayed(generation,'choose-source');}
-    else native?.noLyrics(generation);
+
     return;
   }
   $('sources').value=key;
   const result=params.sourceMap[key].lyricSourceResult;
-  if(!force&&key===selected&&result===currentResult){updateDock();return;}
+  if(!force&&key===selected&&(result===currentResult||currentResult&&signature(result)===signature(currentResult))){params.sourceMap[key].lyricSourceResult=currentResult;updateDock();return;}
   selected=key;currentResult=result;
   
   updateDock();
@@ -151,7 +172,7 @@ function choose(force=false) {
   $('status').textContent=result.source;
   $('status').title=key;
   $('empty').hidden=true;
-  if(/connect|renew/i.test($('notice').textContent))$('connection').hidden=true;
+
   renderer.relayout();
   native?.displayed(generation,key);
   enrichMissing();
@@ -198,9 +219,11 @@ function decorate() {
 function renderFrame(now) {
   raf=0;
   if(!active||document.hidden)return;
+  if(!clock.initialized){raf=requestAnimationFrame(renderFrame);return;}
+  const timing=frameBudget.sample(now,clock.playing);if(timing)native?.diagnostic(generation,'Frame-timing',timing);
   // Android delivers asynchronous snapshots, not a synchronous HTML media element.
   // Extrapolate once at the supplied rate on a monotonic clock; hand Braccato "now".
-  const position=clock.position+(clock.playing?Math.max(0,now-clock.received)*clock.rate:0);
+  const position=clock.read(now);
   renderer.tick(position/1000,{eventCreationTime:Date.now(),isPlaying:clock.playing,
     playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!settings.reducedMotion});
   
@@ -211,18 +234,23 @@ function startClock(){if(!raf&&active&&!document.hidden)raf=requestAnimationFram
 window.BDC = {
   track(track) {
     
-    reportedMismatches.clear();autoPreferred='';
+    reportedMismatches.clear();autoPreferred='';seenPayloads=new Set();seenPayloadBytes=0;clock.reset();frameBudget.reset(performance.now());sourceHealth={pending:1,failed:false,connectionNeeded:false};parsing=0;lookupFinished=false;emptyReported=false;$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');
     generation=track.generation;selected='';pinned=track.preferredSource||'';currentResult=null;enrichmentGeneration++;enrichmentRequested.clear();
     params={song:track.title,artist:track.artist,album:track.album,duration:track.duration,
       videoId:track.videoId,sourceMap:Object.fromEntries([...PRIORITY,'metadata'].map(key=>[key,{filled:false,lyricSourceResult:null}]))};
-    renderer.clear();resetPlaybackClock();
+    renderer.clear();resetPlaybackClock();renderer.resumeAutoscroll();$('resume').hidden=true;resumeScrollUntil=performance.now()+250;
     availableKeys=[];updateDock();$('sources').replaceChildren();$('status').textContent='Looking for lyrics…';
     $('empty').textContent='Looking for lyrics…';$('empty').hidden=false;
     $('track').textContent=track.title+' · '+track.artist;
   },
   async source(id,payload) {
     if(id!==generation||!params)return;
-    const expected=params;
+    const expected=params,cache=seenPayloads;
+    const payloadKey=JSON.stringify(payload.event==='provider'?[payload.event,payload.data?.provider,payload.data?.results,payload.data?.error]:payload);
+    if(cache.has(payloadKey))return;
+    const cached=cache.size<128&&seenPayloadBytes+payloadKey.length*2<=1024*1024;
+    if(cached){cache.add(payloadKey);seenPayloadBytes+=payloadKey.length*2;}
+    parsing++;updateHealth();
     const previous=new Map(PRIORITY.filter(key=>expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length).map(key=>[key,expected.sourceMap[key].lyricSourceResult]));
     try {
       if(payload.event) {
@@ -247,27 +275,31 @@ window.BDC = {
       for(const [key,result] of previous)if(!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length)expected.sourceMap[key].lyricSourceResult=result;
       choose();
     } catch(error){
+      if(cached){cache.delete(payloadKey);if(params===expected)seenPayloadBytes-=payloadKey.length*2;}
       if(id!==generation||params!==expected)return;
       for(const [key,result] of previous)if(!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length)expected.sourceMap[key].lyricSourceResult=result;
       choose();native?.diagnostic(generation,payload.key||payload.event||payload.kind||'unknown',String(error?.message||error).slice(0,240));
       if(!selected)$('status').textContent='A lyric source could not be decoded';
-    }
+    }finally{if(params===expected){parsing=Math.max(0,parsing-1);updateHealth();}}
   },
   state(sample) {
     if(sample.generation!==generation)return;
-    const age=Number.isFinite(sample.sampledAt)?Math.max(0,Math.min(10000,Date.now()-sample.sampledAt)):0;
-    clock={position:sample.position,playing:sample.playing,rate:sample.rate||1,received:performance.now()-age};
-    if(sample.visible===false)active=sample.visible!==false;
-    renderer.noteVisibilityChange();startClock();
+    clock.accept(sample,performance.now(),Date.now());
+    if(typeof sample.visible==='boolean')window.BDC.visible(sample.visible);
+    startClock();
   },
   visible(visible){
     const next=visible===true;if(active===next)return;active=next;
     if(!active){cancelAnimationFrame(raf);raf=0;}
-    renderer.noteVisibilityChange();if(active){renderer.relayout();startClock();}
+    renderer.noteVisibilityChange();if(active){frameBudget.reset(performance.now());renderer.relayout();startClock();}
   },
   settings(next) {
     const rebuild=['translation','romanization','language'].some(key=>key in next&&next[key]!==settings[key]);
-    settings={...settings,...next};const themeRebuild=theme();choose(rebuild||themeRebuild);renderer.relayout();
+    const visual=['fontSize','letterWave','wordSync','background','bgSize','bgOpacity','bgAlignment','agents','reducedMotion'];
+    const changed=visual.some(key=>key in next&&JSON.stringify(next[key])!==JSON.stringify(settings[key]));
+    if('offset' in next&&next.offset!==settings.offset)clock.initialized=false;
+    settings={...settings,...next};const themeRebuild=changed?theme():false;choose(rebuild||themeRebuild);
+    if(changed||rebuild)renderer.relayout();
     
     setCollapsed(settings.dockCollapsed);
     for(const [key,url] of Object.entries(next.buttonIcons||{})){if(!$(key)||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(url))continue;const img=document.createElement('img');img.src=url;img.alt='';$(key).replaceChildren(img);}
@@ -296,20 +328,23 @@ window.BDC = {
     });
     choose(true);
   },
+  health(id,status){if(id!==generation)return;sourceHealth=status;updateHealth();},
   notice(id,message,finished=false){
     if(id!==generation)return;
     if(!selected&&!availableKeys.length){$('empty').textContent=finished?'No lyrics found. YouTube Music’s lyrics remain available behind this panel.':message;}
     $('notice').textContent=message;
-    $('connection').hidden=!/connect|expired|HTTP|failed|unavailable/i.test(message);
+
     $('connect').hidden=!/connect|expired|verification|authorization/i.test(message);
-    if(finished&&!selected&&!availableKeys.length)native?.noLyrics(generation);
+    lookupFinished=finished;updateHealth();
   },
   dispose(){cancelAnimationFrame(raf);clearTimeout(dockLayoutTimer);dockResize.disconnect();renderer.destroy();},
 };
+$('source-health').onclick=()=>{const open=$('connection').hidden;$('connection').hidden=!open;$('source-health').setAttribute('aria-expanded',String(open));};
 $('sources').addEventListener('change',()=>{pinned=$('sources').value;native?.pin(generation,pinned);choose(true);});
 $('source-label').onclick=()=>{$('source-label').getAttribute('aria-expanded')==='true'?closeSources():openSources();};
-document.addEventListener('click',event=>{if(!$('source-menu').contains(event.target)&&!$('source-label').contains(event.target))closeSources();});
+document.addEventListener('click',event=>{if(!$('connection').contains(event.target)&&!$('source-health').contains(event.target)){$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');}if(!$('source-menu').contains(event.target)&&!$('source-label').contains(event.target))closeSources();});
 document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&!$('connection').hidden){$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');$('source-health').focus();return;}
   if($('source-label').getAttribute('aria-expanded')!=='true')return;
   if(event.key==='Escape'){closeSources();$('source-label').focus();}
   if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){

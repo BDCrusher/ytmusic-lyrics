@@ -31,6 +31,10 @@ private object NativeLyricsFactory:Fingerprint(strings=listOf("music_offline_lyr
 
 fun BytecodePatchContext.installNativeLyricsHooks(){
  fun fail(message:String):Nothing=throw PatchException("Unsupported native Lyrics integration: $message. Requires original 9.42.52 / 94252240 arm64-v8a.")
+ val playback=mutableClassDefBy("Lapp/morphe/extension/music/patches/lyrics/LyricsPatch;").methods.singleOrNull {
+  it.name=="onSetPlaybackState"&&it.returnType=="V"&&it.parameterTypes==listOf("Landroid/media/session/PlaybackState;")&&AccessFlags.STATIC.isSet(it.accessFlags)
+ }?:fail("timestamped playback callback")
+ playback.addInstruction(0,"invoke-static/range { p0 .. p0 }, ${OWN}RendererPlayback;->sample(Landroid/media/session/PlaybackState;)V")
  Controller.clearMatch();val controller=Controller.classDef
  val mutableTypes=controller.fields.filter {it.type.startsWith("L")&&!AccessFlags.STATIC.isSet(it.accessFlags)&&!AccessFlags.FINAL.isSet(it.accessFlags)}.map {it.type}
  val setter=controller.methods.singleOrNull {it.returnType=="V"&&it.parameterTypes.size==2&&it.parameterTypes[1]=="Z"&&it.parameterTypes[0] in mutableTypes}?:fail("current panel setter")

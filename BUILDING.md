@@ -1,3 +1,11 @@
+# Current 0.2.10 build and verification
+
+Use app-scoped build-local.ps1 with :lyrics-collection:buildAndroid :patches:test :extensions:music:lintRelease. Verification/verify_revision30_delivery.ps1 applies the exact final bundle in four combinations and rejects conflicts. Earlier revision30 scratch is a candidate. Native clock hook count is exactly one per edition.
+
+Actual-source checks: check_revision30_native_clock.py, check_revision30_connection.py, check_revision30_catalog.py, check_revision30_lifecycle.py and live transport helpers; JS clock/frame/probe scripts execute their actual sources. web/revision30-* scripts cover typed health, real broker decoding, CPU/RAF comparison and rich recordings. Reload between independent browser checks; use the current revision8 dock contract rather than historical revision7 geometry. Use fresh output paths; do not rerun completed reports. Native original APK/wire fixtures stay private.
+
+check_revision30_java_service.py is a one-shot loopback test receiving a normally issued verification through stdin/memory; no credentials should be logged or persisted. It requires ordinary service verification, never bypasses it. Desktop/JVM results do not establish phone acceptance. No device/MuMu/sign/install operations.
+
 # Current 0.2.9 build and verification
 
 Use app-scoped build-local.ps1 with :lyrics-collection:buildAndroid :patches:test :extensions:music:lintRelease. Verification/verify_revision29.ps1 applies four combinations and rejects conflicts. Actual-source checks: check_revision29_connection.py, check_revision29_catalog.py, check_revision29_lifecycle.py and the live transport helpers. check_revision29_probe.js executes the actual browser exchange script. Use fresh report paths. No device/MuMu access.

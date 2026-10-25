@@ -1,3 +1,7 @@
+# 0.2.10-beta.1
+
+Quiet source-status dot, timestamp-aware continuous lyric timing, retained DOM/parsing guards, actual six-backend Java access and bounded frame diagnostics. Phone acceptance pending.
+
 # 0.2.9-beta.1
 
 Automatic source verification and one-hour renewal; retain current lyrics and selection; bounded transient retries and resilient streams. Phone acceptance pending.

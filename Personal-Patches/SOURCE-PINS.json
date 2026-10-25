@@ -94,5 +94,25 @@
     "transientAttempts": 3,
     "verificationExchange": "Normal same-origin browser fetch with credentials include; no native bridge",
     "checkedOn": "2026-10-25"
+  },
+  "quietStatusAndTiming": {
+    "version": "0.2.10-beta.1",
+    "nativePlaybackTimestamp": "PlaybackState.getLastPositionUpdateTime / SystemClock.elapsedRealtime",
+    "hookPerEdition": 1,
+    "bridgeVisibleIntervalMs": 250,
+    "bridgeHiddenIntervalMs": 1000,
+    "clockMaxPhaseCorrectionRate": 0.08,
+    "frameDiagnosticIntervalMs": 30000,
+    "sourceIngestionCacheEntries": 128,
+    "sourceIngestionCacheBytes": 1048576,
+    "ordinaryLiveJavaBrokerProviders": [
+      "qq",
+      "lrclib",
+      "kugou",
+      "golyrics",
+      "binimum",
+      "musixmatch"
+    ],
+    "phoneVerified": false
   }
 }
