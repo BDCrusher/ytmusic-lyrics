@@ -1,8 +1,8 @@
 {
-  "bundleSha256": "f938863a742cc77af0c14a59b9982fde391752b81d7aeed289544d41719bc29d",
+  "bundleSha256": "623e9a05734145b9f948e74df4ecd9227a453cd16bd469d48aa322afcec243ce",
   "patches": [
     {
-      "name": "Third-party lyrics — Better Lyrics add-on",
+      "name": "Third-party lyrics \u2014 Better Lyrics add-on",
       "category": "Lyrics-only Add-on",
       "default": false
     },

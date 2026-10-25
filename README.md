@@ -2,7 +2,7 @@
 
 One Morphe source with two expandable patch categories, like HushFeed's category layout. Personal Better Lyrics providers, Braccato rendering, vocal agents and background vocals for original YouTube Music **9.42.52 / 94252240 arm64-v8a**. Unofficial derivative; phone acceptance is pending.
 
-**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.8-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.8-beta.1)
+**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.9-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.9-beta.1)
 
 ## Expandable categories
 
@@ -26,24 +26,14 @@ Settings: **YouTube Music → Settings → Morphe → Lyrics**.
 
 ## What changed
 
-The cold fallback now mirrors this APK's native Lyrics factory defaults, including its native header/background/persistence behavior, instead of cloning Related. A supplied native Lyrics definition is preserved byte-for-byte, including its native snap/theme/header settings; late native registrations are captured. The native controller, header, close, mini-player and content body remain in charge. **Exact phone/pixel parity remains unverified.**
+Additional lyric providers verify automatically while the app is active, without opening a connection dialog. Tokens renew with one hour left while the current token stays usable. A new token adds sources to the existing lyric session, preserving working lyrics and manual selection. Connect sources reveals the current verification if interaction is required.
 
-Actual Better Lyrics/Braccato per-line scrolling is restored: additive line movement, varied duration/stagger, easing and catch-up. The previous750ms custom viewport path is removed. Only expected-event bookkeeping and explicit gesture recognition are adapted; native timestamp/rate sampling remains. The browser comparison matches8 scroll animations/keyframes/timings against the untouched core package.
-
-The real native Lyrics action is second by default, including before metadata/provider completion. Positive results enable it; confirmed all-not-found moves it explicitly to the end. Unknown connection errors are distinct from empty lookup, and switching the feature off restores the native model. No label/button is painted over it.
-
-Lookup conservatively removes Official Video/Audio labels and Topic suffixes while retaining cover/live/remix qualifiers. LRCLib get404/empty results can use search only with exact normalized title/artist and a maximum2-second duration difference when known. Wrong versions/artists reject; access/rate failures cannot invoke fallback. Existing positive rich-result preservation, manual selection and normal authentication remain.
-
-## Connect sources explained
-
-This is normal Cloudflare verification for Better Lyrics' additional-provider broker, not a Google/YouTube login or account link. It sends recording ID/title/artist/album/duration for lookup and stores an expiring verification token in app-private preferences. Public Better Lyrics, Unison, LRCLib and native sources run independently. Additional broker results include BiniLyrics, Musixmatch, Portato/QQ and Legato/KuGou. Connecting permits those queries; it does not guarantee lyrics exist for every song. Renew when verification expires. Settings and the verification dialog now explain this, and connection status can remain visible beside a working public result.
+Temporary source/network failures have up to three attempts with bounded backoff and Retry-After handling. Denial and not-found responses do not loop. Malformed stream events are skipped so other providers can continue; repeated results after retry do not rebuild the current lyrics.
 
 ## Verification
 
-Four original-APK combinations, both official/add-on orders, five invalid-selection rejections, fresh compiled native/SDK/reference/hierarchy/duplicate-class/asset checks, JVM tests and Android lint passed. Isolated add-on108 owned classes, no foreign/duplicate runtime classes. Actual-source Java:39 host,33 catalog,23 lifecycle checks; the unchanged31-check navigation simulation is reused by exact source identity. Live Java fetches Better Lyrics Wake Up, Unison Love Me Dead and LRCLib Man Areas.
+Four exact APK combinations and both official/add-on orders, five invalid-selection rejections, compiled native/SDK/isolation audits, JVM tests and lint pass.114 actual-source simulated Java checks plus11 verification-script checks pass. Fresh live requests retrieve Better Lyrics Wake Up, exact-recording Unison Love Me Dead and LRCLib Man Areas. Unchanged renderer/browser/native-host/navigation checks are explicitly inherited by source hash.
 
-Browser checks compare the unmodified extension engine, actual rich TTML, manual scroll/resume/seek,16 variants, vocals/agents/letter wave, source selection, glass dock/flyout, themes/sizes and reduced motion. The301-frame visual trace has no reverse steps. Exact hashes and limits: [verification.json](verification.json).
-
-**No Samsung phone/pixel-parity/performance acceptance is claimed.** Cold fallback uses the APK's built-in Lyrics defaults rather than a captured online server definition. Check theme/gesture/snap/button and next-line movement on the phone. Alternate video/audio timeline conversion and Shaders remain absent. No signing, installation, MuMu or device operations occurred.
+**Phone verification and stutter remain unverified.** Silent verification requires an active foreground app host; interactive verification may still be needed. There is no persistent background service and no guarantee every provider has a recording. Screen recording reportedly hides the stutter; no performance fix is claimed here. See [compatibility](COMPATIBILITY.md) and [exact evidence](verification.json).
 
 [Build](BUILDING.md) | [Compatibility](COMPATIBILITY.md) | [Patch metadata](patches-list.json) | [Source pins](SOURCE-PINS.json) | [Notices](NOTICE) | [Third-party notices](THIRD-PARTY-NOTICES.txt)

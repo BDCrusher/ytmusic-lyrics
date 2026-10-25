@@ -51,7 +51,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private java.util.concurrent.ExecutorService enrichmentExecutor;
     private final List<JSONObject> pending=new ArrayList<>();
     private final SharedPreferences.OnSharedPreferenceChangeListener listener=(preferences,key)->handler.post(()->{
-        applySettings();if("serviceJwt".equals(key)&&!preferences.getString("serviceJwt","").isEmpty())reload();
+        if(!"serviceJwt".equals(key))applySettings();
     });
     private final Runnable tick=new Runnable(){public void run(){
         if(!attached)return;

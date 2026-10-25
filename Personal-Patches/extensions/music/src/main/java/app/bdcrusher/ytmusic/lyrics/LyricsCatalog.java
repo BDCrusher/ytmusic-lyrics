@@ -21,17 +21,28 @@ final class LyricsCatalog implements AutoCloseable {
     private volatile boolean closed,connectionNeeded;
     private final Context context;private final String videoId;private final boolean refresh;
     private final LyricsDiskCache cache;private final Sink sink;
+    private final TrackInfo normalized;
+    private final java.util.Set<String> connectionTokens=ConcurrentHashMap.newKeySet();
+    private final java.util.Set<String> delivered=ConcurrentHashMap.newKeySet();
     LyricsCatalog(Context context,TrackInfo track,String videoId,boolean refresh,Sink sink){
         this.context=context;this.videoId=videoId;this.refresh=refresh;this.sink=sink;cache=new LyricsDiskCache(context);
-        TrackInfo normalized=new TrackInfo(LyricsLookup.title(track.title()),LyricsLookup.artist(track.artist()),clean(track.album()),track.durationSeconds());
+        normalized=new TrackInfo(LyricsLookup.title(track.title()),LyricsLookup.artist(track.artist()),clean(track.album()),track.durationSeconds());
         LyricsDiagnostics.record("track","video="+videoId+"; title="+normalized.title()+"; artist="+normalized.artist()+"; album="+normalized.album()+"; duration="+normalized.durationSeconds());
         direct(normalized);
         task("Unison",()->unison(normalized));
-        String jwt=LyricsConfig.preferences(context).getString("serviceJwt","");
-        if(!jwt.isEmpty()&&ServiceConnection.expired(jwt)){connectionNeeded=true;LyricsConfig.preferences(context).edit().remove("serviceJwt").apply();LyricsDiagnostics.record("Combined service","Stored connection expired; normal verification required");sink.reconnect();}
-        else if(!jwt.isEmpty())task("Combined service",()->stream(normalized,jwt));
-        else{connectionNeeded=true;sink.notice("Connect sources to enable the combined Better Lyrics service",false);}
+        connectionChanged();
         finished();
+    }
+    synchronized void connectionChanged(){
+        if(closed)return;
+        String jwt=LyricsConfig.preferences(context).getString("serviceJwt","");
+        if(jwt.isEmpty()||ServiceConnection.expired(jwt)){
+            connectionNeeded=true;sink.notice("Additional sources are verifying automatically; Connect sources is available if interaction is needed",false);return;
+        }
+        if(connectionTokens.size()>=8||!connectionTokens.add(jwt))return;
+        connectionNeeded=false;
+        sink.notice("Loading additional lyric sources",false);
+        task("Combined service",()->stream(normalized,jwt));
     }
     private static String clean(String value){return value==null?"":value.trim();}
     private void unison(TrackInfo t)throws Exception{
@@ -94,7 +105,12 @@ final class LyricsCatalog implements AutoCloseable {
     interface Work {void run()throws Exception;}
     private void task(String source,Work work){
         if(closed)return;remaining.incrementAndGet();
-        try{executor.execute(()->{try{if(!closed)work.run();}catch(LyricsNetwork.HttpFailure ex){
+        try{executor.execute(()->{try{for(int attempt=1;!closed;attempt++){
+            try{work.run();break;}catch(Exception failure){long delay=LyricsRetry.delay(failure,attempt);if(delay<0||closed||Thread.currentThread().isInterrupted())throw failure;
+                LyricsDiagnostics.record(source,"Temporary failure; retry "+(attempt+1)+"/3 in "+delay+" ms");
+                Thread.sleep(delay);
+            }
+        }}catch(LyricsNetwork.HttpFailure ex){
             if(ex.status!=404)lookupFailed.set(true);
             String result=ex.status==404?"Not found":ex.status==401?"Service authorization required":ex.status==403?"Access denied":ex.status==429?"Rate limited":"HTTP "+ex.status;
             LyricsDiagnostics.record(source,result);if(ex.status!=404&&!closed)sink.notice(source+" unavailable: "+result,false);
@@ -102,7 +118,11 @@ final class LyricsCatalog implements AutoCloseable {
         }catch(RejectedExecutionException canceled){finished();}
     }
     private void finished(){if(remaining.decrementAndGet()==0&&!closed){sink.completion(!resultSeen.get()&&!lookupFailed.get()&&!connectionNeeded);sink.notice(connectionNeeded?"Connect sources to enable or renew the combined service":lookupFailed.get()?"Some sources failed; available lyrics have been kept":"Source lookup complete",true);}}
-    private void send(JSONObject payload){if(!closed){if(hasLyricsPayload(payload))resultSeen.set(true);sink.result(payload);}}
+    private void send(JSONObject payload){if(!closed){
+        try{String hash=java.util.Base64.getEncoder().encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(payload.toString().getBytes(StandardCharsets.UTF_8)));if(delivered.contains(hash))return;if(delivered.size()<256)delivered.add(hash);}
+        catch(java.security.NoSuchAlgorithmException impossible){throw new AssertionError(impossible);}
+        if(hasLyricsPayload(payload))resultSeen.set(true);sink.result(payload);
+    }}
     static boolean hasLyricsPayload(JSONObject payload){
         if(!payload.optString("raw").trim().isEmpty())return true;
         if("unison".equals(payload.optString("kind"))){JSONObject data=payload.optJSONObject("data");if(data!=null&&data.optJSONObject("data")!=null)data=data.optJSONObject("data");return data!=null&&!data.optString("lyrics").trim().isEmpty();}
@@ -120,7 +140,9 @@ final class LyricsCatalog implements AutoCloseable {
                 direct(corrected);
             }
         }
-        if("provider".equals(event))LyricsDiagnostics.record("Combined service","Provider "+data.optString("provider")+" received");
+        if("provider".equals(event)){
+            LyricsDiagnostics.record("Combined service","Provider "+data.optString("provider")+" received");
+        }
         send(new JSONObject().put("event",event).put("data",data));
     }
     private void stream(TrackInfo track,String jwt)throws Exception{
@@ -129,19 +151,32 @@ final class LyricsCatalog implements AutoCloseable {
         HttpURLConnection connection=network.open(LyricsNetwork.BROKER+"v2/lyrics","POST",body,"application/x-www-form-urlencoded");
         try{
             int status=connection.getResponseCode();
-            if(status==403){connectionNeeded=true;LyricsConfig.preferences(context).edit().remove("serviceJwt").apply();LyricsDiagnostics.record("Combined service","Connection rejected or expired; normal verification required");sink.notice("Source connection expired — connect again",false);sink.reconnect();return;}
-            if(status!=200)throw new LyricsNetwork.HttpFailure(status);
+            if(status==403){if(!jwt.equals(LyricsConfig.preferences(context).getString("serviceJwt","")))return;connectionNeeded=true;LyricsConfig.preferences(context).edit().remove("serviceJwt").apply();LyricsDiagnostics.record("Combined service","Connection rejected; automatic normal verification requested");sink.notice("Source verification is renewing; Connect sources if interaction is needed",false);sink.reconnect();return;}
+            if(status!=200)throw new LyricsNetwork.HttpFailure(status,connection.getHeaderField("Retry-After"));
             try(BufferedReader reader=new BufferedReader(new InputStreamReader(connection.getInputStream(),StandardCharsets.UTF_8))){
-                String line,event="";StringBuilder data=new StringBuilder();int total=0;
+                String line,event="";StringBuilder data=new StringBuilder();int total=0;boolean providerFailed=false;
                 while(!closed&&(line=reader.readLine())!=null){
-                    total+=line.length();if(total>6*1024*1024)throw new IOException("Stream too large");
-                    if(line.isEmpty()){if(data.length()>0){event(event,new JSONObject(data.toString()));data.setLength(0);}event="";}
+                    total+=line.length();if(total>6*1024*1024)throw new LyricsNetwork.PayloadLimit();
+                    if(line.isEmpty()){if(data.length()>0){providerFailed|=streamEvent(event,data.toString());data.setLength(0);}event="";}
                     else if(line.startsWith("event:"))event=line.substring(6).trim();
                     else if(line.startsWith("data:")){if(data.length()>0)data.append('\n');data.append(line.substring(5).trim());}
                 }
-                if(data.length()>0&&!closed)event(event,new JSONObject(data.toString()));
+                if(data.length()>0&&!closed)providerFailed|=streamEvent(event,data.toString());
+                if(providerFailed&&!closed)throw new IOException("Provider reported a temporary failure");
             }
         }finally{network.release(connection);}
+    }
+    private boolean streamEvent(String event,String raw)throws Exception{
+        if("[DONE]".equals(raw.trim()))return false;
+        JSONObject data;
+        try{data=new JSONObject(raw);}catch(org.json.JSONException malformed){lookupFailed.set(true);LyricsDiagnostics.record("Combined service","Invalid stream event skipped; other sources continue");return false;}
+        event(event,data);
+        if(("provider".equals(event)&&!data.isNull("error")&&!data.optString("error").isEmpty())||"error".equals(event)){
+            int status=data.optInt("status",0);String error=data.optString("error","").toLowerCase(java.util.Locale.ROOT);
+            if(status==401||status==403||status==404||error.contains("not found")||error.contains("unauthoriz")||error.contains("forbidden")){lookupFailed.set(true);return false;}
+            return status==0||status==408||status==429||status>=500;
+        }
+        return false;
     }
     @Override public void close(){closed=true;network.close();executor.shutdownNow();}
 }

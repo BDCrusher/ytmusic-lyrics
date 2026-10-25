@@ -83,5 +83,16 @@
     "instructions": 238,
     "originalApkSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
     "schemaReport": "revision28-panel-schema.json"
+  },
+  "automaticSourceConnection": {
+    "extensionTag": "v3.0.1",
+    "extensionCommit": "7a6a6a104d0667baac6df9f3e126385e3822f179",
+    "reference": "src/modules/lyrics/providers/unified.ts",
+    "renewWhenSecondsRemaining": 3600,
+    "automaticAttemptCooldownMs": 300000,
+    "verificationDeadlineMs": 120000,
+    "transientAttempts": 3,
+    "verificationExchange": "Normal same-origin browser fetch with credentials include; no native bridge",
+    "checkedOn": "2026-10-25"
   }
 }

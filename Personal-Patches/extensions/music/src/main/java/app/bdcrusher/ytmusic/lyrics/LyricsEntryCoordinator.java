@@ -22,7 +22,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
     private boolean started, available,definitelyNotFound;
     private SharedPreferences preferences;
     private final SharedPreferences.OnSharedPreferenceChangeListener preferencesListener = (p, key) -> {
-        if ("serviceJwt".equals(key)) main.post(() -> sync(true));
+        if ("serviceJwt".equals(key)) main.post(LyricsRepository::connectionChanged);
     };
     private final LyricsCatalog.Sink sink = new LyricsCatalog.Sink() {
         public void result(JSONObject payload) {
@@ -73,7 +73,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
         String id = VideoInformation.getVideoId();
         if (!Settings.LYRICS_ENABLED.get() || track == null || id == null || id.isEmpty()) {
             if (!identity.isEmpty()) LyricsRepository.clear();
-            identity = ""; available = false; entry.clear(); return;
+            identity = ""; available = false; entry.clear(); ServiceConnection.cancel(); return;
         }
         if (!id.equals(manager.getCommittedVideoId())) {
             if (!identity.isEmpty()) LyricsRepository.clear();
@@ -86,6 +86,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
             preferences = LyricsConfig.preferences(activity.getApplicationContext());
             preferences.registerOnSharedPreferenceChangeListener(preferencesListener);
         }
+        ServiceConnection.ensure(activity);
         String next = LyricsRepository.identity(track, id);
         if (!next.equals(identity) || refresh) {
             identity = next; available = false;definitelyNotFound=false; entry.trackChanged(next);

@@ -13,7 +13,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Fixed public origins; no arbitrary URL, credential, cookie or host-key bridge. */
 final class LyricsNetwork implements AutoCloseable {
-    static final class HttpFailure extends IOException {final int status;HttpFailure(int status){super("HTTP "+status);this.status=status;}}
+    static final class PayloadLimit extends IOException {PayloadLimit(){super("Lyrics response exceeds size limit");}}
+    static final class HttpFailure extends IOException {
+        final int status;final long retryAfterMs;
+        HttpFailure(int status){this(status,null);}
+        HttpFailure(int status,String retryAfter){super("HTTP "+status);this.status=status;retryAfterMs=retryAfter(retryAfter);}
+    }
+    static long retryAfter(String value){
+        if(value==null)return 0;
+        try{long seconds=Long.parseLong(value.trim());return seconds<=0?0:seconds>86400?86400000:seconds*1000;}
+        catch(NumberFormatException ignored){try{return Math.max(0,java.time.ZonedDateTime.parse(value,java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME).toInstant().toEpochMilli()-System.currentTimeMillis());}catch(java.time.format.DateTimeParseException invalid){return 0;}}
+    }
     static final String BROKER="https://lyrics.api.dacubeking.com/";
     private final Set<HttpURLConnection> connections=ConcurrentHashMap.newKeySet();
     private volatile boolean closed;
@@ -28,17 +38,18 @@ final class LyricsNetwork implements AutoCloseable {
         connection.setRequestProperty("Accept","application/json, text/event-stream");connection.setRequestMethod(method);
         connections.add(connection);
         if(closed){release(connection);throw new IOException("Lyrics request canceled");}
-        if(body!=null){byte[] bytes=body.getBytes(StandardCharsets.UTF_8);connection.setDoOutput(true);connection.setRequestProperty("Content-Type",contentType);connection.setFixedLengthStreamingMode(bytes.length);try(var out=connection.getOutputStream()){out.write(bytes);}}
+        try{if(body!=null){byte[] bytes=body.getBytes(StandardCharsets.UTF_8);connection.setDoOutput(true);connection.setRequestProperty("Content-Type",contentType);connection.setFixedLengthStreamingMode(bytes.length);try(var out=connection.getOutputStream()){out.write(bytes);}}}
+        catch(Exception failure){release(connection);throw failure;}
         return connection;
     }
     String request(String url,String method,String body,String type)throws Exception{
         HttpURLConnection connection=open(url,method,body,type);
         try{
             int code=connection.getResponseCode();
-            if(code!=200)throw new HttpFailure(code);
+            if(code!=200)throw new HttpFailure(code,connection.getHeaderField("Retry-After"));
             try(InputStream input=connection.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()){
                 byte[] buffer=new byte[8192];int count,total=0;
-                while((count=input.read(buffer))!=-1){total+=count;if(total>4*1024*1024)throw new IOException("Lyrics response too large");if(closed||Thread.currentThread().isInterrupted())throw new IOException("Lyrics request canceled");out.write(buffer,0,count);}
+                while((count=input.read(buffer))!=-1){total+=count;if(total>4*1024*1024)throw new PayloadLimit();if(closed||Thread.currentThread().isInterrupted())throw new IOException("Lyrics request canceled");out.write(buffer,0,count);}
                 return new String(out.toByteArray(),StandardCharsets.UTF_8);
             }
         }finally{release(connection);}

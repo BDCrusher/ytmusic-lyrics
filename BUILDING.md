@@ -1,3 +1,7 @@
+# Current 0.2.9 build and verification
+
+Use app-scoped build-local.ps1 with :lyrics-collection:buildAndroid :patches:test :extensions:music:lintRelease. Verification/verify_revision29.ps1 applies four combinations and rejects conflicts. Actual-source checks: check_revision29_connection.py, check_revision29_catalog.py, check_revision29_lifecycle.py and the live transport helpers. check_revision29_probe.js executes the actual browser exchange script. Use fresh report paths. No device/MuMu access.
+
 # Current0.2.8 build and verification
 
 JDK25.0.5.0.2 replaces the removed25.0.4.1 path. Use the existing app-scoped build-local/verify-stable wrappers. Current verification: Verification/verify_revision28_delivery.ps1; check_revision28_host.py, check_revision28_catalog_final.py, check_revision28_lifecycle.py and live transport checks. Use fresh output folders; do not rerun completed canonical reports. Original APK and native wire fixtures remain private inputs. The31-check revision27 navigation simulation is inherited only because its source hash is unchanged.

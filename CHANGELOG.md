@@ -1,3 +1,7 @@
+# 0.2.9-beta.1
+
+Automatic source verification and one-hour renewal; retain current lyrics and selection; bounded transient retries and resilient streams. Phone acceptance pending.
+
 # Changelog
 
 ## 0.2.8-beta.1
