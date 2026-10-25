@@ -2,7 +2,7 @@
 
 One Morphe source with two expandable patch categories, like HushFeed's category layout. Personal Better Lyrics providers, Braccato rendering, vocal agents and background vocals for original YouTube Music **9.42.52 / 94252240 arm64-v8a**. Unofficial derivative; phone acceptance is pending.
 
-**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.10-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.10-beta.1)
+**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.11-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.11-beta.1)
 
 ## Expandable categories
 
@@ -26,16 +26,14 @@ Settings: **YouTube Music → Settings → Morphe → Lyrics**.
 
 ## What changed
 
-A small green/orange/red dot beside the delay replaces the automatic source warning banner. Green means checks completed without unresolved failures and usable lyrics exist; orange means loading/partial/verification needed; red means no usable lyrics. Tap for details, Connect sources or Settings. No automatic popup and no viewport jump when status changes.
+Navigation is now always transparent while Lyrics is open. The bar/divider uses zero alpha, contrast scrim is disabled where supported, and the matching-color mode/toggle and protection overlays are removed. Old saved matching preferences cannot turn it back on. Native navigation buttons, icon appearance and normal content insets remain under native control; closing Lyrics restores native window state.
 
-Android callback positions now use their native timestamps through one isolated personal clock hook per edition. The bridge clock stays continuous through ordinary jitter; real seeks, pauses and rates stay immediate. Reduce bridge/window work, preserve equivalent lyric DOM, avoid repeated parsing and wait for parsing before noLyrics. Actual Braccato scroll curves, highlighting, BG vocals, agents and letter wave remain.
+Lyrics rendering, timing, source retrieval and the status dot are unchanged from0.2.10. The same Full and Lyrics-only categories and source connection link remain.
 
-## Sources and verification
+## Verification
 
-Ordinary service verification now supports the page message callback plus getResponse fallback and Retry-After. Actual Java Catalog/Network access with a normally issued memory-only test JWT returned all six backends and9 positive payloads, with healthy completed state. Android storage was simulated; phone WebView verification still needs acceptance. No credentials were printed or saved by testing. Connecting cannot guarantee a recording exists at every provider.
+47 fresh helper window-state checks cover API26/28/29/30/36, gestures/side/bottom bars, themes, focus, renderer ownership, repeated writes and restoration. Four exact APK combinations/both source orders, five rejected conflicts, compiled native/SDK/isolation audits, JVM tests and lint pass. Prior browser/clock/source results are reused only after exact source/asset hashes match.
 
-Four final APK combinations/both source orders and five rejected conflicts, compiled native/SDK/isolation audits, JVM/lint,143 fresh Java and81 JS checks pass. All16 provider variants and fresh rich-lyrics/control/selection/seek checks pass. A controlled desktop4x CPU comparison had0 reverse steps/long tasks; real-song runs and concurrent-load variability are retained in [exact evidence](verification.json).
-
-**No universal zero-stutter or phone acceptance claim.** Bounded Frame-timing summaries now appear in existing Source diagnostics without screen recording. They measure WebView callback gaps, not GPU/display dropped frames. Native cold presentation and alternate recording-time limits remain. [Compatibility](COMPATIBILITY.md).
+**Real Samsung/One UI transparency still needs phone acceptance.** Transparency reveals the native app underneath; this patch does not hide navigation buttons or globally change window insets. Previous phone-performance/WebView/native-cold-panel/timeline limitations remain. [Compatibility](COMPATIBILITY.md) | [Exact verification](verification.json).
 
 [Build](BUILDING.md) | [Compatibility](COMPATIBILITY.md) | [Patch metadata](patches-list.json) | [Source pins](SOURCE-PINS.json) | [Notices](NOTICE) | [Third-party notices](THIRD-PARTY-NOTICES.txt)

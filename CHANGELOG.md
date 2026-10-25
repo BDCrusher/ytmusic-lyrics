@@ -1,3 +1,7 @@
+# 0.2.11-beta.1
+
+Always-transparent Lyrics navigation; remove matching mode/toggle and opaque sampling/protection. Native icons/insets and close restoration preserved. Phone acceptance pending.
+
 # 0.2.10-beta.1
 
 Quiet source-status dot, timestamp-aware continuous lyric timing, retained DOM/parsing guards, actual six-backend Java access and bounded frame diagnostics. Phone acceptance pending.

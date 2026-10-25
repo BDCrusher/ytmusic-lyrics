@@ -1,3 +1,25 @@
+# Current build - 0.2.11-beta.1
+
+Lyrics system navigation is always transparent. Remove the matching toggle, color sampling and opaque protection overlays; ignore saved transparentNavigation=false. Preserve native navigation icons/insets and restore native window state on close. Source/renderer/timing/status-dot assets and other personal logic are unchanged from0.2.10.
+
+47 fresh actual-helper window-state checks, four exact APK combinations/both source orders, five conflicts, compiled native/SDK/isolation audits, JVM/lint pass. The compiled audit requires the transparent-only two-argument API and rejects helper overlay/Bitmap/icon overrides. Prior browser/clock/source/service evidence is reused only after exact source and asset hashes match. Real Samsung/One UI transparency remains unverified; no new performance/provider acceptance claim. No device/MuMu/sign/install/uninstall operations or copied globals.
+
+Read [TRANSPARENT-NAVIGATION-2026-10-25.md](../Research/TRANSPARENT-NAVIGATION-2026-10-25.md) and app-home Personal-Patches/dist/0.2.11-beta.1/verification.json. MPP SHA256 9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a. Current helpers: Verification/check_revision31_navigation.py, verify_revision31.ps1, stage_revision31.py; use fresh outputs and never rerun completed generators. Publication receipts, once complete: Verification/publication/v0.2.11-beta.1/publication-result.json. Shared Toolkit runs in place; never push private Personal-Patches history.
+
+Exact target stays original9.42.52/94252240 arm64, official1.48.0, engine2.0.0/inherited1.15.1 matching semantics. Use Full alone OR deselect all Full patches and use add-on with official defaults, official Third-party lyrics OFF. Same root feed/categories; enable Pre-release patches/Experimental app versions, refresh and repatch original APK. Settings: Morphe > Lyrics. Previous phone-performance/WebView/cold-panel/timeline limits remain. Scratch is retained/regenerable; cleanup was not authorized.
+
+## Historical record
+
+# Published - 0.2.10-beta.1
+
+[0.2.10-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.10-beta.1) is published. Public source, all 10 assets and the dev feed were verified against the preparation; 7418 source files matched. Source `2fcfbf6095c68a27dbd81d0ab8fc3c6d8549f478`, feed `4d93cecd2a7859b0d61eeae2c92d86de974fdb65`. MPP SHA256 `ebeb65e0016c61271c8346b295366e03e42225c30dacd171c449f56118790533`. Exact receipt: Verification/publication/v0.2.10-beta.1/publication-result.json. Shared Toolkit ran in place; private history was not pushed.
+
+Quiet typed source dot, timestamp-aware continuous timing, retained parsing/DOM/follow state, normal verification callback and bounded recording-free frame diagnostics are shared by both editions. Four final APK combinations/both orders, five conflicts, native hook/SDK/isolation audits, JVM/lint,143 fresh Java/81 JS checks and fresh16-format/browser checks pass. Actual Java HTTP with normal verification returned all six backends and9 positive payloads. No credentials persisted. All performance runs are retained, including concurrent-load variability; no universal zero-stutter or phone/WebView acceptance claim.
+
+Refresh the existing source with Pre-release patches and Experimental app versions enabled, then repatch original9.42.52/94252240 arm64. Use Full alone OR deselect every Full patch and use add-on with official1.48.0 defaults, official Third-party lyrics OFF. Settings: Morphe > Lyrics; Frame-timing summaries appear in Source diagnostics without recording. No device/MuMu/sign/install/uninstall operations or copied globals.
+
+## Build and prior records
+
 # Current build - 0.2.10-beta.1
 
 Replace automatic source banners with a typed green/orange/red dot right of delay; tap for details. Use a separate timestamp-aware native renderer clock and continuous bridge clock, retain actual Braccato curves, reduce native polling/window work, avoid repeated parsing/DOM resets and premature noLyrics hides, reset follow on tracks and respect hidden windows. Normal verification supports the service's message callback and Retry-After. Bounded Frame-timing summaries are in existing Source diagnostics without recording.

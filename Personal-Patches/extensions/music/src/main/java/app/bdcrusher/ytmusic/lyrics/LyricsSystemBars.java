@@ -2,37 +2,24 @@
 package app.bdcrusher.ytmusic.lyrics;
 
 import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Rect;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowInsets;
-import android.view.WindowInsetsController;
 import java.lang.ref.WeakReference;
 import app.morphe.extension.shared.Utils;
 
-/** Native navigation-inset protection, scoped to the displayed native Lyrics panel. */
+/** Transparent navigation while the native Lyrics panel owns the current window. */
 @SuppressWarnings("deprecation")
 final class LyricsSystemBars {
-    private static WeakReference<View> owner=new WeakReference<>(null),decorRef=new WeakReference<>(null);
+    private static WeakReference<View> owner=new WeakReference<>(null);
     private static WeakReference<Window> windowRef=new WeakReference<>(null);
-    private static final ColorDrawable protection=new ColorDrawable();
-    private static int previousColor,previousDivider,previousAppearance,appliedColor;
+    private static int previousColor,previousDivider;
     private static boolean previousContrast;
-    private static boolean protectionAdded;
-    private static Bitmap samplePixel;
-    private static Canvas sampleCanvas;
     private LyricsSystemBars(){}
 
     static void sync(View view,boolean active){
-        sync(view,active,false);
-    }
-    static void sync(View view,boolean active,boolean transparent){
         if(!active){release(view);return;}
         Activity activity=Utils.getActivity();
         if(activity==null||activity.isFinishing()||activity.isDestroyed()||!(view.getParent() instanceof View body)){
@@ -40,87 +27,38 @@ final class LyricsSystemBars {
         }
         Window window=activity.getWindow();View decor=window.getDecorView();
         if(view.getWindowToken()==null||!view.getWindowToken().equals(decor.getWindowToken())){release(view);return;}
-        Rect navigation=navigationBounds(decor);
-        Integer color=transparent?Integer.valueOf(Color.TRANSPARENT):panelColor(body);
-        if(!body.isShown()||!decor.hasWindowFocus()||navigation.isEmpty()||color==null){release(view);return;}
+        if(!body.isShown()||!decor.hasWindowFocus()||!hasNavigation(decor)){release(view);return;}
         if(owner.get()!=view||windowRef.get()!=window){
-            release(null);owner=new WeakReference<>(view);decorRef=new WeakReference<>(decor);windowRef=new WeakReference<>(window);
-            previousColor=window.getNavigationBarColor();previousAppearance=appearance(window,decor);
+            release(null);owner=new WeakReference<>(view);windowRef=new WeakReference<>(window);
+            previousColor=window.getNavigationBarColor();
             previousDivider=Build.VERSION.SDK_INT>=28?window.getNavigationBarDividerColor():0;
             previousContrast=Build.VERSION.SDK_INT>=29&&window.isNavigationBarContrastEnforced();
-            appliedColor=previousColor;protectionAdded=false;
-        }else if(window.getNavigationBarColor()!=appliedColor){
-            // Preserve a newer native theme update for restoration after closing Lyrics.
-            previousColor=window.getNavigationBarColor();
+        }else{
+            // Retain native theme changes for restoration when Lyrics closes.
+            if(window.getNavigationBarColor()!=Color.TRANSPARENT)previousColor=window.getNavigationBarColor();
+            if(Build.VERSION.SDK_INT>=28&&window.getNavigationBarDividerColor()!=Color.TRANSPARENT)previousDivider=window.getNavigationBarDividerColor();
+            if(Build.VERSION.SDK_INT>=29&&window.isNavigationBarContrastEnforced())previousContrast=true;
         }
-        if(transparent){if(protectionAdded)decor.getOverlay().remove(protection);protectionAdded=false;}
-        else{if(!protectionAdded){decor.getOverlay().add(protection);protectionAdded=true;}protection.setColor(color);protection.setBounds(navigation);}
-        appliedColor=color;
-        if(window.getNavigationBarColor()!=color)window.setNavigationBarColor(color);
+        if(window.getNavigationBarColor()!=Color.TRANSPARENT)window.setNavigationBarColor(Color.TRANSPARENT);
         if(Build.VERSION.SDK_INT>=28&&window.getNavigationBarDividerColor()!=Color.TRANSPARENT)window.setNavigationBarDividerColor(Color.TRANSPARENT);
         if(Build.VERSION.SDK_INT>=29&&window.isNavigationBarContrastEnforced())window.setNavigationBarContrastEnforced(false);
-        // Native icon appearance already matches the native window underneath transparency.
-        if(transparent){
-            if(Build.VERSION.SDK_INT>=30){WindowInsetsController c=window.getInsetsController();if(c!=null&&(c.getSystemBarsAppearance()&WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)!=previousAppearance)c.setSystemBarsAppearance(previousAppearance,WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);}
-            else{int flags=decor.getSystemUiVisibility(),desired=(flags&~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)|previousAppearance;if(flags!=desired)decor.setSystemUiVisibility(desired);}
-            return;
-        }
-        boolean light=Color.red(color)*299+Color.green(color)*587+Color.blue(color)*114>=160000;
-        if(Build.VERSION.SDK_INT>=30){
-            WindowInsetsController controller=window.getInsetsController();
-            int desired=light?WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS:0;
-            if(controller!=null&&(controller.getSystemBarsAppearance()&WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS)!=desired)controller.setSystemBarsAppearance(desired,WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);
-        }else{
-            int flags=decor.getSystemUiVisibility(),desired=light?flags|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR:flags&~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-            if(flags!=desired)decor.setSystemUiVisibility(desired);
-        }
+        // Leave native button/icon appearance and content/window insets untouched.
     }
     static void release(View view){
         if(view!=null&&owner.get()!=view)return;
-        Window window=windowRef.get();View decor=decorRef.get();
-        if(decor!=null&&protectionAdded)decor.getOverlay().remove(protection);
-        protectionAdded=false;
-        if(window!=null&&decor!=null){
-            if(window.getNavigationBarColor()==appliedColor)window.setNavigationBarColor(previousColor);
+        Window window=windowRef.get();
+        if(window!=null){
+            if(window.getNavigationBarColor()==Color.TRANSPARENT)window.setNavigationBarColor(previousColor);
             if(Build.VERSION.SDK_INT>=28&&window.getNavigationBarDividerColor()==Color.TRANSPARENT)window.setNavigationBarDividerColor(previousDivider);
             if(Build.VERSION.SDK_INT>=29&&!window.isNavigationBarContrastEnforced())window.setNavigationBarContrastEnforced(previousContrast);
-            if(Build.VERSION.SDK_INT>=30){WindowInsetsController controller=window.getInsetsController();if(controller!=null)controller.setSystemBarsAppearance(previousAppearance,WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS);}
-            else{int flags=decor.getSystemUiVisibility();decor.setSystemUiVisibility((flags&~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR)|previousAppearance);}
         }
-        owner.clear();decorRef.clear();windowRef.clear();
+        owner.clear();windowRef.clear();
     }
-    private static int appearance(Window window,View decor){
-        if(Build.VERSION.SDK_INT>=30){WindowInsetsController controller=window.getInsetsController();return controller==null?0:controller.getSystemBarsAppearance()&WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;}
-        return decor.getSystemUiVisibility()&View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-    }
-    private static Rect navigationBounds(View decor){
-        WindowInsets insets=decor.getRootWindowInsets();if(insets==null)return new Rect();
+    private static boolean hasNavigation(View decor){
+        WindowInsets insets=decor.getRootWindowInsets();if(insets==null)return false;
         int bottom,left,right;
         if(Build.VERSION.SDK_INT>=30){android.graphics.Insets n=insets.getInsets(WindowInsets.Type.navigationBars());bottom=n.bottom;left=n.left;right=n.right;}
         else{bottom=Math.min(insets.getSystemWindowInsetBottom(),insets.getStableInsetBottom());left=Math.min(insets.getSystemWindowInsetLeft(),insets.getStableInsetLeft());right=Math.min(insets.getSystemWindowInsetRight(),insets.getStableInsetRight());}
-        int w=decor.getWidth(),h=decor.getHeight();
-        if(bottom>0&&bottom<h)return new Rect(0,h-bottom,w,h);
-        if(right>0&&right<w)return new Rect(w-right,0,w,h);
-        if(left>0&&left<w)return new Rect(0,0,left,h);
-        return new Rect();
-    }
-    private static Integer panelColor(View body){
-        for(int depth=0;body!=null&&depth<12;depth++){
-            Drawable background=body.getBackground();
-            if(background!=null){
-                Integer color=sample(background);
-                if(color!=null&&Color.alpha(color)==255)return color;
-            }
-            body=body.getParent() instanceof View?(View)body.getParent():null;
-        }
-        return null;
-    }
-    private static Integer sample(Drawable drawable){
-        Rect bounds=drawable.getBounds();if(bounds.isEmpty())return null;
-        if(samplePixel==null){samplePixel=Bitmap.createBitmap(1,1,Bitmap.Config.ARGB_8888);sampleCanvas=new Canvas(samplePixel);}
-        samplePixel.eraseColor(Color.TRANSPARENT);int saved=sampleCanvas.save();
-        try{sampleCanvas.translate(-bounds.centerX(),-(bounds.bottom-1));drawable.draw(sampleCanvas);return samplePixel.getPixel(0,0);}
-        catch(RuntimeException unsupported){return null;}
-        finally{sampleCanvas.restoreToCount(saved);}
+        return bottom>0&&bottom<decor.getHeight()||left>0&&left<decor.getWidth()||right>0&&right<decor.getWidth();
     }
 }

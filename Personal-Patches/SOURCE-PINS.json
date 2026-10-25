@@ -114,5 +114,17 @@
       "musixmatch"
     ],
     "phoneVerified": false
+  },
+  "lyricsNavigation": {
+    "version": "0.2.11-beta.1",
+    "mode": "always-transparent",
+    "matchingMode": false,
+    "legacyPreferenceIgnored": "transparentNavigation",
+    "colorSampling": false,
+    "opaqueOverlays": false,
+    "iconAppearanceOverride": false,
+    "globalInsetChanges": false,
+    "restoresNativeWindowOnClose": true,
+    "phoneVerified": false
   }
 }

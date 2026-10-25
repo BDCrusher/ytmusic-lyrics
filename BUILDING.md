@@ -1,3 +1,9 @@
+# Current0.2.11 build and verification
+
+Use existing app-scoped build-local.ps1 with :lyrics-collection:buildAndroid :patches:test :extensions:music:lintRelease. Verification/verify_revision31.ps1 applies four exact combinations and rejects conflicts; check_revision31_navigation.py runs the actual window helper against simulated Android boundaries. Use fresh output paths. The compiled audit requires two-argument transparent-only navigation and rejects sampling/overlay/icon overrides.
+
+Renderer/source/clock assets and code are unchanged from0.2.10 and prior evidence is reused by exact hashes. No new browser/provider/performance claim is made. Native original APK remains a private input. Real phone/One UI checks are separate; no device/MuMu/sign/install operations.
+
 # Current 0.2.10 build and verification
 
 Use app-scoped build-local.ps1 with :lyrics-collection:buildAndroid :patches:test :extensions:music:lintRelease. Verification/verify_revision30_delivery.ps1 applies the exact final bundle in four combinations and rejects conflicts. Earlier revision30 scratch is a candidate. Native clock hook count is exactly one per edition.

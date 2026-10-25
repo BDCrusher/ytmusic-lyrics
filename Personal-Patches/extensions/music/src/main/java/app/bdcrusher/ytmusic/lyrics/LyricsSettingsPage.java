@@ -40,7 +40,6 @@ public final class LyricsSettingsPage {
         category(c,page,"Rendering");
         toggle(c,page,p,"wordSync","Word and syllable highlighting",true);toggle(c,page,p,"letterWave","Letter wave",true);
         number(c,page,p,"fontSize","Lyrics text size",20,44,28);toggle(c,page,p,"reducedMotion","Reduce motion",false);
-        toggle(c,page,p,"transparentNavigation","Transparent system navigation",true);
         toggle(c,page,p,"tapSeek","Tap lyrics to seek",true);toggle(c,page,p,"passive","Slow scroll for untimed lyrics",false);
         category(c,page,"Background vocals and singers");toggle(c,page,p,"background","Show background vocals",true);
         number(c,page,p,"bgSize","Background vocal size",40,90,65);number(c,page,p,"bgOpacity","Background vocal opacity",30,100,70);

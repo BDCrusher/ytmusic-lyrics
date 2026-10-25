@@ -222,7 +222,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         if(show&&getParent() instanceof android.view.ViewGroup parent){for(int i=0;i<parent.getChildCount();i++){View child=parent.getChildAt(i);if(child!=this){covered.putIfAbsent(child,child.getVisibility());if(child.getVisibility()!=View.INVISIBLE)child.setVisibility(View.INVISIBLE);}}}
         else restoreNativeContent();
         int visibility=show?View.VISIBLE:View.INVISIBLE;if(getVisibility()!=visibility)setVisibility(visibility);
-        LyricsSystemBars.sync(this,Settings.LYRICS_ENABLED.get()&&NativeLyricsHost.owns(this)&&getWindowVisibility()==View.VISIBLE,LyricsConfig.preferences(getContext()).getBoolean("transparentNavigation",true));
+        LyricsSystemBars.sync(this,Settings.LYRICS_ENABLED.get()&&NativeLyricsHost.owns(this)&&getWindowVisibility()==View.VISIBLE);
     }
     // Preserve the installer's settings callbacks while the personal controls own rendering.
     public void applyToolbarButtonSettings(){applySettings();}public void applyTextSize(){applySettings();}
