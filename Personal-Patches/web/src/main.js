@@ -4,7 +4,6 @@ import { parseTTMLContent, parseLRC, parseQRC, PlainParser } from '@braccato/par
 import { processStreamData, fillTtml } from './upstream-providers.ts';
 import { stringSimilarity } from './lyric-parse-utils.ts';
 import { catalog, controls } from './catalog.js';
-import { createViewportMotion } from './viewport-motion.js';
 
 export const PRIORITY = ['bLyrics-richsynced','unison-richsynced','binimum-richsynced',
   'unison-wordsynced','portato-richsynced','musixmatch-richsync','bLyrics-synced',
@@ -62,17 +61,15 @@ const dockResize=new ResizeObserver(()=>{
 });
 $('dock-content').addEventListener('transitionend',event=>{if(event.propertyName==='grid-template-rows')settleDockLayout();});
 const enrichmentRequested=new Set();
+let resumeScrollUntil=0;
+function resumeFollow(){resumeScrollUntil=performance.now()+120;renderer.resumeAutoscroll();}
 let renderer = createLyricsRenderer({document,window,mount:$('lyrics'),host:{
   getScrollElement:()=>$('scroll'),
   isViewVisible:()=>active && !document.hidden,
   setResumeAffordanceVisible:visible=>$('resume').hidden=!visible,
-  seek:seconds=>{if(settings.tapSeek){viewportMotion?.settle();native?.seek(Math.round(seconds*1000));renderer.resumeAutoscroll();}},
+  seek:seconds=>{if(settings.tapSeek){native?.seek(Math.round(seconds*1000));resumeFollow();}},
   log:message=>native?.diagnostic(generation,'Renderer',String(message).slice(0,240)),
 }});
-const viewportMotion=createViewportMotion($('scroll'));
-const systemReducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
-function configureMotion(){viewportMotion?.configure(renderer.syncType!=='none'&&renderer.syncType!=='plain',settings.reducedMotion||systemReducedMotion.matches);}
-systemReducedMotion.addEventListener('change',configureMotion);
 
 function theme() {
   const css = `/* blyrics-letter-wave = ${settings.letterWave&&!settings.reducedMotion&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -137,7 +134,7 @@ function choose(force=false) {
   const key=available.includes(pinned)?pinned:autoPreferred;
   availableKeys=available;
   if(!key){
-    selected='';currentResult=null;viewportMotion?.cancel();renderer.clear();configureMotion();updateDock();$('sources').value='';
+    selected='';currentResult=null;renderer.clear();updateDock();$('sources').value='';
     if(available.length){$('empty').textContent='These lyrics differ from YouTube Music. Choose a source to use them.';$('empty').hidden=false;native?.displayed(generation,'choose-source');}
     else native?.noLyrics(generation);
     return;
@@ -146,10 +143,10 @@ function choose(force=false) {
   const result=params.sourceMap[key].lyricSourceResult;
   if(!force&&key===selected&&result===currentResult){updateDock();return;}
   selected=key;currentResult=result;
-  viewportMotion?.cancel();
+  
   updateDock();
   renderer.setLyrics(result.lyrics,{language:result.language,songwriters:result.songwriters});
-  configureMotion();
+  
   decorate();
   $('status').textContent=result.source;
   $('status').title=key;
@@ -205,15 +202,15 @@ function renderFrame(now) {
   // Extrapolate once at the supplied rate on a monotonic clock; hand Braccato "now".
   const position=clock.position+(clock.playing?Math.max(0,now-clock.received)*clock.rate:0);
   renderer.tick(position/1000,{eventCreationTime:Date.now(),isPlaying:clock.playing,
-    playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!viewportMotion&&!settings.reducedMotion});
-  viewportMotion?.advance(now);
+    playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!settings.reducedMotion});
+  
   raf=requestAnimationFrame(renderFrame);
 }
 function startClock(){if(!raf&&active&&!document.hidden)raf=requestAnimationFrame(renderFrame);}
 
 window.BDC = {
   track(track) {
-    viewportMotion?.cancel();
+    
     reportedMismatches.clear();autoPreferred='';
     generation=track.generation;selected='';pinned=track.preferredSource||'';currentResult=null;enrichmentGeneration++;enrichmentRequested.clear();
     params={song:track.title,artist:track.artist,album:track.album,duration:track.duration,
@@ -260,18 +257,18 @@ window.BDC = {
     if(sample.generation!==generation)return;
     const age=Number.isFinite(sample.sampledAt)?Math.max(0,Math.min(10000,Date.now()-sample.sampledAt)):0;
     clock={position:sample.position,playing:sample.playing,rate:sample.rate||1,received:performance.now()-age};
-    if(sample.visible===false)viewportMotion?.cancel();active=sample.visible!==false;
+    if(sample.visible===false)active=sample.visible!==false;
     renderer.noteVisibilityChange();startClock();
   },
   visible(visible){
     const next=visible===true;if(active===next)return;active=next;
-    if(!active){viewportMotion?.cancel();cancelAnimationFrame(raf);raf=0;}
+    if(!active){cancelAnimationFrame(raf);raf=0;}
     renderer.noteVisibilityChange();if(active){renderer.relayout();startClock();}
   },
   settings(next) {
     const rebuild=['translation','romanization','language'].some(key=>key in next&&next[key]!==settings[key]);
     settings={...settings,...next};const themeRebuild=theme();choose(rebuild||themeRebuild);renderer.relayout();
-    configureMotion();
+    
     setCollapsed(settings.dockCollapsed);
     for(const [key,url] of Object.entries(next.buttonIcons||{})){if(!$(key)||!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(url))continue;const img=document.createElement('img');img.src=url;img.alt='';$(key).replaceChildren(img);}
     if(next.pillColor)document.documentElement.style.setProperty('--bd-pill',next.pillColor);
@@ -303,10 +300,11 @@ window.BDC = {
     if(id!==generation)return;
     if(!selected&&!availableKeys.length){$('empty').textContent=finished?'No lyrics found. YouTube Music’s lyrics remain available behind this panel.':message;}
     $('notice').textContent=message;
-    $('connection').hidden=!!selected||!/connect|expired|HTTP|failed|unavailable/i.test(message);
+    $('connection').hidden=!/connect|expired|HTTP|failed|unavailable/i.test(message);
+    $('connect').hidden=!/connect|expired|verification|authorization/i.test(message);
     if(finished&&!selected&&!availableKeys.length)native?.noLyrics(generation);
   },
-  dispose(){cancelAnimationFrame(raf);clearTimeout(dockLayoutTimer);dockResize.disconnect();systemReducedMotion.removeEventListener('change',configureMotion);viewportMotion?.destroy();renderer.destroy();},
+  dispose(){cancelAnimationFrame(raf);clearTimeout(dockLayoutTimer);dockResize.disconnect();renderer.destroy();},
 };
 $('sources').addEventListener('change',()=>{pinned=$('sources').value;native?.pin(generation,pinned);choose(true);});
 $('source-label').onclick=()=>{$('source-label').getAttribute('aria-expanded')==='true'?closeSources():openSources();};
@@ -326,14 +324,15 @@ $('copy').onclick=()=>native?.copy(generation,(currentResult?.lyrics||[]).map(li
 $('refresh').addEventListener('click',()=>native?.refresh());
 $('connect').addEventListener('click',()=>native?.connect());
 $('configure').addEventListener('click',()=>native?.configure());
-$('resume').addEventListener('click',()=>{viewportMotion?.settle();renderer.resumeAutoscroll();});
+$('resume').addEventListener('click',resumeFollow);
 for(const kind of ['translate','romanize'])$(kind).addEventListener('click',()=>native?.toggle(kind));
 $('earlier').addEventListener('click',()=>native?.offset(-100));
 $('later').addEventListener('click',()=>native?.offset(100));
-// The core counts programmatic scroll events; feed actual scrolling so its skip counter
-// is consumed by those events, rather than swallowing the next user's touch/wheel gesture.
-$('scroll').addEventListener('scroll',()=>{if(!viewportMotion?.ignoreScrollEvent())renderer.noteUserScroll();},{passive:true});
-for(const type of ['pointerdown','touchstart','wheel'])$('scroll').addEventListener(type,()=>viewportMotion?.cancel(),{passive:true});
-$('scroll').addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))viewportMotion?.cancel();});
+// Preserve extension scrolling; explicit gestures bypass only pending event suppression.
+$('scroll').addEventListener('scroll',()=>{if(performance.now()>=resumeScrollUntil)renderer.noteUserScroll();},{passive:true});
+function userScroll(){resumeScrollUntil=0;renderer.noteUserScroll(true);}
+for(const type of ['wheel','touchmove'])$('scroll').addEventListener(type,userScroll,{passive:true});
+$('scroll').addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))userScroll();});
+
 document.addEventListener('visibilitychange',()=>{renderer.noteVisibilityChange();if(!document.hidden)startClock();});
 dockResize.observe($('dock'));theme();startClock();native?.ready();

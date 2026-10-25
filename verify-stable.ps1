@@ -1,7 +1,7 @@
 param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Options)
 $ErrorActionPreference='Stop'
 $scope=$PSScriptRoot
-$env:JAVA_HOME='C:\Program Files\Java\jdk-25.0.4.1'
+$env:JAVA_HOME='C:\Program Files\Java\jdk-25.0.5.0.2'
 $env:ANDROID_HOME=(Join-Path $env:LOCALAPPDATA 'Android\Sdk')
 $env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
 $env:GRADLE_USER_HOME="$scope\BuildCache\Gradle Cache"

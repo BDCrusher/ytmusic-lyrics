@@ -51,7 +51,7 @@ public final class LyricsSettingsPage {
         text(c,page,p,"language","Translation language","Language code",java.util.Locale.getDefault().getLanguage());
         category(c,page,"Sources");page.addPreference(new LyricsSourceOrderPreference(c));
         Preference connection=new Preference(c);connection.setTitle("Source connection");
-        connection.setSummary(p.getString("serviceJwt","").isEmpty()?"Not connected · tap to connect":"Connected · tap to reconnect");
+        String jwt=p.getString("serviceJwt","");connection.setSummary(jwt.isEmpty()?"Verify additional providers. Public and YouTube Music sources still work without this.":ServiceConnection.expired(jwt)?"Additional-provider verification expired · tap to renew":"Additional providers connected · tap to reconnect");
         connection.setOnPreferenceClickListener(pref->{ServiceConnection.show(c);return true;});page.addPreference(connection);
         Preference diagnostics=new Preference(c);diagnostics.setTitle("Source diagnostics");diagnostics.setSummary("Request metadata and provider outcomes; credentials are excluded");
         diagnostics.setOnPreferenceClickListener(pref->{LyricsDiagnostics.show(c);return true;});page.addPreference(diagnostics);

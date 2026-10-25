@@ -4,7 +4,7 @@ Personal derivative; not an official Morphe or Better Lyrics release.
 Android host: BDCrusher (2026), GPL-3.0.
 Full baseline: MorpheApp/morphe-patches v1.48.0-dev.19, applied over preserved dev.18 history.
 Renderer: Better Lyrics Braccato @braccato/core 1.16.11, MIT.
-Local renderer correction: clamp expired automatic-scroll suppression at zero.
+Local renderer corrections: coalesce/clamp scroll-event suppression and recognize explicit user gestures. Upstream line motion, stagger, durations and easing are retained.
 Only the prepared app-local engine.js is adapted; original research packages remain intact.
 Exact upstream/patched hashes and reproducible change: web/braccato-local-patch.json and web/patch_braccato.py.
 Parsers: @braccato/parsers 0.4.0, MIT.
@@ -1846,3 +1846,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+

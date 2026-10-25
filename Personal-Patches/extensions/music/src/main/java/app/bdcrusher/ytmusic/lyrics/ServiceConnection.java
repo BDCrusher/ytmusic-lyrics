@@ -35,7 +35,7 @@ final class ServiceConnection {
         });
         int height=(int)(220*context.getResources().getDisplayMetrics().density);view.setMinimumHeight(height);
         AlertDialog dialog=new AlertDialog.Builder(context).setTitle("Connect Better Lyrics sources")
-            .setMessage("Complete the service’s verification. Access remains subject to its availability and rules.")
+            .setMessage("Verify access to Better Lyrics’ additional-provider service. It uses the track ID, title, artist, album and duration to look up lyrics. This does not sign you into YouTube. Public and YouTube Music sources still run without this connection. Verification may need renewing when it expires.")
             .setView(view).setNegativeButton("Cancel",null).create();
         Handler handler=new Handler(Looper.getMainLooper());ExecutorService executor=Executors.newSingleThreadExecutor();LyricsNetwork network=new LyricsNetwork();
         boolean[] stopped={false},verifying={false};long deadline=android.os.SystemClock.uptimeMillis()+120000;

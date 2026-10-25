@@ -22,7 +22,7 @@ public final class LyricsEntryButton {
         int mode;
         Presentation(Object value){owner=new WeakReference<>(value);}
     }
-    private volatile boolean available,pending;
+    private volatile boolean available,pending,unavailable,restoring;
     private volatile String identity="",videoId="";
     public LyricsEntryButton(){active=new WeakReference<>(this);}
     private static synchronized Presentation presentation(Object owner){
@@ -39,7 +39,7 @@ public final class LyricsEntryButton {
         if(owner==null||id==null||id.isEmpty())return;
         Presentation p=presentation(owner);
         if(!id.equals(p.video)){p.video=id;p.original=null;p.mode=0;p.currentModel=false;}
-        main.post(()->{LyricsEntryButton entry=active.get();if(entry!=null&&(entry.available||entry.pending))entry.refresh();});
+        main.post(()->{LyricsEntryButton entry=active.get();if(entry!=null&&(entry.available||entry.pending||entry.unavailable))entry.refresh();});
     }
     /** Retain the unmodified native model, never a personal view or tap handler. */
     public static void captureModel(Object owner,Object original,byte[] bytes){
@@ -55,9 +55,11 @@ public final class LyricsEntryButton {
     public static byte[] rewrite(Object owner,byte[] element){
         LyricsEntryButton entry=active.get();
         Presentation p=presentation(owner);
-        if(entry==null||(!entry.available&&!entry.pending)||!entry.isCurrent()||!p.currentModel||!entry.videoId.equals(p.video))return element;
-        byte[] result=entry.available?NativeActionModel.enable(element):NativeActionModel.orderWhilePending(element);
-        p.mode=entry.available?2:1;
+        if(!Settings.LYRICS_ENABLED.get()||!p.currentModel||!p.video.equals(VideoInformation.getVideoId())||p.video.isEmpty()||entry!=null&&entry.restoring)return element;
+        boolean decided=entry!=null&&entry.isCurrent()&&entry.videoId.equals(p.video);
+        int mode=decided&&entry.available?2:decided&&entry.unavailable?3:1;
+        byte[] result=mode==2?NativeActionModel.enable(element):mode==3?NativeActionModel.orderUnavailable(element):NativeActionModel.orderWhilePending(element);
+        p.mode=mode;
         return result;
     }
     void update(Activity activity,String key){
@@ -65,13 +67,14 @@ public final class LyricsEntryButton {
         if(!isCurrent())return;
         // Panel definitions can be registered after provider results arrive.
         NativeLyricsHost.prepare(videoId);
-        pending=false;available=true;refresh();
+        pending=false;unavailable=false;available=true;refresh();
     }
-    void orderWhilePending(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=true;available=false;refresh();}
+    void orderWhilePending(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=true;available=false;unavailable=false;refresh();}
+    void notFound(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=false;available=false;unavailable=true;refresh();}
     private void refresh(){
         if(!videoId.equals(VideoInformation.getVideoId()))return;
-        if((available||pending)&&!isCurrent())return;
-        int desired=available?2:pending?1:0;
+        if((available||pending||unavailable)&&!isCurrent())return;
+        int desired=available?2:unavailable?3:pending?1:0;
         for(Presentation p:snapshot()){
             Object owner=p.owner.get();
             if(owner==null||p.original==null||p.replaying||!videoId.equals(p.video))continue;
@@ -85,7 +88,7 @@ public final class LyricsEntryButton {
         LyricsManager manager=LyricsManager.getInstance();var track=manager.getCurrentTrack();String id=VideoInformation.getVideoId();
         return Settings.LYRICS_ENABLED.get()&&track!=null&&id!=null&&id.equals(manager.getCommittedVideoId())&&identity.equals(LyricsRepository.identity(track,id));
     }
-    void hideButton(){if(available||pending){available=false;pending=false;refresh();}}
+    void hideButton(){available=false;pending=false;unavailable=false;restoring=true;try{refresh();}finally{restoring=false;}}
     void trackChanged(String key){hideButton();identity=key;String id=VideoInformation.getVideoId();videoId=id==null?"":id;}
     void clear(){hideButton();identity="";videoId="";}
     // Replays the remembered model through the presenter's own renderer at patch time.

@@ -21,6 +21,7 @@ public final class NativeLyricsHost {
     private static int epoch;
     private static int queuedEpoch=-1;
     private static byte[] nativeLyricsPresentation;
+    private static final ThreadLocal<Boolean> installing=ThreadLocal.withInitial(()->false);
     private static boolean lyrics;
     private NativeLyricsHost(){}
     public static void captureController(Object value){
@@ -31,25 +32,31 @@ public final class NativeLyricsHost {
         if(!isOpen())controller=new WeakReference<>(value);
     }
     public static boolean isOpen(){return lyrics&&panel.get()!=null;}
+    public static void captureDefinition(Object owner,byte[] bytes){
+        if(installing.get()||!Settings.LYRICS_ENABLED.get()||bytes==null||bytes.length>1_000_000)return;
+        try{
+            String id=new String(new ProtoWire(new ProtoWire(bytes).child(18)).child(3),java.nio.charset.StandardCharsets.UTF_8);
+            if(!ID.equals(id))return;
+            nativeLyricsPresentation=NativePanelWire.presentation(bytes);prepared.remove(owner);
+            captureController(owner);
+        }catch(IllegalArgumentException unrelated){/* Other native panel types are unchanged. */}
+    }
     public static boolean prepare(String videoId){
         boolean ready=false;
         for(var reference:new java.util.ArrayList<>(controllers)){
         Object owner=reference.get();if(owner==null)continue;
         try{
             byte[] original=nativeDefinition(owner,ID);
+            // Check Music registry readiness only; never copy Related presentation fields.
+            if(original==null&&nativeDefinition(owner,"music-related-panel")==null)continue;
             if(original!=null&&videoId.equals(prepared.get(owner))){ready=true;continue;}
-            // A first native Lyrics definition is valid even before its content loads.
-            // Only a previously prepared empty definition needs our fallback template.
-            boolean related=original==null||(prepared.containsKey(owner)&&new ProtoWire(original).one(3)==null);
-            if(!related&&original.length<=1_000_000)nativeLyricsPresentation=NativePanelWire.presentation(original);
-            if(related)original=nativeDefinition(owner,"music-related-panel");
-            if(original==null)continue;
-            byte[] definition=related&&nativeLyricsPresentation!=null
-                ?NativePanelWire.fromPresentation(nativeLyricsPresentation,original,ResourceUtils.getString("lyrics_tab_title"))
-                :NativePanelWire.definition(original,ResourceUtils.getString("lyrics_tab_title"),related);
-            registerNative(owner,definition);
+            boolean supplied=original!=null&&!prepared.containsKey(owner);
+            if(supplied&&original.length<=1_000_000)nativeLyricsPresentation=NativePanelWire.presentation(original);
+            byte[] definition=supplied?original:nativeLyricsPresentation!=null
+                ?nativeLyricsPresentation:NativePanelWire.lyricsProfile(ResourceUtils.getString("lyrics_tab_title"));
+            installing.set(true);try{registerNative(owner,definition);}finally{installing.set(false);}
             prepared.put(owner,videoId);ready=true;
-            LyricsDiagnostics.record("Lyrics panel","Prepared native Music Lyrics with mini-player snap and native palette");
+            LyricsDiagnostics.record("Lyrics panel",supplied?"Preserved supplied native Lyrics presentation":"Prepared native Lyrics factory presentation");
         }catch(Exception ex){LyricsDiagnostics.record("Lyrics panel","Native Music setup failed: "+ex.getClass().getSimpleName());}
         }
         if(!ready)LyricsDiagnostics.record("Lyrics panel","Native Music presentation is not ready; retrying without blocking the action model");
@@ -102,4 +109,5 @@ public final class NativeLyricsHost {
     private static void registerNative(Object owner,byte[] definition){}
     private static View panelRoot(Object value){return null;}
     private static String panelId(Object value){return null;}
+    public static void observeNativeDefinition(Object owner,Object definition){}
 }

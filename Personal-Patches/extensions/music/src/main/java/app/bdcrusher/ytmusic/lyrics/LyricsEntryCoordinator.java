@@ -104,6 +104,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
                 && id != null && id.equals(LyricsManager.getInstance().getCommittedVideoId())) {
             entry.update(activity, identity);
         } else if(!definitelyNotFound&&Settings.LYRICS_ENABLED.get()&&activity!=null)entry.orderWhilePending(identity);
+        else if(definitelyNotFound)entry.notFound(identity);
         else entry.hideButton();
     }
 

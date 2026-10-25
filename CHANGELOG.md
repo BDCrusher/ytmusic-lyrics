@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.8-beta.1
+
+Restore native Lyrics defaults without Related cloning; restore extension per-line motion; place native Lyrics second by default and last after confirmed empty; strengthen matched lookup and explain verification. Four APK combinations and source/browser/compiled checks passed. Phone acceptance remains pending.
+
 ## 0.2.7-beta.1
 
 Use one timed viewport animation; preserve rich results; retry404/empty Better Lyrics metadata once without album/duration; retain manual candidates; order native Lyrics second while pending; add transparent system navigation. Check upstream3.0.1 and research Shaders. Four APK combinations and source/browser/compiled checks passed. Phone acceptance remains pending.

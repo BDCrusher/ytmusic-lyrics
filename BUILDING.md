@@ -1,3 +1,11 @@
+# Current0.2.8 build and verification
+
+JDK25.0.5.0.2 replaces the removed25.0.4.1 path. Use the existing app-scoped build-local/verify-stable wrappers. Current verification: Verification/verify_revision28_delivery.ps1; check_revision28_host.py, check_revision28_catalog_final.py, check_revision28_lifecycle.py and live transport checks. Use fresh output folders; do not rerun completed canonical reports. Original APK and native wire fixtures remain private inputs. The31-check revision27 navigation simulation is inherited only because its source hash is unchanged.
+
+Browser: web/revision28-extension-scroll-check.js compares the same host against the untouched @braccato/core1.16.11 in the retained Research/Better-Lyrics/Packages/core-1.16.11. Bundle its dist/index.js with esbuild alias @braccato/core into Personal-Patches/output/playwright/revision28-reference-renderer.js first. Use the existing app-scoped Playwright wrapper/loopback server; reload between independent provider/renderer/dock/selection checks. The core patch script verifies/inverts known bookkeeping changes; it does not replace upstream visual scrolling. No device result is claimed.
+
+## Previous build records
+
 # Build 0.2.6-beta.1
 
 Run build-local.ps1 with installed JDK25/JDK17 and Android SDK36. Its default task is now `:lyrics-collection:buildAndroid`. The combined output is `Personal-Patches/lyrics-collection/build/libs/lyrics-collection-0.2.6-beta.1.mpp`. Separate `:patches:buildAndroid` and `:lyrics-addon:buildAndroid` targets remain available for development.

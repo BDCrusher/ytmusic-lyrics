@@ -2,6 +2,7 @@
 package app.bdcrusher.ytmusic.lyrics;
 import android.content.Context;
 import org.json.JSONObject;
+import org.json.JSONArray;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +23,7 @@ final class LyricsCatalog implements AutoCloseable {
     private final LyricsDiskCache cache;private final Sink sink;
     LyricsCatalog(Context context,TrackInfo track,String videoId,boolean refresh,Sink sink){
         this.context=context;this.videoId=videoId;this.refresh=refresh;this.sink=sink;cache=new LyricsDiskCache(context);
-        TrackInfo normalized=new TrackInfo(clean(track.title()),clean(track.artist()).replace(", & ",", "),clean(track.album()),track.durationSeconds());
+        TrackInfo normalized=new TrackInfo(LyricsLookup.title(track.title()),LyricsLookup.artist(track.artist()),clean(track.album()),track.durationSeconds());
         LyricsDiagnostics.record("track","video="+videoId+"; title="+normalized.title()+"; artist="+normalized.artist()+"; album="+normalized.album()+"; duration="+normalized.durationSeconds());
         direct(normalized);
         task("Unison",()->unison(normalized));
@@ -75,7 +76,15 @@ final class LyricsCatalog implements AutoCloseable {
             JSONObject cached=refresh?null:cache.get(cacheKey+"|lrclib");if(cached!=null){send(cached);return;}
             String url="https://lrclib.net/api/get?track_name="+LyricsNetwork.encode(t.title())+"&artist_name="+LyricsNetwork.encode(t.artist());
             if(!t.album().isEmpty())url+="&album_name="+LyricsNetwork.encode(t.album());if(t.durationSeconds()>0)url+="&duration="+t.durationSeconds();
-            JSONObject data=new JSONObject(network.request(url,"GET",null,null));
+            JSONObject data;
+            try{data=new JSONObject(network.request(url,"GET",null,null));}
+            catch(LyricsNetwork.HttpFailure ex){if(ex.status!=404)throw ex;data=new JSONObject();}
+            if(data.optString("syncedLyrics").trim().isEmpty()&&data.optString("plainLyrics").trim().isEmpty()){
+                String search="https://lrclib.net/api/search?track_name="+LyricsNetwork.encode(t.title())+"&artist_name="+LyricsNetwork.encode(t.artist());
+                data=LyricsLookup.best(new JSONArray(network.request(search,"GET",null,null)),t.title(),t.artist(),t.durationSeconds());
+                if(data==null){LyricsDiagnostics.record("LRCLib","No exact title/artist/duration candidate");return;}
+                LyricsDiagnostics.record("LRCLib","Search recovered an exact title/artist match"+(t.durationSeconds()>0?" within 2 seconds":"; duration unknown"));
+            }
             if(!data.isNull("syncedLyrics")&&!data.optString("syncedLyrics").isEmpty()){
                 JSONObject payload=new JSONObject().put("key","lrclib-synced").put("source","LRCLib").put("format","lrc").put("raw",data.getString("syncedLyrics"));cache.put(cacheKey+"|lrclib",payload);send(payload);
             }
@@ -106,7 +115,7 @@ final class LyricsCatalog implements AutoCloseable {
         if("metadata".equals(event)){
             String song=data.optString("song"),artist=data.optString("artist");
             if(!song.isEmpty()&&!artist.isEmpty()){
-                TrackInfo corrected=new TrackInfo(clean(song),clean(artist).replace(", & ",", "),clean(data.optString("album")),data.optInt("duration",0));
+                TrackInfo corrected=new TrackInfo(LyricsLookup.title(song),LyricsLookup.artist(artist),clean(data.optString("album")),data.optInt("duration",0));
                 LyricsDiagnostics.record("metadata","title="+corrected.title()+"; artist="+corrected.artist()+"; album="+corrected.album()+"; duration="+corrected.durationSeconds());
                 direct(corrected);
             }

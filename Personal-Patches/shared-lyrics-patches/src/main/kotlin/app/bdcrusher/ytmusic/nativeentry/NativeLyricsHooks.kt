@@ -27,6 +27,7 @@ private object Controller:Fingerprint(strings=listOf(
 private fun Method.calls()=implementation?.instructions?.mapNotNull {((it as? ReferenceInstruction)?.reference as? MethodReference)}?:emptyList()
 private fun Method.ref()="$definingClass->$name(${parameterTypes.joinToString("")})$returnType"
 private object MusicActionPresenter:Fingerprint(strings=listOf("com/google/android/apps/youtube/music/watchpage/VideoActionBarPresenter"))
+private object NativeLyricsFactory:Fingerprint(strings=listOf("music_offline_lyrics_panel"))
 
 fun BytecodePatchContext.installNativeLyricsHooks(){
  fun fail(message:String):Nothing=throw PatchException("Unsupported native Lyrics integration: $message. Requires original 9.42.52 / 94252240 arm64-v8a.")
@@ -65,6 +66,10 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
   if(hash in hashes){if(found.put(hash,c.type)!=null)fail("ambiguous protobuf schema")}
  }}
  if(found.keys!=hashes||found[hashes.first()]!=definitionType)fail("native panel protocol schema")
+ NativeLyricsFactory.clearMatch()
+ val recipe=NativeLyricsFactory.method.implementation!!.instructions.joinToString("\n") { "${it.opcode}|${(it as? ReferenceInstruction)?.reference?:""}|${(it as? WideLiteralInstruction)?.wideLiteral?:""}" }
+ val recipeHash=MessageDigest.getInstance("SHA-256").digest(recipe.toByteArray(Charsets.UTF_8)).joinToString(""){"%02x".format(it)}
+ if(recipeHash!="7bc335a95608014c5d4d9ba2ca5e97752cc4b34706dfc8a69fdc225203229727")fail("native Lyrics factory profile")
  val host=mutableClassDefBy(OWN+"NativeLyricsHost;")
  fun body(name:String,registers:Int,code:String){val old=host.methods.single {it.name==name};val m=MutableMethod(ImmutableMethod(old.definingClass,old.name,old.parameters,old.returnType,old.accessFlags,old.annotations,old.hiddenApiRestrictions,MutableMethodImplementation(registers)));host.methods.remove(old);m.addInstructions(0,code);host.methods.add(m)}
  body("registerNative",5,"""
@@ -95,6 +100,14 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
  """)
  body("panelRoot",2,"check-cast p0, $panelType\ninvoke-interface { p0 }, ${root.ref()}\nmove-result-object v0\nreturn-object v0")
  body("panelId",2,"check-cast p0, $panelType\ninvoke-interface { p0 }, ${id.ref()}\nmove-result-object v0\nreturn-object v0")
+ body("observeNativeDefinition",3,"""
+  check-cast p1, $definitionType
+  invoke-interface { p1 }, Lcom/google/protobuf/MessageLite;->toByteArray()[B
+  move-result-object v0
+  invoke-static { p0, v0 }, ${OWN}NativeLyricsHost;->captureDefinition(Ljava/lang/Object;[B)V
+  return-void
+ """)
+ register.addInstruction(0,BuilderInstruction3rc(Opcode.INVOKE_STATIC_RANGE,register.implementation!!.registerCount-2,2,ImmutableMethodReference(OWN+"NativeLyricsHost;","observeNativeDefinition",listOf("Ljava/lang/Object;","Ljava/lang/Object;"),"V")))
  val constructors=controller.methods.filter {it.name=="<init>"};if(constructors.isEmpty())fail("native controller constructor")
  for(m in constructors){val returns=m.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_VOID}.map {it.index}
   for(index in returns.reversed()){

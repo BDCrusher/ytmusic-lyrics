@@ -2,7 +2,7 @@
 
 One Morphe source with two expandable patch categories, like HushFeed's category layout. Personal Better Lyrics providers, Braccato rendering, vocal agents and background vocals for original YouTube Music **9.42.52 / 94252240 arm64-v8a**. Unofficial derivative; phone acceptance is pending.
 
-**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.7-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.7-beta.1)
+**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.2.8-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.8-beta.1)
 
 ## Expandable categories
 
@@ -26,22 +26,24 @@ Settings: **YouTube Music → Settings → Morphe → Lyrics**.
 
 ## What changed
 
-Timed lyrics now move through one host-owned viewport animation instead of multiple per-line scroll transforms. Braccato still renders word/syllable highlights, background vocals, singer positions and letter wave. Manual follow pause/resume, seek, plain passive scrolling and reduced motion are retained. Native snapshot timestamps and playback rate are extrapolated once on a monotonic clock.
+The cold fallback now mirrors this APK's native Lyrics factory defaults, including its native header/background/persistence behavior, instead of cloning Related. A supplied native Lyrics definition is preserved byte-for-byte, including its native snap/theme/header settings; late native registrations are captured. The native controller, header, close, mini-player and content body remain in charge. **Exact phone/pixel parity remains unverified.**
 
-Valid rich results survive later empty/less-detailed replies. Automatic text matching still protects against wrong songs; received candidates remain manually selectable. Better Lyrics retries once without album/duration after404 or empty metadata, while access/rate/authentication failures use their ordinary error/renewal paths. Unison is not persistently cached.
+Actual Better Lyrics/Braccato per-line scrolling is restored: additive line movement, varied duration/stagger, easing and catch-up. The previous750ms custom viewport path is removed. Only expected-event bookkeeping and explicit gesture recognition are adapted; native timestamp/rate sampling remains. The browser comparison matches8 scroll animations/keyframes/timings against the untouched core package.
 
-The actual native Lyrics action is second while lookup is pending; this ordering does not enable an unavailable command. A positive result enables it, definite all-not-found restores the original placement, and connection failures remain unknown. No text/button is drawn over the native action.
+The real native Lyrics action is second by default, including before metadata/provider completion. Positive results enable it; confirmed all-not-found moves it explicitly to the end. Unknown connection errors are distinct from empty lookup, and switching the feature off restores the native model. No label/button is painted over it.
 
-**Transparent system navigation** is enabled by default under Morphe > Lyrics. It removes the scoped navigation fill/contrast scrim and restores the prior window on close. Switch it off to match the actual Lyrics-panel color. Transparency reveals whatever the native host draws beneath the bar; it does not change the app's inset layout.
+Lookup conservatively removes Official Video/Audio labels and Topic suffixes while retaining cover/live/remix qualifiers. LRCLib get404/empty results can use search only with exact normalized title/artist and a maximum2-second duration difference when known. Wrong versions/artists reject; access/rate failures cannot invoke fallback. Existing positive rich-result preservation, manual selection and normal authentication remain.
 
-Checked Better Lyrics v3.0.1: its provider/renderer code already matches our inspected source. [Shaders feasibility](Research/SHADERS-ANDROID-FEASIBILITY-2026-10-23.md) covers moving artwork backgrounds and animated album loops; these effects are research only in this release.
+## Connect sources explained
+
+This is normal Cloudflare verification for Better Lyrics' additional-provider broker, not a Google/YouTube login or account link. It sends recording ID/title/artist/album/duration for lookup and stores an expiring verification token in app-private preferences. Public Better Lyrics, Unison, LRCLib and native sources run independently. Additional broker results include BiniLyrics, Musixmatch, Portato/QQ and Legato/KuGou. Connecting permits those queries; it does not guarantee lyrics exist for every song. Renew when verification expires. Settings and the verification dialog now explain this, and connection status can remain visible beside a working public result.
 
 ## Verification
 
-Four original-APK patching combinations, both official/add-on source orders, five invalid-selection rejections, compiled native/SDK/duplicate-class/asset checks, JVM tests and Android lint passed. The isolated add-on has107 owned classes and no foreign or duplicate runtime classes. Actual-source Java tests:34 host,31 navigation,23 catalog and23 lifecycle checks, with explicit Android/native/HTTP simulations. Actual Java transport fetched Better Lyrics for Wake Up, Unison for the supplied Love Me Dead video, and LRCLib for Man Areas.
+Four original-APK combinations, both official/add-on orders, five invalid-selection rejections, fresh compiled native/SDK/reference/hierarchy/duplicate-class/asset checks, JVM tests and Android lint passed. Isolated add-on108 owned classes, no foreign/duplicate runtime classes. Actual-source Java:39 host,33 catalog,23 lifecycle checks; the unchanged31-check navigation simulation is reused by exact source identity. Live Java fetches Better Lyrics Wake Up, Unison Love Me Dead and LRCLib Man Areas.
 
-Browser checks use real TTML for the first two recordings: five active-group changes each, no physical reverse steps/false manual pauses; late-result preservation, manual selection, wheel during motion, seek/back-seek, delayed2x snapshots, plain passive mode,16 variants, vocals, dock/flyout, sizes/themes and reduced motion passed. Exact identities are in [verification.json](verification.json).
+Browser checks compare the unmodified extension engine, actual rich TTML, manual scroll/resume/seek,16 variants, vocals/agents/letter wave, source selection, glass dock/flyout, themes/sizes and reduced motion. The301-frame visual trace has no reverse steps. Exact hashes and limits: [verification.json](verification.json).
 
-**Samsung phone jitter and native-panel acceptance remain unverified.** A cold session without a real Lyrics definition still uses the Related-derived native fallback. Some metadata requests to the public Better Lyrics endpoint return401; normal combined-service verification is retained. Alternate music-video/audio timeline conversion is not implemented. No signing, installation, MuMu or device operations occurred.
+**No Samsung phone/pixel-parity/performance acceptance is claimed.** Cold fallback uses the APK's built-in Lyrics defaults rather than a captured online server definition. Check theme/gesture/snap/button and next-line movement on the phone. Alternate video/audio timeline conversion and Shaders remain absent. No signing, installation, MuMu or device operations occurred.
 
 [Build](BUILDING.md) | [Compatibility](COMPATIBILITY.md) | [Patch metadata](patches-list.json) | [Source pins](SOURCE-PINS.json) | [Notices](NOTICE) | [Third-party notices](THIRD-PARTY-NOTICES.txt)

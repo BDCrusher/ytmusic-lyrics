@@ -58,3 +58,5 @@ tasks.register<JavaExec>("inspectButtonSchemas") { dependsOn("classes");classpat
 tasks.register<JavaExec>("auditModelEntry") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.AuditModelEntryKt");workingDir=rootDir;doFirst {setArgs(listOf(providers.gradleProperty("auditManifest").get()))} }
 tasks.register<JavaExec>("inspectModelContracts") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectModelContractsKt");workingDir=rootDir }
 tasks.register<JavaExec>("inspectActionReplay") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectActionReplayKt");workingDir=rootDir }
+tasks.register<JavaExec>("inspectLyricsPresentation") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectLyricsPresentationKt");workingDir=rootDir }
+tasks.register<JavaExec>("inspectLyricsBackground") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectLyricsBackgroundKt");workingDir=rootDir }

@@ -14,7 +14,7 @@ try {
     & "$scope\Personal-Patches\web\tools\esbuild\esbuild.exe" web\src\main.js --bundle --format=iife --target=chrome110 --outfile=patches\src\main\resources\bdcrusher-lyrics\renderer.js
     if ($LASTEXITCODE -ne 0) { throw 'Web renderer build failed' }
 } finally { Pop-Location }
-$env:JAVA_HOME = 'C:\Program Files\Java\jdk-25.0.4.1'
+$env:JAVA_HOME = 'C:\Program Files\Java\jdk-25.0.5.0.2'
 $env:ANDROID_HOME = (Join-Path $env:LOCALAPPDATA 'Android\Sdk')
 $env:ANDROID_SDK_ROOT = $env:ANDROID_HOME
 $env:GRADLE_USER_HOME = "$scope\BuildCache\Gradle Cache"

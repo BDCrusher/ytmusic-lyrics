@@ -9,17 +9,18 @@ final class NativeActionModel {
     // Android Music 9.42.52 public native response; guarded by the component URI and VM shape.
     private static final int[] ACTION_PATH={172660663,1,168777401,5,389155117};
     private static final int[] BUTTON_PATH={10,461054335};
-    static byte[] enable(byte[] element){return transform(element,true);}
-    static byte[] orderWhilePending(byte[] element){return transform(element,false);}
-    private static byte[] transform(byte[] element,boolean enable){
+    static byte[] enable(byte[] element){return transform(element,2);}
+    static byte[] orderWhilePending(byte[] element){return transform(element,1);}
+    static byte[] orderUnavailable(byte[] element){return transform(element,3);}
+    private static byte[] transform(byte[] element,int mode){
         // The typed VideoActionBarPresenter hook supplies scope. Client-generated
         // Elements need not repeat the server template URI in their serialized model.
         try{
-            try{return ProtoWire.at(element,ACTION_PATH,0,raw->update(raw,enable));}
+            try{return ProtoWire.at(element,ACTION_PATH,0,raw->update(raw,mode));}
             catch(IllegalArgumentException fixedShape){
                 List<int[]> matches=new ArrayList<>();findRows(element,new ArrayList<>(),matches,new int[]{192},0);
                 if(matches.size()!=1)throw new IllegalArgumentException("expected one native Lyrics/Like row, found "+matches.size());
-                return ProtoWire.at(element,matches.get(0),0,raw->update(raw,enable));
+                return ProtoWire.at(element,matches.get(0),0,raw->update(raw,mode));
             }
         }
         catch(IllegalArgumentException ex){LyricsDiagnostics.record("Lyrics action model","Unsupported native button model: "+ex.getMessage());return element;}
@@ -59,7 +60,7 @@ final class NativeActionModel {
             path.add(f.number);findRows(f.data,path,matches,budget,depth+1);path.remove(path.size()-1);
         }
     }
-    private static byte[] update(byte[] input,boolean enable){
+    private static byte[] update(byte[] input,int mode){
         ProtoWire row=new ProtoWire(input);List<ProtoWire.Field> buttons=new ArrayList<>();
         for(ProtoWire.Field f:row.fields)if(f.number==4){if(f.wire!=2)throw new IllegalArgumentException("action wire type");buttons.add(f);}
         if(buttons.size()<2||buttons.size()>32)throw new IllegalArgumentException("action count");
@@ -76,7 +77,7 @@ final class NativeActionModel {
         }
         if(lyrics<0||like<0)throw new IllegalArgumentException("missing Lyrics/Like action");
         final boolean[] changed={false};
-        byte[] patched=enable?ProtoWire.at(buttons.get(lyrics).data,BUTTON_PATH,0,raw->{
+        byte[] patched=mode==2?ProtoWire.at(buttons.get(lyrics).data,BUTTON_PATH,0,raw->{
             ProtoWire vm=new ProtoWire(raw);ProtoWire.Field state=vm.one(14),title=vm.one(3);
             if(title==null||title.wire!=2||title.data.length>256)throw new IllegalArgumentException("Lyrics title");
             if(state!=null&&(state.wire!=0||state.value!=3))throw new IllegalArgumentException("unrecognized Lyrics state");
@@ -86,10 +87,11 @@ final class NativeActionModel {
             return changed[0]?vm.bytes():raw;
         }):buttons.get(lyrics).data;
         ProtoWire.Field item=ProtoWire.blob(4,patched);buttons.remove(lyrics);if(lyrics<like)like--;
-        buttons.add(like+1,item);
-        if(!changed[0]&&lyrics==like+1)return input;
+        int position=mode==3?buttons.size():like+1;
+        buttons.add(position,item);
+        if(!changed[0]&&lyrics==position)return input;
         int i=0;for(int n=0;n<row.fields.size();n++)if(row.fields.get(n).number==4)row.fields.set(n,buttons.get(i++));
-        LyricsDiagnostics.record("Lyrics action model",enable?"Enabled native Lyrics model after Like/Dislike":"Positioned native Lyrics second while discovery is pending");
+        LyricsDiagnostics.record("Lyrics action model",mode==2?"Enabled native Lyrics model after Like/Dislike":mode==3?"Moved native Lyrics to the end after confirmed empty lookup":"Positioned native Lyrics second while discovery is pending");
         return row.bytes();
     }
     private static byte[] path(byte[] bytes,int[] path){for(int f:path)bytes=new ProtoWire(bytes).child(f);return bytes;}
