@@ -41,20 +41,31 @@ public final class LyricsSettingsPage {
         toggle(c,page,p,"wordSync","Word and syllable highlighting",true);toggle(c,page,p,"letterWave","Letter wave",true);
         number(c,page,p,"fontSize","Lyrics text size",20,44,28);toggle(c,page,p,"reducedMotion","Reduce motion",false);
         toggle(c,page,p,"tapSeek","Tap lyrics to seek",true);toggle(c,page,p,"passive","Slow scroll for untimed lyrics",false);
+        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"rendering",()->populate(c,page),"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive");
         category(c,page,"Background vocals and singers");toggle(c,page,p,"background","Show background vocals",true);
         number(c,page,p,"bgSize","Background vocal size",40,90,65);number(c,page,p,"bgOpacity","Background vocal opacity",30,100,70);
         alignment(c,page,p,"backgroundAlignment","Background vocal placement");
         for(String a:new String[]{"v1","v2","v3","v1000"})alignment(c,page,p,a,"Singer "+a+" placement");
         text(c,page,p,"extraAgents","Additional singer positions","For example: v4=center,v5=right","");
+        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"vocals and singers",()->populate(c,page),"background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents");
         category(c,page,"Translation and romanization");toggle(c,page,p,"translation","Translate lyrics",false);toggle(c,page,p,"romanization","Romanize lyrics",false);
         text(c,page,p,"language","Translation language","Language code",java.util.Locale.getDefault().getLanguage());
+        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"translation",()->populate(c,page),"translation","romanization","language");
         category(c,page,"Sources");page.addPreference(new LyricsSourceOrderPreference(c));
+        category(c,page,"Saved lyrics and storage");
+        ListPreference policy=new ListPreference(c);policy.setTitle("Choose the saved version");policy.setKey("bdcrusher_cache_policy");policy.setPersistent(false);
+        policy.setEntries(new String[]{"Best timing, then source order","Source order first"});policy.setEntryValues(new String[]{"quality","source"});policy.setValue(p.getString("cachePolicy","quality"));policy.setSummary(policy.getEntry());
+        policy.setOnPreferenceChangeListener((pref,value)->{p.edit().putString("cachePolicy",value.toString()).apply();policy.setValue(value.toString());policy.setSummary(policy.getEntry());return true;});page.addPreference(policy);
+        page.addPreference(new StoragePreference(c,true));
+        Preference clear=new Preference(c);clear.setTitle("Clear saved lyrics");clear.setSummary("Lyrics remain saved until you clear them; no automatic expiry");
+        clear.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Clear saved lyrics?").setMessage("Remove your saved lyric library. Rendering settings, source connections and downloaded music are kept.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->new LyricsLibrary(c).clear(()->populate(c,page))).show();return true;});page.addPreference(clear);
         Preference connection=new Preference(c);connection.setTitle("Source connection");
         String jwt=p.getString("serviceJwt","");connection.setSummary(jwt.isEmpty()?"Additional providers verify automatically while the app is active. Tap if interaction is needed.":ServiceConnection.expired(jwt)?"Additional-provider verification expired · tap to renew":"Additional providers connected · tap to reconnect");
         connection.setOnPreferenceClickListener(pref->{ServiceConnection.show(c);return true;});page.addPreference(connection);
         Preference diagnostics=new Preference(c);diagnostics.setTitle("Source diagnostics");diagnostics.setSummary("Request metadata and provider outcomes; credentials are excluded");
         diagnostics.setOnPreferenceClickListener(pref->{LyricsDiagnostics.show(c);return true;});page.addPreference(diagnostics);
         Preference license=new Preference(c);license.setTitle("Credits and licenses");license.setOnPreferenceClickListener(pref->{showNotice(c);return true;});page.addPreference(license);
+        Preference reset=new Preference(c);reset.setTitle("Reset rendering settings");reset.setSummary("Restore visual defaults without changing sources, saved lyrics or connections");reset.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Reset rendering settings?").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{SharedPreferences.Editor e=p.edit();for(String key:new String[]{"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive","background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents"})e.remove(key);e.apply();populate(c,page);}).show();return true;});page.addPreference(reset);
     }
     static String join(org.json.JSONArray a){java.util.List<String> v=new java.util.ArrayList<>();for(int i=0;i<a.length();i++)v.add(a.optString(i));return android.text.TextUtils.join(",",v);}
     private static void category(Context c,PreferenceScreen page,String title){PreferenceCategory category=new PreferenceCategory(c);category.setTitle(title);page.addPreference(category);}

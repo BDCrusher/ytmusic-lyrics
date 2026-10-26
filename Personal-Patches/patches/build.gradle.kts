@@ -51,6 +51,10 @@ dependencies {
 }
 
 tasks {
+    named<Jar>("jar") {
+        dependsOn(":lyrics-addon:prepareRuntime")
+        from(project(":lyrics-addon").layout.buildDirectory.file("runtime/lyrics-addon.mpe")) {into("extensions")}
+    }
     register<JavaExec>("validateBetterLyricsOnly") {
         group = "verification"
         dependsOn("testClasses", "buildAndroid")

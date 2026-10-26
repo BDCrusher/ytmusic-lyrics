@@ -76,7 +76,8 @@
     "commit": "7a6a6a104d0667baac6df9f3e126385e3822f179",
     "archiveSha256": "6d97f48a008f90ddf64db240132424b607cb3dce1f645121a6c9a1f1c1b58abc",
     "providerAndRendererCodeUnchangedFromPinnedSource": true,
-    "checkedOn": "2026-10-25"
+    "checkedOn": "2026-10-25",
+    "decoderComparison": "Verification/revision32-upstream-decoder-comparison.json"
   },
   "nativeLyricsFactoryProfile": {
     "sha256": "7bc335a95608014c5d4d9ba2ca5e97752cc4b34706dfc8a69fdc225203229727",
@@ -116,15 +117,38 @@
     "phoneVerified": false
   },
   "lyricsNavigation": {
-    "version": "0.2.11-beta.1",
-    "mode": "always-transparent",
+    "version": "0.3.0-beta.1",
+    "mode": "shared-window-scoped-transparent",
     "matchingMode": false,
-    "legacyPreferenceIgnored": "transparentNavigation",
     "colorSampling": false,
     "opaqueOverlays": false,
     "iconAppearanceOverride": false,
-    "globalInsetChanges": false,
-    "restoresNativeWindowOnClose": true,
+    "layoutBehindNavigation": true,
+    "safeControlInsets": true,
+    "restoresOwnedWindowState": true,
+    "phoneVerified": false
+  },
+  "shaders": {
+    "version": "1.5.1",
+    "commit": "88be3b81450b8d66bd8af445bf6062caac7d2747",
+    "archiveSha256": "318062ab777c08a6734fba1bba8b74303f86b949f7d1a30d2f98498bf4767a23",
+    "kawarp": "1.3.1",
+    "altcha": "2.5.0",
+    "packages": {
+      "altcha-lib-2.5.0-registry.json": {
+        "name": "altcha-lib",
+        "version": "2.5.0",
+        "integrity": "sha512-MiqlwnImoooVTmFzZ8odhpqtCsSl7M/6cmgaX42Tkuvd41e5IVveg6hiw/e9rXSb6dm1RvniPmeURwO64wWTuQ=="
+      },
+      "kawarp_core-1.3.1-registry.json": {
+        "name": "@kawarp/core",
+        "version": "1.3.1",
+        "integrity": "sha512-gDR4d5kMr/viItEzZb5XBlHHi5WcWRsIPbnSj3ToVdLfc6ykP03VlTUpAhxA4mn/ZayICJbgFqZkGWSrySCQPQ=="
+      }
+    },
+    "webSourceSha256": "b91e2823d767d2ee04e4e76445fe4cbe668b6fded51218fa96341c656cc7db5f",
+    "bundledWebSha256": "9e306cfc307154b4ada23241d1e7408bbd444c6a629a7c1b113cf4d6b5381d96",
+    "nativeVideoSampling": false,
     "phoneVerified": false
   }
 }

@@ -32,7 +32,9 @@ fun main(args: Array<String>) {
     val hash=digest(input)
     val bundleHash=digest(bundle)
     require(hash == "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56") { "Unexpected original APK: $hash" }
-    val officialFirst=args.size==5&&args[3]=="official-first"
+    val featureMode=args[3].contains("features")||args[3].contains("shaders")||args[3].contains("playlists")
+    val noPersonal=args[3].startsWith("standalone-")
+    val officialFirst=args.size==5&&args[3].contains("official-first")
     val firstOfficial=if(officialFirst)loadPatchesFromJar(setOf(File(args[4])))else emptySet()
     val patches=loadPatchesFromJar(setOf(bundle))
     val isAddon=args.size==5
@@ -44,13 +46,18 @@ fun main(args: Array<String>) {
     if(combined){
         require(allLyrics.map {it.category}.toSet()==setOf("Full Collection","Lyrics-only Add-on"))
         require(!allLyrics.single {it.category=="Lyrics-only Add-on"}.default)
-        val uncategorized=patches.filter {it.name!=null&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true&&it.category !in setOf("Full Collection","Lyrics-only Add-on")}
+        val uncategorized=patches.filter {it.name!=null&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true&&it.category !in setOf("Full Collection","Lyrics-only Add-on","Shaders","Playlist downloads")}
         require(uncategorized.isEmpty()) { "Missing categories: "+uncategorized.joinToString {it.name.orEmpty()} }
     }
     var officialHash=""
     val official=if(isAddon){officialHash=digest(File(args[4]));if(officialFirst)firstOfficial else loadPatchesFromJar(setOf(File(args[4])))}else emptySet()
-    val officialSelected=official.filter { p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(p.name!="Third-party lyrics"||args[3]=="conflict")}
-    val selected=when(args[3]){
+    val officialSelected=official.filter { p->(!args[3].contains("missing-downloads")||p.name!="Downloads")&&p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(p.name!="Third-party lyrics"||args[3]=="conflict"||noPersonal)}
+    val selected=if(featureMode){
+        val features=patches.filter {it.name=="Shaders"&& !args[3].contains("playlists-only")||it.name=="Download playlist"&&!args[3].contains("shaders-only")}
+        val full=patches.filter {p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true}
+        val base=if(noPersonal)officialSelected else if(isAddon)officialSelected+lyrics else full
+        if(officialFirst)(base+features).toSet()else(features+base).toSet()
+    }else when(args[3]){
         "lyrics","missing-official"->lyrics.toSet()
         "addon-first"->(lyrics+officialSelected).toSet()
         "official-first","conflict"->(officialSelected+lyrics).toSet()
@@ -84,15 +91,15 @@ fun main(args: Array<String>) {
     }
     }catch(ex:Exception){
         val editionConflict=args[3] in setOf("editions-both","editions-reverse","addon-full-other")
-        if(args[3]!="conflict"&&args[3]!="missing-official"&&!editionConflict)throw ex
+        if(args[3]!="conflict"&&args[3]!="missing-official"&&!editionConflict&&!args[3].contains("missing-downloads"))throw ex
         val messages=generateSequence(ex as Throwable?){it.cause}.mapNotNull {it.message}.joinToString(" | ")
-        require(if(editionConflict)messages.contains("Choose one personal edition")else if(args[3]=="conflict")messages.contains("Two lyrics patches selected")else messages.contains("Missing official Morphe runtime")){"Unexpected negative failure: "+messages}
+        require(if(args[3].contains("missing-downloads"))messages.contains("requires the Downloads patch")else if(editionConflict)messages.contains("Choose one personal edition")else if(args[3]=="conflict")messages.contains("Two lyrics patches selected")else messages.contains("Missing official Morphe runtime")||messages.contains("Select compatible Morphe Music settings")){"Unexpected negative failure: "+messages}
         workspace.resolve("verification.json").writeText("""{"expectedFailure":true,"mode":${quote(args[3])},"bundleSha256":${quote(bundleHash)},"officialSha256":${quote(officialHash)},"reason":${quote(messages)}}""")
         println("PASS: expected actionable rejection: "+args[3]);return
     }
-    require(args[3] !in setOf("conflict","missing-official","editions-both","editions-reverse","addon-full-other")){"Invalid selection was accepted"}
+    require(!args[3].contains("missing-downloads")&&args[3] !in setOf("conflict","missing-official","editions-both","editions-reverse","addon-full-other")){"Invalid selection was accepted"}
     ZipFile(output).use { zip ->
-        val required=listOf("index.html","renderer.js","lyrics.css","variables.css","host.css","Satoshi-Variable.woff2")
+        val required=if(noPersonal)emptyList()else listOf("index.html","renderer.js","lyrics.css","variables.css","host.css","Satoshi-Variable.woff2")
         ZipFile(bundle).use { packed ->
             required.forEach { name ->
                 val asset=zip.getEntry("assets/bdcrusher-lyrics/$name") ?: error("Missing lyric asset $name")
@@ -100,6 +107,11 @@ fun main(args: Array<String>) {
                 require(zip.getInputStream(asset).readBytes().contentEquals(packed.getInputStream(source).readBytes())) { "Changed asset $name" }
             }
         }
+        require(zip.getEntry("assets/bdcrusher-features/NOTICE.txt")!=null){"Missing shared personal feature notices"}
+        for((feature,name) in listOf("shaders" to "Shaders","playlists" to "Download playlist")){
+            require((zip.getEntry("assets/bdcrusher-features/$feature.enabled")!=null)==selected.any {it.name==name}){"Incorrect feature activation: $feature"}
+        }
+        if(selected.any {it.name=="Shaders"})for(name in listOf("index.html","shaders.js"))require(zip.getEntry("assets/bdcrusher-shaders/$name")!=null){"Missing Shaders asset $name"}
         val owned=mutableSetOf<String>()
         val personalCalls=mutableMapOf<String,MutableSet<String>>()
         val definitions=mutableSetOf<String>();var metadataHooks=0;var playbackHooks=0
@@ -122,7 +134,7 @@ fun main(args: Array<String>) {
         }
         require("Lapp/bdcrusher/ytmusic/lyrics/BetterLyricsPanelView;" in owned)
         require("Lapp/bdcrusher/ytmusic/lyrics/BetterLyricsPreference;" in owned)
-        require(metadataHooks>0&&playbackHooks>0) { "Missing playback hooks: $metadataHooks / $playbackHooks" }
+        require(noPersonal||metadataHooks>0&&playbackHooks>0) { "Missing playback hooks: $metadataHooks / $playbackHooks" }
         val panel="Lapp/bdcrusher/ytmusic/lyrics/BetterLyricsPanelView;->"
         fun reachesSettings(method: String,seen: MutableSet<String> = mutableSetOf()): Boolean {
             if(method==panel+"applySettings")return true

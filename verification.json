@@ -1,48 +1,22 @@
 {
+  "version": "0.3.0-beta.1",
+  "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
   "experimentalTarget": {
     "package": "com.google.android.apps.youtube.music",
-    "version": "9.42.52",
+    "versionName": "9.42.52",
     "versionCode": 94252240,
     "abi": "arm64-v8a",
     "minSdk": 26,
     "sha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56"
   },
-  "officialBundleSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
-  "patcher": {
-    "verifiedEngine": "2.0.0",
-    "commit": "8c7ff9f29d4cf6395fcbe42a4ceddd034d71fecf",
-    "inheritedCompatibilitySemantics": "1.15.1"
+  "official": {
+    "version": "1.48.0",
+    "sha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7"
   },
-  "nativeLyricsFactoryProfile": {
-    "sha256": "7bc335a95608014c5d4d9ba2ca5e97752cc4b34706dfc8a69fdc225203229727",
-    "instructions": 238,
-    "originalApkSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-    "schemaReport": "revision28-panel-schema.json"
-  },
-  "version": "0.2.11-beta.1",
-  "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
   "runs": {
-    "lyrics": {
-      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
-      "mode": "lyrics",
-      "officialSha256": "",
-      "duplicateClasses": 0,
-      "selectedPatches": [
-        "Third-party lyrics"
-      ],
-      "sdkDexVerification": true,
-      "assetIdentity": true,
-      "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 123,
-      "metadataHooks": 1,
-      "playbackHooks": 1,
-      "outputUnsignedApkSha256": "7cf6410f563037fcfde98dcc4fde922f0b57575b86e464ec892054919574fbec",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision31-lyrics\\verified-unsigned.apk"
-    },
     "defaults": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "mode": "defaults",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -99,20 +73,219 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 123,
+      "personalClassDefinitions": 258,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "c7f6e68c9d273767fba072fd7274a641baeb71ff0e32aae4d63d008acb0aced7",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision31-defaults\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "e75d5583564a4c8142aee249c22e022799ed4b26f479347d9b997b89171da27f",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-defaults\\verified-unsigned.apk"
+    },
+    "features": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "features",
+      "officialSha256": "",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Shaders",
+        "Download playlist",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Third-party lyrics",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "d13ba097c8197ed236dcb4946f29e76b4242461425f80dd546bd3a246597cc4c",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-features\\verified-unsigned.apk"
+    },
+    "full-shaders-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "full-shaders-only",
+      "officialSha256": "",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Shaders",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Third-party lyrics",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "56ff4bfd2fe8f0f54e59960f5373c6a7b1e619cc1c6ea2f1df0f8c207da3a0c5",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-full-shaders-only\\verified-unsigned.apk"
+    },
+    "full-playlists-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "full-playlists-only",
+      "officialSha256": "",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Download playlist",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Third-party lyrics",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "16b4ce6283ff53e5f6d65f55fcb252a6b7ae3bbbf1a6fe88d2b49bc6df1f4fc4",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-full-playlists-only\\verified-unsigned.apk"
     },
     "addon-first": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "mode": "addon-first",
       "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
       "duplicateClasses": 0,
       "selectedPatches": [
-        "Third-party lyrics \u2014 Better Lyrics add-on",
+        "Third-party lyrics — Better Lyrics add-on",
         "Hide ads",
         "Crossfade",
         "Remove viewer discretion dialog",
@@ -164,15 +337,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 113,
+      "personalClassDefinitions": 258,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "fd27dc76993785d10ae3c995f9e8e4228ad508e44d95d371ad727494c5b83445",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision31-addon-first\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "ef64025fb58622059de8b2d620fbb83b0c6816bfd80a1eda7c10490f7cae3cb4",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-addon-first\\verified-unsigned.apk"
     },
     "official-first": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "mode": "official-first",
       "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
       "duplicateClasses": 0,
@@ -224,57 +397,1315 @@
         "Spoof app version",
         "Skip silence",
         "Playback speed",
-        "Third-party lyrics \u2014 Better Lyrics add-on"
+        "Third-party lyrics — Better Lyrics add-on"
       ],
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 113,
+      "personalClassDefinitions": 258,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "2e35cc4722d20eeae3ad6bc15ac05f05e0d501330ac540e84b61ed2573f71e01",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision31-official-first\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "b9b5839864b07d47536c7fc4f06b959db39992880435d3a5447d61b434fef1a2",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-official-first\\verified-unsigned.apk"
+    },
+    "addon-first-features": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "addon-first-features",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Shaders",
+        "Download playlist",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed",
+        "Third-party lyrics — Better Lyrics add-on"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "0d82dfe7e1640726f88d4d82d4c83fe85647cdda62b81373e254f540b741e505",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-addon-first-features\\verified-unsigned.apk"
+    },
+    "official-first-features": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "official-first-features",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed",
+        "Third-party lyrics — Better Lyrics add-on",
+        "Shaders",
+        "Download playlist"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "8261dee049755da2b4d70ba03d775770b35c3349efd534ffb1f54b8a67830dd5",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-official-first-features\\verified-unsigned.apk"
+    },
+    "addon-first-shaders-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "addon-first-shaders-only",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Shaders",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed",
+        "Third-party lyrics — Better Lyrics add-on"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "aeb03ec7e79ce909194ff6a63809b7b0902ce832d123b80df66e38d352da926a",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-addon-first-shaders-only\\verified-unsigned.apk"
+    },
+    "official-first-shaders-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "official-first-shaders-only",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed",
+        "Third-party lyrics — Better Lyrics add-on",
+        "Shaders"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "bf6a469814f2ed996e722a0d229578c15234ef54a1e64e905f2399a5e57fb172",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-official-first-shaders-only\\verified-unsigned.apk"
+    },
+    "addon-first-playlists-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "addon-first-playlists-only",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Download playlist",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed",
+        "Third-party lyrics — Better Lyrics add-on"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "99726446a92e8891e5e293b2a861bdb1398f826210c3eef0c3601425f4b8b529",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-addon-first-playlists-only\\verified-unsigned.apk"
+    },
+    "official-first-playlists-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "official-first-playlists-only",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed",
+        "Third-party lyrics — Better Lyrics add-on",
+        "Download playlist"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "30fd7b12ae3a68c7caccf44b9fc983f3b6a9a4fe3955ffc073c6420b144c1ac8",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-official-first-playlists-only\\verified-unsigned.apk"
+    },
+    "standalone-shaders-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "standalone-shaders-only",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Shaders",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Third-party lyrics",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "b1a51e088b25a364f53ae2e01a76cb447da62b2cad297d755572d886e4358cfd",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-standalone-shaders-only\\verified-unsigned.apk"
+    },
+    "standalone-playlists-only": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "standalone-playlists-only",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Download playlist",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Third-party lyrics",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "a186c49cb8212a2a1094c31d3fe8212e671b283f7bb856a716a831f94ed2c399",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-standalone-playlists-only\\verified-unsigned.apk"
+    },
+    "standalone-features": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "standalone-features",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Shaders",
+        "Download playlist",
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Third-party lyrics",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "35fd8372ec447fef1b81c69570d7dd219ac1b8391e22f64df61dafc01307bc69",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-standalone-features\\verified-unsigned.apk"
+    },
+    "standalone-official-first-features": {
+      "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "mode": "standalone-official-first-features",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "duplicateClasses": 0,
+      "selectedPatches": [
+        "Hide ads",
+        "Crossfade",
+        "Remove viewer discretion dialog",
+        "Disable dislike redirection",
+        "Downloads",
+        "Jam queue sharing",
+        "Playlist track tap action",
+        "Remember repeat state",
+        "Remember shuffle state",
+        "Scrobbling",
+        "Custom branding",
+        "Change header",
+        "Hide buttons",
+        "Hide music action buttons",
+        "Navigation bar",
+        "Custom font",
+        "Hide flyout menu components",
+        "Hide layout components",
+        "Settings menu filter",
+        "Third-party lyrics",
+        "Change miniplayer color",
+        "Enable forced miniplayer",
+        "Enable swipe to dismiss miniplayer",
+        "Miniplayer previous and next buttons",
+        "Force portrait orientation",
+        "Return YouTube Dislike",
+        "SponsorBlock",
+        "Change start page",
+        "Theme",
+        "Play albums songs",
+        "Android Auto",
+        "Disable DRC audio",
+        "Enable exclusive audio playback",
+        "Force original audio",
+        "Enable audio/video switch",
+        "Remove background playback restrictions",
+        "Enable debugging",
+        "Check watch history domain name resolution",
+        "GmsCore support",
+        "Media notification controls",
+        "PoToken provider",
+        "Sanitize sharing links",
+        "Disable QUIC protocol",
+        "App refresh rate",
+        "Spoof video streams",
+        "Spoof app version",
+        "Skip silence",
+        "Playback speed",
+        "Shaders",
+        "Download playlist"
+      ],
+      "sdkDexVerification": true,
+      "assetIdentity": true,
+      "visibilityDoesNotReconfigure": true,
+      "personalClassDefinitions": 258,
+      "metadataHooks": 1,
+      "playbackHooks": 1,
+      "outputUnsignedApkSha256": "30e4aa1759985bea1545f650a224ebb019a6b2c2cc1e0485c41e6dd79e9ce35a",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision32-finalrelease-standalone-official-first-features\\verified-unsigned.apk"
     },
     "editions-both": {
       "expectedFailure": true,
       "mode": "editions-both",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "officialSha256": "",
-      "reason": "The patch \"Third-party lyrics \u2014 Better Lyrics add-on\" depends on \"BytecodePatch@1712669532\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n"
+      "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" depends on \"BytecodePatch@1508395126\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:86)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:86)\r\n"
     },
     "editions-reverse": {
       "expectedFailure": true,
       "mode": "editions-reverse",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "officialSha256": "",
-      "reason": "The patch \"Third-party lyrics \u2014 Better Lyrics add-on\" depends on \"BytecodePatch@1712669532\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n"
+      "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" depends on \"BytecodePatch@1508395126\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:86)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:86)\r\n"
     },
     "addon-full-other": {
       "expectedFailure": true,
       "mode": "addon-full-other",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "officialSha256": "",
-      "reason": "The patch \"Third-party lyrics \u2014 Better Lyrics add-on\" depends on \"BytecodePatch@1712669532\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n"
+      "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" depends on \"BytecodePatch@1508395126\", which raised an exception:\napp.morphe.patcher.patch.PatchException: Choose one personal edition. For Lyrics-only Add-on, deselect every patch in Full Collection and use official Morphe with official Third-party lyrics disabled. For Full Collection, deselect Lyrics-only Add-on and official Morphe.\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelection.claim(EditionSelection.kt:17)\r\n\tat app.bdcrusher.ytmusic.nativeentry.EditionSelectionKt.addonEditionGuard$lambda$0$0(EditionSelection.kt:28)\r\n\tat app.morphe.patcher.patch.Patch.execute(Patch.kt:141)\r\n\tat app.morphe.patcher.patch.BytecodePatch.execute$morphe_patcher(Patch.kt:292)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:122)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend$execute(Patcher.kt:100)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:147)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:86)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:86)\r\n"
     },
     "conflict": {
       "expectedFailure": true,
       "mode": "conflict",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
-      "reason": "The patch \"Third-party lyrics \u2014 Better Lyrics add-on\" raised an exception: app.morphe.patcher.patch.PatchException: Two lyrics patches selected. Disable official Third-party lyrics; do not combine the Full edition with this add-on.\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1(LyricsAddon.kt:90)\r\n\tat app.morphe.patcher.patch.Patch.finalize(Patch.kt:164)\r\n\tat app.morphe.patcher.patch.BytecodePatch.finalize$morphe_patcher(Patch.kt:295)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:164)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n | Two lyrics patches selected. Disable official Third-party lyrics; do not combine the Full edition with this add-on."
+      "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" raised an exception: app.morphe.patcher.patch.PatchException: Two lyrics patches selected. Disable official Third-party lyrics; do not combine the Full edition with this add-on.\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1(LyricsAddon.kt:84)\r\n\tat app.morphe.patcher.patch.Patch.finalize(Patch.kt:164)\r\n\tat app.morphe.patcher.patch.BytecodePatch.finalize$morphe_patcher(Patch.kt:295)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:164)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:86)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:86)\r\n | Two lyrics patches selected. Disable official Third-party lyrics; do not combine the Full edition with this add-on."
     },
     "missing-official": {
       "expectedFailure": true,
       "mode": "missing-official",
-      "bundleSha256": "9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
       "officialSha256": "",
-      "reason": "The patch \"Third-party lyrics \u2014 Better Lyrics add-on\" raised an exception: app.morphe.patcher.patch.PatchException: Missing official Morphe runtime: Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;. Select compatible official default Music patches, disabling their Third-party lyrics.\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1$required(LyricsAddon.kt:65)\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1(LyricsAddon.kt:66)\r\n\tat app.morphe.patcher.patch.Patch.finalize(Patch.kt:164)\r\n\tat app.morphe.patcher.patch.BytecodePatch.finalize$morphe_patcher(Patch.kt:295)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:164)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:79)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:79)\r\n | Missing official Morphe runtime: Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;. Select compatible official default Music patches, disabling their Third-party lyrics."
+      "reason": "The patch \"Third-party lyrics — Better Lyrics add-on\" raised an exception: app.morphe.patcher.patch.PatchException: Missing official Morphe runtime: Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;. Select compatible official default Music patches, disabling their Third-party lyrics.\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1$required(LyricsAddon.kt:65)\r\n\tat app.bdcrusher.ytmusic.addon.LyricsAddonKt.lyricsAddon$lambda$0$1(LyricsAddon.kt:66)\r\n\tat app.morphe.patcher.patch.Patch.finalize(Patch.kt:164)\r\n\tat app.morphe.patcher.patch.BytecodePatch.finalize$morphe_patcher(Patch.kt:295)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:164)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:86)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:86)\r\n | Missing official Morphe runtime: Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;. Select compatible official default Music patches, disabling their Third-party lyrics."
+    },
+    "standalone-missing-downloads-features": {
+      "expectedFailure": true,
+      "mode": "standalone-missing-downloads-features",
+      "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+      "officialSha256": "82bc696c94c26dbf75242b59980251315145457575b663200b981ca351e1c0f7",
+      "reason": "The patch \"Download playlist\" raised an exception: app.morphe.patcher.patch.PatchException: Download playlist requires the Downloads patch to be selected in Full or official Morphe 1.48.0.\r\n\tat app.bdcrusher.ytmusic.playlists.PlaylistPatchKt.playlistDownloadsPatch$lambda$0$1(PlaylistPatch.kt:109)\r\n\tat app.morphe.patcher.patch.Patch.finalize(Patch.kt:164)\r\n\tat app.morphe.patcher.patch.BytecodePatch.finalize$morphe_patcher(Patch.kt:295)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invokeSuspend(Patcher.kt:164)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat app.morphe.patcher.Patcher$invoke$1.invoke(Patcher.kt)\r\n\tat kotlinx.coroutines.flow.SafeFlow.collectSafely(Builders.kt:57)\r\n\tat kotlinx.coroutines.flow.AbstractFlow.collect(Flow.kt:226)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt$main$10$1.invokeSuspend(ValidateLyrics.kt:86)\r\n\tat kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)\r\n\tat kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)\r\n\tat kotlinx.coroutines.EventLoopImplBase.processNextEvent(EventLoop.common.kt:263)\r\n\tat kotlinx.coroutines.BlockingCoroutine.joinBlocking(Builders.kt:94)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking(Builders.kt:70)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking(Unknown Source)\r\n\tat kotlinx.coroutines.BuildersKt__BuildersKt.runBlocking$default(Builders.kt:48)\r\n\tat kotlinx.coroutines.BuildersKt.runBlocking$default(Unknown Source)\r\n\tat app.bdcrusher.lyrics.ValidateLyricsKt.main(ValidateLyrics.kt:86)\r\n | Download playlist requires the Downloads patch to be selected in Full or official Morphe 1.48.0."
     }
   },
-  "nativeCompiledAudits": {
-    "lyrics": {
+  "catalog": {
+    "bundleSha256": "30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96",
+    "patches": [
+      {
+        "name": "Third-party lyrics — Better Lyrics add-on",
+        "category": "Lyrics-only Add-on",
+        "default": false
+      },
+      {
+        "name": "Shaders",
+        "category": "Shaders",
+        "default": false
+      },
+      {
+        "name": "Download playlist",
+        "category": "Playlist downloads",
+        "default": false
+      },
+      {
+        "name": "Hide ads",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Crossfade",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Remove viewer discretion dialog",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Disable dislike redirection",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Downloads",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Jam queue sharing",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Playlist track tap action",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Remember repeat state",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Remember shuffle state",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Scrobbling",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Custom branding",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Change header",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Hide buttons",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Hide music action buttons",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Navigation bar",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Custom font",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Hide flyout menu components",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Hide layout components",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Settings menu filter",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Third-party lyrics",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Change miniplayer color",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Enable forced miniplayer",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Enable swipe to dismiss miniplayer",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Miniplayer previous and next buttons",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Force portrait orientation",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Return YouTube Dislike",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "SponsorBlock",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Change start page",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Theme",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Play albums songs",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Android Auto",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Disable DRC audio",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Enable exclusive audio playback",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Force original audio",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Enable audio/video switch",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Remove background playback restrictions",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Enable debugging",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Check watch history domain name resolution",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "GmsCore support",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Media notification controls",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "PoToken provider",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Sanitize sharing links",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Network proxy",
+        "category": "Full Collection",
+        "default": false
+      },
+      {
+        "name": "Disable QUIC protocol",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "App refresh rate",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Spoof video streams",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Spoof app version",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Skip silence",
+        "category": "Full Collection",
+        "default": true
+      },
+      {
+        "name": "Playback speed",
+        "category": "Full Collection",
+        "default": true
+      }
+    ]
+  },
+  "compiledFeatureAudits": {
+    "defaults": {
       "passed": true,
-      "apkSha256": "7cf6410f563037fcfde98dcc4fde922f0b57575b86e464ec892054919574fbec",
+      "apkSha256": "e75d5583564a4c8142aee249c22e022799ed4b26f479347d9b997b89171da27f",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4168,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": false,
+      "playlistDownloads": false,
+      "personalLyrics": true,
+      "shaderCallbacks": 0,
+      "personalCallbacks": 2,
+      "playlistCommandHooks": 0,
+      "typedCompletionHooks": 1,
+      "nativeBrowseCaptures": 0,
+      "nativeHeaderHooks": 0,
+      "phoneVerified": false
+    },
+    "features": {
+      "passed": true,
+      "apkSha256": "d13ba097c8197ed236dcb4946f29e76b4242461425f80dd546bd3a246597cc4c",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4169,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": true,
+      "personalLyrics": true,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 2,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "full-shaders-only": {
+      "passed": true,
+      "apkSha256": "56ff4bfd2fe8f0f54e59960f5373c6a7b1e619cc1c6ea2f1df0f8c207da3a0c5",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4168,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": false,
+      "personalLyrics": true,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 2,
+      "playlistCommandHooks": 0,
+      "typedCompletionHooks": 1,
+      "nativeBrowseCaptures": 0,
+      "nativeHeaderHooks": 0,
+      "phoneVerified": false
+    },
+    "full-playlists-only": {
+      "passed": true,
+      "apkSha256": "16b4ce6283ff53e5f6d65f55fcb252a6b7ae3bbbf1a6fe88d2b49bc6df1f4fc4",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4169,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": false,
+      "playlistDownloads": true,
+      "personalLyrics": true,
+      "shaderCallbacks": 0,
+      "personalCallbacks": 2,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "addon-first": {
+      "passed": true,
+      "apkSha256": "ef64025fb58622059de8b2d620fbb83b0c6816bfd80a1eda7c10490f7cae3cb4",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4168,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": false,
+      "playlistDownloads": false,
+      "personalLyrics": true,
+      "shaderCallbacks": 0,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 0,
+      "typedCompletionHooks": 1,
+      "nativeBrowseCaptures": 0,
+      "nativeHeaderHooks": 0,
+      "phoneVerified": false
+    },
+    "official-first": {
+      "passed": true,
+      "apkSha256": "b9b5839864b07d47536c7fc4f06b959db39992880435d3a5447d61b434fef1a2",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4168,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": false,
+      "playlistDownloads": false,
+      "personalLyrics": true,
+      "shaderCallbacks": 0,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 0,
+      "typedCompletionHooks": 1,
+      "nativeBrowseCaptures": 0,
+      "nativeHeaderHooks": 0,
+      "phoneVerified": false
+    },
+    "addon-first-features": {
+      "passed": true,
+      "apkSha256": "0d82dfe7e1640726f88d4d82d4c83fe85647cdda62b81373e254f540b741e505",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4169,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": true,
+      "personalLyrics": true,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "official-first-features": {
+      "passed": true,
+      "apkSha256": "8261dee049755da2b4d70ba03d775770b35c3349efd534ffb1f54b8a67830dd5",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4169,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": true,
+      "personalLyrics": true,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "addon-first-shaders-only": {
+      "passed": true,
+      "apkSha256": "aeb03ec7e79ce909194ff6a63809b7b0902ce832d123b80df66e38d352da926a",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4168,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": false,
+      "personalLyrics": true,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 0,
+      "typedCompletionHooks": 1,
+      "nativeBrowseCaptures": 0,
+      "nativeHeaderHooks": 0,
+      "phoneVerified": false
+    },
+    "official-first-shaders-only": {
+      "passed": true,
+      "apkSha256": "bf6a469814f2ed996e722a0d229578c15234ef54a1e64e905f2399a5e57fb172",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4168,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": false,
+      "personalLyrics": true,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 0,
+      "typedCompletionHooks": 1,
+      "nativeBrowseCaptures": 0,
+      "nativeHeaderHooks": 0,
+      "phoneVerified": false
+    },
+    "addon-first-playlists-only": {
+      "passed": true,
+      "apkSha256": "99726446a92e8891e5e293b2a861bdb1398f826210c3eef0c3601425f4b8b529",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4169,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": false,
+      "playlistDownloads": true,
+      "personalLyrics": true,
+      "shaderCallbacks": 0,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "official-first-playlists-only": {
+      "passed": true,
+      "apkSha256": "30fd7b12ae3a68c7caccf44b9fc983f3b6a9a4fe3955ffc073c6420b144c1ac8",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4169,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": false,
+      "playlistDownloads": true,
+      "personalLyrics": true,
+      "shaderCallbacks": 0,
+      "personalCallbacks": 3,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "standalone-shaders-only": {
+      "passed": true,
+      "apkSha256": "b1a51e088b25a364f53ae2e01a76cb447da62b2cad297d755572d886e4358cfd",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4164,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": false,
+      "personalLyrics": false,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 0,
+      "playlistCommandHooks": 0,
+      "typedCompletionHooks": 1,
+      "nativeBrowseCaptures": 0,
+      "nativeHeaderHooks": 0,
+      "phoneVerified": false
+    },
+    "standalone-playlists-only": {
+      "passed": true,
+      "apkSha256": "a186c49cb8212a2a1094c31d3fe8212e671b283f7bb856a716a831f94ed2c399",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4165,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": false,
+      "playlistDownloads": true,
+      "personalLyrics": false,
+      "shaderCallbacks": 0,
+      "personalCallbacks": 0,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "standalone-features": {
+      "passed": true,
+      "apkSha256": "35fd8372ec447fef1b81c69570d7dd219ac1b8391e22f64df61dafc01307bc69",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4165,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": true,
+      "personalLyrics": false,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 0,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    },
+    "standalone-official-first-features": {
+      "passed": true,
+      "apkSha256": "30e4aa1759985bea1545f650a224ebb019a6b2c2cc1e0485c41e6dd79e9ce35a",
+      "ownedClasses": 258,
+      "validatedRuntimeReferences": 4165,
+      "unresolvedRuntimeReferences": 0,
+      "sharedLifecycleHooks": 1,
+      "dialogHooks": 115,
+      "legacyBarHooks": 0,
+      "shaders": true,
+      "playlistDownloads": true,
+      "personalLyrics": false,
+      "shaderCallbacks": 5,
+      "personalCallbacks": 0,
+      "playlistCommandHooks": 1,
+      "typedCompletionHooks": 5,
+      "nativeBrowseCaptures": 1,
+      "nativeHeaderHooks": 1,
+      "phoneVerified": false
+    }
+  },
+  "nativeLyricsAudits": {
+    "defaults": {
+      "passed": true,
+      "apkSha256": "e75d5583564a4c8142aee249c22e022799ed4b26f479347d9b997b89171da27f",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -282,18 +1713,19 @@
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
       "optionalServerResponseIdentityGate": false,
-      "nativeNavigationSyncSites": 1,
-      "nativeNavigationReleaseSites": 1,
-      "navigationDecorationOnly": true,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
       "navigationAlwaysTransparent": true,
       "navigationProtectionOverlays": false,
       "nativeScrollbarSuppressionSites": 2,
       "personalButtonViewOverrides": false,
       "phoneVerified": false
     },
-    "defaults": {
+    "features": {
       "passed": true,
-      "apkSha256": "c7f6e68c9d273767fba072fd7274a641baeb71ff0e32aae4d63d008acb0aced7",
+      "apkSha256": "d13ba097c8197ed236dcb4946f29e76b4242461425f80dd546bd3a246597cc4c",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -301,9 +1733,50 @@
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
       "optionalServerResponseIdentityGate": false,
-      "nativeNavigationSyncSites": 1,
-      "nativeNavigationReleaseSites": 1,
-      "navigationDecorationOnly": true,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "full-shaders-only": {
+      "passed": true,
+      "apkSha256": "56ff4bfd2fe8f0f54e59960f5373c6a7b1e619cc1c6ea2f1df0f8c207da3a0c5",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "full-playlists-only": {
+      "passed": true,
+      "apkSha256": "16b4ce6283ff53e5f6d65f55fcb252a6b7ae3bbbf1a6fe88d2b49bc6df1f4fc4",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
       "navigationAlwaysTransparent": true,
       "navigationProtectionOverlays": false,
       "nativeScrollbarSuppressionSites": 2,
@@ -312,7 +1785,7 @@
     },
     "addon-first": {
       "passed": true,
-      "apkSha256": "fd27dc76993785d10ae3c995f9e8e4228ad508e44d95d371ad727494c5b83445",
+      "apkSha256": "ef64025fb58622059de8b2d620fbb83b0c6816bfd80a1eda7c10490f7cae3cb4",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -320,9 +1793,10 @@
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
       "optionalServerResponseIdentityGate": false,
-      "nativeNavigationSyncSites": 1,
-      "nativeNavigationReleaseSites": 1,
-      "navigationDecorationOnly": true,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
       "navigationAlwaysTransparent": true,
       "navigationProtectionOverlays": false,
       "nativeScrollbarSuppressionSites": 2,
@@ -331,7 +1805,7 @@
     },
     "official-first": {
       "passed": true,
-      "apkSha256": "2e35cc4722d20eeae3ad6bc15ac05f05e0d501330ac540e84b61ed2573f71e01",
+      "apkSha256": "b9b5839864b07d47536c7fc4f06b959db39992880435d3a5447d61b434fef1a2",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -339,9 +1813,130 @@
       "originalNativeModelCaptureSites": 1,
       "nativeRendererReplayCalls": 1,
       "optionalServerResponseIdentityGate": false,
-      "nativeNavigationSyncSites": 1,
-      "nativeNavigationReleaseSites": 1,
-      "navigationDecorationOnly": true,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "addon-first-features": {
+      "passed": true,
+      "apkSha256": "0d82dfe7e1640726f88d4d82d4c83fe85647cdda62b81373e254f540b741e505",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "official-first-features": {
+      "passed": true,
+      "apkSha256": "8261dee049755da2b4d70ba03d775770b35c3349efd534ffb1f54b8a67830dd5",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "addon-first-shaders-only": {
+      "passed": true,
+      "apkSha256": "aeb03ec7e79ce909194ff6a63809b7b0902ce832d123b80df66e38d352da926a",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "official-first-shaders-only": {
+      "passed": true,
+      "apkSha256": "bf6a469814f2ed996e722a0d229578c15234ef54a1e64e905f2399a5e57fb172",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "addon-first-playlists-only": {
+      "passed": true,
+      "apkSha256": "99726446a92e8891e5e293b2a861bdb1398f826210c3eef0c3601425f4b8b529",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
+      "navigationAlwaysTransparent": true,
+      "navigationProtectionOverlays": false,
+      "nativeScrollbarSuppressionSites": 2,
+      "personalButtonViewOverrides": false,
+      "phoneVerified": false
+    },
+    "official-first-playlists-only": {
+      "passed": true,
+      "apkSha256": "30fd7b12ae3a68c7caccf44b9fc983f3b6a9a4fe3955ffc073c6420b144c1ac8",
+      "timestampedRendererClockHooks": 1,
+      "nativeActionModes": 3,
+      "nativeDefinitionCaptureSites": 1,
+      "nativeIdentityInputs": 4,
+      "originalNativeModelCaptureSites": 1,
+      "nativeRendererReplayCalls": 1,
+      "optionalServerResponseIdentityGate": false,
+      "nativeNavigationSyncSites": 0,
+      "nativeNavigationReleaseSites": 0,
+      "navigationDecorationOnly": false,
+      "sharedWindowNavigation": true,
       "navigationAlwaysTransparent": true,
       "navigationProtectionOverlays": false,
       "nativeScrollbarSuppressionSites": 2,
@@ -350,934 +1945,404 @@
     }
   },
   "javaChecks": {
-    "connection": {
-      "checks": 40,
-      "browserAndAndroidSimulated": true,
-      "phoneVerified": false,
+    "library": {
+      "checks": 49,
+      "androidBoundarySimulated": true,
       "passed": true,
-      "actualSourceSha256": {
-        "app\\bdcrusher\\ytmusic\\lyrics\\TokenExpiry.java": "ef4aa3bfa5b4642ee70d051312fe72e1b69364dcdfc7e32ef5b1cc4f9e8feb7f",
-        "app\\bdcrusher\\ytmusic\\lyrics\\ServiceConnection.java": "122f123b878771ae5ab5b02c200e892d259caee68ed90e0458b6de8e97a81b1b",
-        "app\\bdcrusher\\ytmusic\\lyrics\\SourceVerification.java": "c6210087fce4ebe0fb8d118ad025ccef13f7fac33e9c207ad56008c44416beba",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsNetwork.java": "9294a964c08393df2c776540fa229c514220334a366a3e6a1d4af4bfd975b14d",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsRetry.java": "623109ec2be59b1c819511eb20ff03ea8300d87a714469b765a46e6c7cc8d180"
-      },
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
+      "sourceSha256": {
+        "LyricsLibrary.java": "02320e50349468e3818d9bf3dff5e88bc13c7e3b6f8c4c1ef9f3c641b06fd694",
+        "LyricQuality.java": "2752f5bb95dc633a676a16c202016e7ed2fedb72c44bc013bab0b3d1e6dcf6f6",
+        "LyricsDiskCache.java": "677e0c7002c0333afb3762430621409d3ba09f4560becef8e434c3e66dbda1d1"
+      }
     },
-    "catalog": {
-      "checks": 60,
-      "phoneVerified": false,
+    "recovery": {
+      "transportAndClockSimulated": true,
+      "checks": 24,
       "passed": true,
-      "httpSimulated": true,
-      "actualSourceSha256": {
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "e5785098927a03e939726d2881b5a2d3e9e79b35dc4ef59db828c98970eeefc8",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsRetry.java": "623109ec2be59b1c819511eb20ff03ea8300d87a714469b765a46e6c7cc8d180",
-        "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
-      },
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
+      "sourceSha256": {
+        "LyricsCatalog.java": "de357b72287d7595325178abc0eec7f6ac38ccbad054f8bdc8cfe3c52ae77e46",
+        "LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
+        "LyricsRetry.java": "ca379c56180ca3c4198ea2b40780aed44312c2e350b0b5997dacda1edb5e083d",
+        "TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
+      }
     },
-    "lifecycle": {
-      "checks": 25,
+    "playlists": {
+      "androidAndMediaTransportSimulated": true,
+      "checks": 33,
+      "nativeFixtures": true,
+      "realDownloadsLaunched": false,
       "passed": true,
-      "androidPhoneVerified": false,
-      "actualSourceSha256": {
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsRepository.java": "f4928cbf4707be3d0eadf5b202bd6f29b7f9dcc1724a9cf1666d81976581e789",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsEntryCoordinator.java": "553e75ecd6776e5352ac33230796f2dddebe0e7eb8c70c853caece0c738cc59f"
-      },
-      "stubs": [
-        "app/bdcrusher/ytmusic/lyrics/ServiceConnection.java",
-        "android/content/Context.java",
-        "android/content/SharedPreferences.java",
-        "android/app/Activity.java",
-        "android/os/Looper.java",
-        "android/os/Handler.java",
-        "app/morphe/extension/shared/Utils.java",
-        "app/morphe/extension/music/settings/Settings.java",
-        "app/morphe/extension/music/shared/VideoInformation.java",
-        "app/morphe/extension/music/patches/lyrics/model/TrackInfo.java",
-        "app/morphe/extension/music/patches/lyrics/model/Lyrics.java",
-        "app/morphe/extension/music/patches/lyrics/LyricsManager.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsEntryButton.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsConfig.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsCatalog.java",
-        "app/bdcrusher/ytmusic/lyrics/EntryCheck.java"
-      ],
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
+      "sourceSha256": {
+        "ProtoWire.java": "4ec64157d8e34b226781d5707161713767bbc1331b1d298d2d468e2c67371e49",
+        "PlaylistHeaderModel.java": "a60c12d510f3ebd96ed259c9e399a0fda68b5bf0ac47c9d3477ab4479f57460a",
+        "PlaylistPage.java": "f7fde766eda42f6400e77b0a6b24aaa39e2504bb8bb51a6cfd69517e252806b3",
+        "PlaylistRuntime.java": "dc7cbfa683040da210c2b8f78f6efe68e4eb57797e7f290875c5c71507e88591"
+      }
     },
-    "nativeClock": {
+    "artwork": {
+      "checks": 12,
       "passed": true,
-      "checks": 18,
-      "androidSimulated": true,
-      "phoneVerified": false,
-      "actualSourceSha256": {
-        "RendererPlayback.java": "132775c89c69fc552a489b8466a3d80827f3a53ea0ee7b5937786c65ecde4339"
-      },
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
+      "realMediaDownloaded": false,
+      "networkAndNativeDecoderSimulated": true,
+      "sourceSha256": "7853234343d8456b54a216457263735df51f1f5fb1bb56c4d4723c1ecd62848f"
     },
-    "liveTransport": {
-      "cases": [
-        {
-          "characters": 3700,
-          "videoId": "gF2KuOJLEQE",
-          "source": "LRCLib synced",
-          "passed": true
-        },
-        {
-          "characters": 23376,
-          "videoId": "MYal8NoVQXs",
-          "source": "Unison",
-          "passed": true
-        }
-      ],
+    "artworkToken": {
+      "checks": 12,
       "passed": true,
-      "androidPhoneVerified": false,
-      "actualSourceSha256": {
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "e5785098927a03e939726d2881b5a2d3e9e79b35dc4ef59db828c98970eeefc8",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsNetwork.java": "9294a964c08393df2c776540fa229c514220334a366a3e6a1d4af4bfd975b14d",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsRetry.java": "623109ec2be59b1c819511eb20ff03ea8300d87a714469b765a46e6c7cc8d180",
-        "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
-      },
-      "stubs": [
-        "android/content/Context.java",
-        "android/content/SharedPreferences.java",
-        "androidx/annotation/Nullable.java",
-        "androidx/annotation/NonNull.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsConfig.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsDiskCache.java",
-        "app/bdcrusher/ytmusic/lyrics/ServiceConnection.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java",
-        "app/bdcrusher/ytmusic/lyrics/CatalogCheck.java"
-      ],
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
-    },
-    "liveWake": {
-      "characters": 18125,
-      "relaxedMetadata": false,
-      "videoId": "sN_tJ8d3c0I",
-      "passed": true,
-      "source": "Better Lyrics",
-      "androidPhoneVerified": false,
-      "actualSourceSha256": {
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "e5785098927a03e939726d2881b5a2d3e9e79b35dc4ef59db828c98970eeefc8",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsNetwork.java": "9294a964c08393df2c776540fa229c514220334a366a3e6a1d4af4bfd975b14d",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsRetry.java": "623109ec2be59b1c819511eb20ff03ea8300d87a714469b765a46e6c7cc8d180",
-        "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
-      },
-      "stubs": [
-        "android/content/Context.java",
-        "android/content/SharedPreferences.java",
-        "androidx/annotation/Nullable.java",
-        "androidx/annotation/NonNull.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsConfig.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsDiskCache.java",
-        "app/bdcrusher/ytmusic/lyrics/ServiceConnection.java",
-        "app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java",
-        "app/bdcrusher/ytmusic/lyrics/CatalogCheck.java"
-      ],
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
-    },
-    "liveJavaService": {
-      "androidStorageSimulated": true,
-      "backendProviders": [
-        "qq",
-        "lrclib",
-        "kugou",
-        "golyrics",
-        "binimum",
-        "musixmatch"
-      ],
-      "phoneVerified": false,
-      "health": {
-        "found": true,
-        "pending": 0,
-        "failed": false,
-        "connectionNeeded": false
-      },
-      "positivePayloads": 9,
-      "passed": true,
-      "actualJavaHttpTransport": true,
-      "actualSourceSha256": {
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsCatalog.java": "e5785098927a03e939726d2881b5a2d3e9e79b35dc4ef59db828c98970eeefc8",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsNetwork.java": "9294a964c08393df2c776540fa229c514220334a366a3e6a1d4af4bfd975b14d",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
-        "app\\bdcrusher\\ytmusic\\lyrics\\LyricsRetry.java": "623109ec2be59b1c819511eb20ff03ea8300d87a714469b765a46e6c7cc8d180",
-        "app\\bdcrusher\\ytmusic\\lyrics\\TokenExpiry.java": "ef4aa3bfa5b4642ee70d051312fe72e1b69364dcdfc7e32ef5b1cc4f9e8feb7f",
-        "app\\morphe\\extension\\music\\patches\\lyrics\\model\\TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
-      },
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
-    },
-    "host": {
-      "passed": true,
-      "checks": 39,
-      "nativeProxiesSimulated": true,
-      "phoneVerified": false,
-      "actualSourceSha256": {
-        "NativeActionModel.java": "641fe727b5c1719fa388e63c050754a2f88019d7ddcf4babd08cf1dd3b8973fb",
-        "ProtoWire.java": "d333d51895d63ee06aee1e78fc1d876b56fa6beae77ca49e6e3c48e4cf179f20",
-        "NativePanelWire.java": "11dbd7a3696d2ef32174f675a11386326f7e10224316a52ad08776c94a091645",
-        "NativeLyricsHost.java": "b38d48cc4e9f758bac6f8467d6b77911270906fc49e16681454b123e55e8af75",
-        "LyricsEntryButton.java": "8bc1d5e452dc2c13ae3ad1963d1783d074e33f9ea3b554c9c203facf9223d2da"
-      },
-      "evidenceReuse": "0.2.10 evidence reused after exact source hashes match; not rerun for a navigation-only change."
+      "normalVerificationPreserved": true,
+      "serviceAndSolverSimulated": true,
+      "sourceSha256": "9c7d7a2c2902e2cbd837a214518aa362c834860d78fbf9a900b1461155a17dd4"
     },
     "navigation": {
+      "checks": 51,
       "passed": true,
-      "checks": 47,
       "androidWindowStateSimulated": true,
-      "phoneVerified": false,
-      "legacyPreferenceIgnored": true,
-      "toggleRemoved": true,
-      "actualSourceSha256": {
-        "LyricsSystemBars.java": "7bd6b36f38ba96c6584aaf2e276e41d6e74bde20466be475d48d5e5f571f13cf",
-        "BetterLyricsPanelView.java": "b6540d7121abcd336f06034c5a9652585db8c4e53dd308e4d34d076ecbc7bd77",
-        "LyricsSettingsPage.java": "502e4bba4fe98c002b36580e67bf82c25733ce7b11cdffd2228c3b8a5224ce35"
-      }
-    }
-  },
-  "jsChecks": {
-    "clock": {
-      "passed": true,
-      "checks": 57,
-      "virtualCases": [
-        {
-          "hz": 60,
-          "rate": 0.5,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4,
-          "maximumRate": 0.54
-        },
-        {
-          "hz": 60,
-          "rate": 1,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 1.047
-        },
-        {
-          "hz": 60,
-          "rate": 1.5,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 1.547
-        },
-        {
-          "hz": 60,
-          "rate": 2,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 2.047
-        },
-        {
-          "hz": 90,
-          "rate": 0.5,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4,
-          "maximumRate": 0.54
-        },
-        {
-          "hz": 90,
-          "rate": 1,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 1.047
-        },
-        {
-          "hz": 90,
-          "rate": 1.5,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 1.547
-        },
-        {
-          "hz": 90,
-          "rate": 2,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 2.047
-        },
-        {
-          "hz": 120,
-          "rate": 0.5,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4,
-          "maximumRate": 0.54
-        },
-        {
-          "hz": 120,
-          "rate": 1,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 1.047
-        },
-        {
-          "hz": 120,
-          "rate": 1.5,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 1.547
-        },
-        {
-          "hz": 120,
-          "rate": 2,
-          "seconds": 120,
-          "reverseSteps": 0,
-          "legacyReverseSteps": 599,
-          "maxErrorMs": 4.5,
-          "maximumRate": 2.047
-        }
-      ],
-      "seeksPauseResumeRateAndWallClock": true,
-      "phoneVerified": false,
-      "executedSourceSha256": {
-        "web/src/playback-clock.js": "ce33baf1ca11380be35ec66e5a69d7789cad11e0905e540f2c0ee18cd5679ede"
-      }
+      "samsungPhoneVerified": false,
+      "sourceSha256": "76074f492eb5b42c785236b47c2462544088f6332bf1b5b3b36f1e934e5a7a31"
     },
-    "frameBudget": {
-      "passed": true,
-      "checks": 8,
-      "actualSourceSha256": {
-        "web/src/frame-budget.js": "1c13892608740200155779da584e3d90d72b2e054945b84b66e83a5e2f374dae"
-      },
-      "phoneVerified": false
-    },
-    "verificationProbe": {
-      "passed": true,
+    "repository": {
       "checks": 16,
-      "browserGlobalsSimulated": true,
-      "liveVerification": false
+      "transportAndMainBoundarySimulated": true,
+      "passed": true,
+      "sourceSha256": "c07e2339ae948c0fb9b003ee293288e3b621eff7c2ee7baa09564f3c08d89948"
     }
   },
-  "browser": {
-    "motion": {
-      "passed": true,
-      "results": {
-        "baseline-0.2.9": {
-          "frames": 508,
-          "reverseSteps": 1,
-          "maxReversePx": 2.63427734375,
-          "maxForwardPx": 15.199951171875,
-          "frameIntervalP95": 16.800000000000182,
-          "frameIntervalMax": 50,
-          "longTasks": 0,
-          "longTaskMax": 0,
-          "metrics": {
-            "LayoutCount": 33,
-            "RecalcStyleCount": 576,
-            "LayoutDuration": 0.018855000000000004,
-            "RecalcStyleDuration": 0.88951,
-            "ScriptDuration": 0.557097,
-            "TaskDuration": 3.256125
-          },
-          "cpuProfile": "C:/Morphe/App's/YT-Music/Personal-Patches/output/playwright/revision30-delivery-baseline-0.2.9-cpu.json"
-        },
-        "current": {
-          "frames": 511,
-          "reverseSteps": 0,
-          "maxReversePx": 0,
-          "maxForwardPx": 15.286376953125,
-          "frameIntervalP95": 16.800000000000182,
-          "frameIntervalMax": 16.899999999999636,
-          "longTasks": 0,
-          "longTaskMax": 0,
-          "metrics": {
-            "LayoutCount": 25,
-            "RecalcStyleCount": 524,
-            "LayoutDuration": 0.010015,
-            "RecalcStyleDuration": 0.707148,
-            "ScriptDuration": 0.39041699999999996,
-            "TaskDuration": 2.6166
-          },
-          "cpuProfile": "C:/Morphe/App's/YT-Music/Personal-Patches/output/playwright/revision30-delivery-current-cpu.json"
-        }
-      },
-      "healthStates": [
-        "orange",
-        "green",
-        "orange",
-        "red"
-      ],
-      "noAutomaticBanner": true,
-      "detailsAccessible": true,
-      "duplicatePreservesDOM": true,
-      "staleHealthIgnored": true,
-      "phoneVerified": false,
-      "errors": []
-    },
-    "richSources": {
-      "passed": true,
-      "challengeStatus": 200,
-      "brokerStatus": 200,
-      "backendProviders": [
-        "lrclib",
-        "musixmatch",
-        "golyrics",
-        "qq",
-        "kugou",
-        "binimum"
-      ],
-      "loaded": {
-        "keys": [
-          "bLyrics-richsynced",
-          "binimum-richsynced",
-          "portato-richsynced",
-          "musixmatch-richsync",
-          "lrclib-synced",
-          "legato-synced",
-          "musixmatch-synced",
-          "lrclib-plain"
-        ],
-        "selected": "bLyrics-richsynced",
-        "letters": 2356,
-        "spuriousEmpty": 0
-      },
-      "motion": {
-        "frames": 648,
-        "median": 16.699999999999818,
-        "p95": 16.800000000000182,
-        "max": 83.5,
-        "longTasks": 2,
-        "longTaskMax": 84,
-        "equivalentReplyPreservesDOM": true,
-        "replayed": 8
-      },
-      "cpuProfile": "C:/Morphe/App's/YT-Music/Personal-Patches/output/playwright/revision30-rich-final-cpu.json",
-      "sourceFlyout": true,
-      "noAutomaticBanner": true,
-      "androidWebViewVerified": false,
-      "errors": []
-    },
-    "steadyRich": {
-      "passed": true,
-      "reports": [
-        {
-          "videoId": "sN_tJ8d3c0I",
-          "cpuThrottle": 1,
-          "frames": 390,
-          "p95": 16.800000000000182,
-          "max": 16.899999999999636,
-          "longTasks": 0,
-          "longTaskMax": 0,
-          "letters": 2356,
-          "active": 1
-        },
-        {
-          "videoId": "MYal8NoVQXs",
-          "cpuThrottle": 1,
-          "frames": 390,
-          "p95": 16.800000000000182,
-          "max": 16.90000000000009,
-          "longTasks": 0,
-          "longTaskMax": 0,
-          "letters": 2730,
-          "active": 1
-        },
-        {
-          "videoId": "sN_tJ8d3c0I",
-          "cpuThrottle": 4,
-          "frames": 390,
-          "p95": 16.800000000000182,
-          "max": 16.800000000000182,
-          "longTasks": 0,
-          "longTaskMax": 0,
-          "letters": 2356,
-          "active": 1
-        },
-        {
-          "videoId": "MYal8NoVQXs",
-          "cpuThrottle": 4,
-          "frames": 390,
-          "p95": 16.800000000000182,
-          "max": 16.900000000000546,
-          "longTasks": 0,
-          "longTaskMax": 0,
-          "letters": 2730,
-          "active": 1
-        }
-      ],
-      "phoneVerified": false,
-      "errors": []
-    },
+  "javaCheckTotal": 197,
+  "browserChecks": {
     "providers": {
-      "passed": true,
-      "providerVariants": [
-        {
-          "key": "bLyrics-richsynced",
-          "passed": true
-        },
-        {
-          "key": "bLyrics-synced",
-          "passed": true
-        },
-        {
-          "key": "binimum-richsynced",
-          "passed": true
-        },
-        {
-          "key": "binimum-synced",
-          "passed": true
-        },
-        {
-          "key": "portato-richsynced",
-          "passed": true
-        },
-        {
-          "key": "legato-synced",
-          "passed": true
-        },
-        {
-          "key": "musixmatch-richsync",
-          "passed": true
-        },
-        {
-          "key": "musixmatch-synced",
-          "passed": true
-        },
-        {
-          "key": "lrclib-synced",
-          "passed": true
-        },
-        {
-          "key": "lrclib-plain",
-          "passed": true
-        },
-        {
-          "key": "unison-richsynced",
-          "passed": true
-        },
-        {
-          "key": "unison-wordsynced",
-          "passed": true
-        },
-        {
-          "key": "unison-synced",
-          "passed": true
-        },
-        {
-          "key": "unison-plain",
-          "passed": true
-        },
-        {
-          "key": "yt-captions",
-          "passed": true
-        },
-        {
-          "key": "yt-lyrics",
-          "passed": true
-        }
-      ],
-      "wrongSongRejected": true,
-      "light": {
-        "background": "rgba(0, 0, 0, 0)",
-        "inactive": "rgba(17,17,17,.3)",
-        "overflow": false,
-        "letters": 0
-      },
-      "navigator": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
-    },
-    "renderer": {
-      "passed": true,
-      "initial": {
-        "agents": [
-          "v1",
-          "v2",
-          "v1000",
-          "v1"
-        ],
-        "alignment": [
-          "start",
-          "right",
-          "center",
-          "start"
-        ],
-        "background": 1,
-        "letters": 120,
-        "translation": "Embedded translation",
-        "animations": 87,
-        "overflow": false
-      },
-      "customized": {
-        "alignment": [
-          "right",
-          "left",
-          "center",
-          "right"
-        ],
-        "letters": 0,
-        "bgDisplay": "none"
-      },
-      "plainCount": 2,
-      "staleResponseRejected": true,
-      "errors": []
-    },
-    "selection": {
-      "passed": true,
-      "automatic": "yt-lyrics",
-      "offered": [
-        "bLyrics-richsynced",
-        "yt-lyrics"
-      ],
-      "manual": "bLyrics-richsynced",
-      "afterEmpty": "bLyrics-richsynced",
-      "disabled": "lrclib-synced",
-      "phoneVerified": false
-    },
-    "dock": {
-      "passed": true,
-      "expanded": {
-        "width": 412,
-        "height": 800,
-        "toggle": {
-          "x": 183,
-          "y": 622,
-          "w": 46,
-          "h": 44,
-          "bottom": 134
-        },
-        "dockHeight": 178,
-        "centerOffset": 0,
-        "iconDx": 0,
-        "iconDy": 0,
-        "sourceTop": 671,
-        "toolbarTop": 723,
-        "clearance": 190,
-        "transparent": "rgba(0, 0, 0, 0)",
-        "blur": "blur(20px) saturate(1.3)",
-        "active": 1
-      },
-      "collapsed": {
-        "width": 412,
-        "height": 800,
-        "toggle": {
-          "x": 183,
-          "y": 752,
-          "w": 46,
-          "h": 44,
-          "bottom": 4
-        },
-        "dockHeight": 48,
-        "centerOffset": 0,
-        "iconDx": 0,
-        "iconDy": 0,
-        "sourceTop": 796,
-        "toolbarTop": 848,
-        "clearance": 60,
-        "transparent": "rgba(0, 0, 0, 0)",
-        "blur": "blur(20px) saturate(1.3)",
-        "active": 1
-      },
-      "during": {
-        "width": 412,
-        "height": 800,
-        "toggle": {
-          "x": 177.9177703857422,
-          "y": 693.4363403320312,
-          "w": 56.164459228515625,
-          "h": 57.4398193359375,
-          "bottom": 49.12384033203125
-        },
-        "dockHeight": 99.84375,
-        "centerOffset": 0,
-        "iconDx": 0,
-        "iconDy": 0,
-        "sourceTop": 746.140625,
-        "toolbarTop": 798.140625,
-        "clearance": 190,
-        "transparent": "rgba(0, 0, 0, 0)",
-        "blur": "blur(20px) saturate(1.3)",
-        "active": 1
-      },
-      "flyout": {
-        "visible": "1",
-        "above": true,
-        "rows": 2
-      },
-      "bridge": [
-        "ready",
-        "displayed",
-        "displayed",
-        "dock",
-        "dock",
-        "copy",
-        "offset",
-        "offset"
-      ],
-      "sizes": [
-        {
-          "expanded": {
-            "width": 320,
-            "height": 640,
-            "toggle": {
-              "x": 137,
-              "y": 462,
-              "w": 46,
-              "h": 44,
-              "bottom": 134
-            },
-            "dockHeight": 178,
-            "centerOffset": 0,
-            "iconDx": 0,
-            "iconDy": 0,
-            "sourceTop": 511,
-            "toolbarTop": 563,
-            "clearance": 190,
-            "transparent": "rgba(0, 0, 0, 0)",
-            "blur": "blur(20px) saturate(1.3)",
-            "active": 1
+      "logSha256": "97edf8f92e7d3bfa13566af1b1ff473ca35afc3b389fa7d7f0debe5aefd5f466",
+      "result": {
+        "passed": true,
+        "providerVariants": [
+          {
+            "key": "bLyrics-richsynced",
+            "passed": true
           },
-          "collapsed": {
-            "width": 320,
-            "height": 640,
-            "toggle": {
-              "x": 137,
-              "y": 592,
-              "w": 46,
-              "h": 44,
-              "bottom": 4
+          {
+            "key": "bLyrics-synced",
+            "passed": true
+          },
+          {
+            "key": "binimum-richsynced",
+            "passed": true
+          },
+          {
+            "key": "binimum-synced",
+            "passed": true
+          },
+          {
+            "key": "portato-richsynced",
+            "passed": true
+          },
+          {
+            "key": "legato-synced",
+            "passed": true
+          },
+          {
+            "key": "musixmatch-richsync",
+            "passed": true
+          },
+          {
+            "key": "musixmatch-synced",
+            "passed": true
+          },
+          {
+            "key": "lrclib-synced",
+            "passed": true
+          },
+          {
+            "key": "lrclib-plain",
+            "passed": true
+          },
+          {
+            "key": "unison-richsynced",
+            "passed": true
+          },
+          {
+            "key": "unison-wordsynced",
+            "passed": true
+          },
+          {
+            "key": "unison-synced",
+            "passed": true
+          },
+          {
+            "key": "unison-plain",
+            "passed": true
+          },
+          {
+            "key": "yt-captions",
+            "passed": true
+          },
+          {
+            "key": "yt-lyrics",
+            "passed": true
+          }
+        ],
+        "wrongSongRejected": true,
+        "light": {
+          "background": "rgba(0, 0, 0, 0)",
+          "inactive": "rgba(17,17,17,.3)",
+          "overflow": false,
+          "letters": 0
+        },
+        "navigator": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36"
+      }
+    },
+    "scroll": {
+      "logSha256": "113cec5a6c706053146e3a8122b84a1e865b2232f00dcb1dcff31077ed0c3183",
+      "result": {
+        "passed": true,
+        "exactUpstreamLineAnimations": true,
+        "lineAnimations": 10,
+        "scrollAnimations": 8,
+        "firstTiming": {
+          "frames": [
+            {
+              "translate": "0px 139.1px",
+              "easing": "cubic-bezier(0.86, 0, 0.2, 1)",
+              "offset": 0
             },
-            "dockHeight": 48,
-            "centerOffset": 0,
-            "iconDx": 0,
-            "iconDy": 0,
-            "sourceTop": 636,
-            "toolbarTop": 688,
-            "clearance": 190,
-            "transparent": "rgba(0, 0, 0, 0)",
-            "blur": "blur(20px) saturate(1.3)",
-            "active": 1
+            {
+              "translate": "0px",
+              "easing": "linear",
+              "offset": 1
+            }
+          ],
+          "duration": 810,
+          "delay": 0,
+          "easing": "linear"
+        },
+        "customViewportHook": false,
+        "manualResumeSeek": true,
+        "trace": {
+          "frames": 301,
+          "reverse": 0,
+          "maxStep": 27.531494140625
+        },
+        "cases": [
+          {
+            "videoId": "sN_tJ8d3c0I",
+            "key": "bLyrics-richsynced",
+            "letters": 2356
+          },
+          {
+            "videoId": "MYal8NoVQXs",
+            "key": "unison-richsynced",
+            "letters": 2730
+          }
+        ],
+        "quietStatusDot": true,
+        "reducedMotion": true,
+        "phoneVerified": false,
+        "errors": []
+      }
+    },
+    "timing": {
+      "logSha256": "32bd11816561ad3283b6d6e741b012533e0274da7646666cea7f6212bd77ae78",
+      "result": {
+        "passed": true,
+        "results": {
+          "baseline-0.2.9": {
+            "frames": 511,
+            "reverseSteps": 0,
+            "maxReversePx": 0,
+            "maxForwardPx": 15.29052734375,
+            "frameIntervalP95": 16.800000000000182,
+            "frameIntervalMax": 33.30000000000018,
+            "longTasks": 0,
+            "longTaskMax": 0,
+            "metrics": {
+              "LayoutCount": 25,
+              "RecalcStyleCount": 523,
+              "LayoutDuration": 0.009254,
+              "RecalcStyleDuration": 0.639797,
+              "ScriptDuration": 0.315081,
+              "TaskDuration": 2.3208509999999998
+            },
+            "cpuProfile": "C:/Morphe/App's/YT-Music/Personal-Patches/output/playwright/revision32-delivery-baseline-0.2.9-cpu.json"
+          },
+          "current": {
+            "frames": 510,
+            "reverseSteps": 0,
+            "maxReversePx": 0,
+            "maxForwardPx": 15.286376953125,
+            "frameIntervalP95": 16.800000000000182,
+            "frameIntervalMax": 33.29999999999927,
+            "longTasks": 0,
+            "longTaskMax": 0,
+            "metrics": {
+              "LayoutCount": 25,
+              "RecalcStyleCount": 524,
+              "LayoutDuration": 0.009954999999999999,
+              "RecalcStyleDuration": 0.678667,
+              "ScriptDuration": 0.334133,
+              "TaskDuration": 2.3252829999999998
+            },
+            "cpuProfile": "C:/Morphe/App's/YT-Music/Personal-Patches/output/playwright/revision32-delivery-current-cpu.json"
           }
         },
-        {
-          "expanded": {
+        "healthStates": [
+          "orange",
+          "green",
+          "orange",
+          "red"
+        ],
+        "noAutomaticBanner": true,
+        "detailsAccessible": true,
+        "duplicatePreservesDOM": true,
+        "staleHealthIgnored": true,
+        "phoneVerified": false,
+        "errors": []
+      }
+    },
+    "shaders": {
+      "logSha256": "61bf479699b510a43a4b3d86fdfc1c423384db4eafb4dfcebce67171d06b1ea3",
+      "result": {
+        "passed": true,
+        "realKawarp": true,
+        "frameLimits": [
+          {
+            "fps": 24,
+            "frames": 29,
             "width": 412,
-            "height": 800,
-            "toggle": {
-              "x": 183,
-              "y": 622,
-              "w": 46,
-              "h": 44,
-              "bottom": 134
-            },
-            "dockHeight": 178,
-            "centerOffset": 0,
-            "iconDx": 0,
-            "iconDy": 0,
-            "sourceTop": 671,
-            "toolbarTop": 723,
-            "clearance": 190,
-            "transparent": "rgba(0, 0, 0, 0)",
-            "blur": "blur(20px) saturate(1.3)",
-            "active": 1
+            "height": 820,
+            "maxGap": 50.200000000000045
           },
-          "collapsed": {
+          {
+            "fps": 30,
+            "frames": 36,
             "width": 412,
-            "height": 800,
-            "toggle": {
-              "x": 183,
-              "y": 752,
-              "w": 46,
-              "h": 44,
-              "bottom": 4
-            },
-            "dockHeight": 48,
-            "centerOffset": 0,
-            "iconDx": 0,
-            "iconDy": 0,
-            "sourceTop": 796,
-            "toolbarTop": 848,
-            "clearance": 190,
-            "transparent": "rgba(0, 0, 0, 0)",
-            "blur": "blur(20px) saturate(1.3)",
-            "active": 1
-          }
-        },
-        {
-          "expanded": {
-            "width": 800,
-            "height": 412,
-            "toggle": {
-              "x": 377,
-              "y": 234,
-              "w": 46,
-              "h": 44,
-              "bottom": 134
-            },
-            "dockHeight": 178,
-            "centerOffset": 0,
-            "iconDx": 0,
-            "iconDy": 0,
-            "sourceTop": 283,
-            "toolbarTop": 335,
-            "clearance": 190,
-            "transparent": "rgba(0, 0, 0, 0)",
-            "blur": "blur(20px) saturate(1.3)",
-            "active": 1
+            "height": 820,
+            "maxGap": 33.5
           },
-          "collapsed": {
-            "width": 800,
-            "height": 412,
-            "toggle": {
-              "x": 377,
-              "y": 364,
-              "w": 46,
-              "h": 44,
-              "bottom": 4
-            },
-            "dockHeight": 48,
-            "centerOffset": 0,
-            "iconDx": 0,
-            "iconDy": 0,
-            "sourceTop": 408,
-            "toolbarTop": 460,
-            "clearance": 190,
-            "transparent": "rgba(0, 0, 0, 0)",
-            "blur": "blur(20px) saturate(1.3)",
-            "active": 1
+          {
+            "fps": 60,
+            "frames": 72,
+            "width": 412,
+            "height": 820,
+            "maxGap": 16.899999999999636
           }
-        }
-      ],
-      "reducedMotion": true,
-      "collapsedOpenerAtBottom": true,
-      "expandedCloserAtTop": true,
-      "controlsExpandUpward": true,
-      "nativeInsetsNotDuplicated": true,
-      "errors": [],
-      "androidPhoneVerified": false
+        ],
+        "hidden": 0,
+        "paused": 0,
+        "reduced": 0,
+        "landscape": {
+          "w": 820,
+          "h": 412
+        },
+        "pointerEvents": [
+          "none",
+          "none",
+          "none"
+        ],
+        "androidWebViewVerified": false,
+        "errors": []
+      }
     },
-    "interactions": {
-      "passed": true,
-      "cover": {
-        "selected": "unison-richsynced",
-        "lines": 50,
-        "letters": 2730,
+    "video": {
+      "logSha256": "ef3f9d5bdb6a33039a605458737b43990602b8ebc5870b26f4249ee532741ad3",
+      "result": {
+        "passed": true,
+        "generated": {
+          "bytes": 13071,
+          "mime": "video/mp4"
+        },
+        "backgroundFollowsAnimatedFrames": true,
+        "colorSpread": [
+          254,
+          247,
+          207
+        ],
+        "coverOnly": {
+          "hidden": false,
+          "opacity": "1",
+          "paused": false
+        },
+        "hiddenTimeDelta": 0,
+        "realProgressiveMp4": true,
+        "nativeAndroidDecoderVerified": false,
+        "errors": []
+      }
+    },
+    "graphicsFallback": {
+      "logSha256": "96ca28458a3a6f3015f237ec07800e55f3fd7bb0a47547ac96280049ae6e34c1",
+      "result": {
+        "passed": true,
+        "graphicsUnavailableReportedOnce": true,
+        "silentCoverContinues": true,
+        "noGraphicsPaint": true,
+        "androidNativeFallbackVerified": false,
+        "errors": []
+      }
+    },
+    "artworkLive": {
+      "logSha256": "3111ec474e67bf46f8dde790e8940f39c257cd95529c2ea0e63518bde1f01387",
+      "result": {
+        "passed": true,
+        "normalAltcha": true,
+        "challengeStatus": 200,
+        "mintStatus": 200,
+        "lookupStatus": 200,
+        "progressiveMp4Available": true,
+        "hlsUnused": true,
+        "mediaDownloaded": false,
+        "credentialsPersisted": false,
+        "androidWebViewVerified": false
+      }
+    }
+  },
+  "liveDirectProviders": {
+    "cases": [
+      {
+        "loaded": true,
+        "characters": 18125,
+        "videoId": "sN_tJ8d3c0I",
+        "source": "bLyrics-richsynced",
+        "exactRecording": false
+      },
+      {
+        "loaded": true,
+        "characters": 23376,
         "videoId": "MYal8NoVQXs",
-        "ttmlChars": 23376
+        "source": "unison",
+        "exactRecording": true
       },
-      "flyout": {
-        "bodyPortal": true,
-        "visible": "1",
-        "blur": "blur(26px)",
-        "bottom": 686,
-        "pillTop": 694,
-        "selected": 1,
-        "noExtraTypeText": true,
-        "width": 160
-      },
-      "layout": {
-        "dockBackground": "rgba(0, 0, 0, 0)",
-        "scrollHeight": 820,
-        "viewport": 820,
-        "overlap": true,
-        "pillBlur": "blur(20px) saturate(1.3)",
-        "centers": [
-          {
-            "id": "collapse",
-            "dx": 0,
-            "dy": 0
-          },
-          {
-            "id": "previous",
-            "dx": 0,
-            "dy": 0
-          },
-          {
-            "id": "next",
-            "dx": 0,
-            "dy": 0
-          },
-          {
-            "id": "earlier",
-            "dx": 0,
-            "dy": 0
-          },
-          {
-            "id": "later",
-            "dx": 0,
-            "dy": 0
-          }
-        ],
-        "lineSurvived": true,
-        "tapHighlight": "rgba(0, 0, 0, 0)"
-      },
-      "follow": {
-        "active": 1,
-        "tap": "rgba(0, 0, 0, 0)",
-        "scrollTop": 590
-      },
-      "seekMs": 31885,
-      "reducedMotion": true,
-      "errors": []
+      {
+        "loaded": true,
+        "characters": 3700,
+        "videoId": "gF2KuOJLEQE",
+        "source": "lrclib-synced",
+        "exactRecording": false
+      }
+    ],
+    "credentialsPersisted": false,
+    "phoneVerified": false,
+    "passed": true,
+    "actualJavaHttpTransport": true,
+    "sourceSha256": {
+      "LyricsCatalog.java": "de357b72287d7595325178abc0eec7f6ac38ccbad054f8bdc8cfe3c52ae77e46",
+      "LyricsNetwork.java": "67ee990881d8b456c9c7919a062e7c075ddb5beced71d50367fb8709b0f40db0",
+      "LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
+      "LyricsRetry.java": "ca379c56180ca3c4198ea2b40780aed44312c2e350b0b5997dacda1edb5e083d",
+      "TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
+    }
+  },
+  "combinedServiceLive": {
+    "passed": false,
+    "outcome": "Ordinary verification challenge timed out; not bypassed",
+    "logSha256": "5d53acc91a2eb84bf7a8ed217e35fe27c363a4a1671068bb1091c1b91a6c47a2"
+  },
+  "decoderComparison": {
+    "ttmlSource.ts": {
+      "sameDecoder": true,
+      "oldSha256": "fdccb57b1de03554ac3a1f0df6e05f877dea580bf0023a22ea48b4c35d4e67a9",
+      "newSha256": "fdccb57b1de03554ac3a1f0df6e05f877dea580bf0023a22ea48b4c35d4e67a9"
     },
-    "upstreamScroll": {
-      "passed": true,
-      "exactUpstreamLineAnimations": true,
-      "lineAnimations": 10,
-      "scrollAnimations": 8,
-      "firstTiming": {
-        "frames": [
-          {
-            "translate": "0px 139.1px",
-            "easing": "cubic-bezier(0.86, 0, 0.2, 1)",
-            "offset": 0
-          },
-          {
-            "translate": "0px",
-            "easing": "linear",
-            "offset": 1
-          }
-        ],
-        "duration": 810,
-        "delay": 0,
-        "easing": "linear"
-      },
-      "customViewportHook": false,
-      "manualResumeSeek": true,
-      "trace": {
-        "frames": 300,
-        "reverse": 0,
-        "maxStep": 27.531005859375
-      },
-      "cases": [
-        {
-          "videoId": "sN_tJ8d3c0I",
-          "key": "bLyrics-richsynced",
-          "letters": 2356
-        },
-        {
-          "videoId": "MYal8NoVQXs",
-          "key": "unison-richsynced",
-          "letters": 2730
-        }
-      ],
-      "quietStatusDot": true,
-      "reducedMotion": true,
-      "phoneVerified": false,
-      "errors": []
+    "unified.ts": {
+      "sameDecoder": true,
+      "oldSha256": "ecad0869d83a8975b8405467f3aa69e66e26004e89b2a38b74bf745476ff0d6d",
+      "newSha256": "ecad0869d83a8975b8405467f3aa69e66e26004e89b2a38b74bf745476ff0d6d"
     }
   },
   "jvmTests": [
@@ -1287,9 +2352,9 @@
       "skipped": "5",
       "failures": "0",
       "errors": "0",
-      "timestamp": "2026-10-25T19:01:15.628Z",
+      "timestamp": "2026-10-26T08:29:33.487Z",
       "hostname": "BDCRUSHER-PC",
-      "time": "0.121"
+      "time": "0.135"
     },
     {
       "name": "app.morphe.patches.music.interaction.jam.JamQueueCommandTest",
@@ -1297,9 +2362,9 @@
       "skipped": "0",
       "failures": "0",
       "errors": "0",
-      "timestamp": "2026-10-25T19:01:15.751Z",
+      "timestamp": "2026-10-26T08:29:33.623Z",
       "hostname": "BDCRUSHER-PC",
-      "time": "0.455"
+      "time": "0.459"
     },
     {
       "name": "app.morphe.patches.util.resource.RawXmlResourcesTest",
@@ -1307,174 +2372,175 @@
       "skipped": "0",
       "failures": "0",
       "errors": "0",
-      "timestamp": "2026-10-25T19:01:16.207Z",
+      "timestamp": "2026-10-26T08:29:34.083Z",
       "hostname": "BDCRUSHER-PC",
       "time": "0.012"
     }
   ],
   "lint": {
     "errors": 0,
-    "warnings": 7
+    "warnings": 13
   },
-  "rendererAssets": [
-    {
-      "entry": "bdcrusher-lyrics/NOTICE.txt",
-      "sha256": "912fc888a9c22ab9c88835bc34c7f904e574c846f3a8ecd257fa5cc0973274e2",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/Satoshi-Variable.woff2",
-      "sha256": "e739aff9b4d02c264341d6d4872edcda28e79373aeda936f659566a1cd3eb47f",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_line.xml",
-      "sha256": "a6a86e8d055bbb0bbd9fcec2d61dcc050a5751d40d688666328a4dd2f6a2109a",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_syllable.xml",
-      "sha256": "d33ee78eab04530e082c3017e256e9420b711d50252c24dc9cf1b2a94e1250cd",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_unsynced.xml",
-      "sha256": "5d0d1c98eca5379e343f5e8e06140d2492ef6acf154f52e399d4dd4a5f88c187",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/bd_lyrics_word.xml",
-      "sha256": "1872ea451834262347689765ab572d2f0e374069288d2f1998fc50e30b0debc2",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/host.css",
-      "sha256": "5956581706921adb6791f2fae41267a38e6f1b59461918be73bfb44be1990049",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/image-highlights.css",
-      "sha256": "d21ece4181f104cfc8e012242b7cb47cca6f9f3b4041b6e4061294f830537e94",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/index.html",
-      "sha256": "82ffc7d96992674244c08a73f9ae9bc4a589fa7db4be456aa22dd31739d6769d",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/instrumental.css",
-      "sha256": "5f059474105380860565fcbc8cca67576fa4799753f6e13baeef08fb274805c0",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/lyrics.css",
-      "sha256": "aa2859f3be1f4e73e1d8609584fff6c276955c230c7652add22ea40477d32f7d",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/providers.json",
-      "sha256": "2b07b69360b95814567bac1e03bac78347bc19a10e77578f4afd9ad194ab678d",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/renderer.js",
-      "sha256": "4d135faae6a72536a93909090cab8b95d629e94e1917723f7c9ca7ac9ba63d9f",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/stage.css",
-      "sha256": "bc3005988ec02216263c708ef6502b21079dc4257fe93b1349b4fc8112893399",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    },
-    {
-      "entry": "bdcrusher-lyrics/variables.css",
-      "sha256": "590dc9abaadecbc99586afec6c06007b10d99929b71199df6b4296a72532e892",
-      "changed": false,
-      "identicalTo": "0.2.10-beta.1"
-    }
-  ],
-  "addonPayloadIsolation": {
-    "uniqueClasses": 113,
-    "duplicates": 0,
-    "outsideOwnedPrefix": 0,
-    "reportSha256": "94f2bb23c546fe2ee7ca507244e78d4a2747ea67849147da8c4d4ef71de6f346"
+  "payloadIsolation": {
+    "uniqueSelectedClasses": 259,
+    "duplicateClasses": 0,
+    "morpheImplementationClasses": 0,
+    "compilerHelper": "Lcom/android/tools/r8/RecordTag;",
+    "strictReportSha256": "4fbd09c0f222b335c3a2516fcca41d0bfab05156d0f62edd564118c7c69bf555",
+    "reviewedReportSha256": "67dd6c3fcdfb5247b002c726028a29e30b3f18fe634c323531187c95baf6e192"
   },
-  "phoneVerified": false,
-  "androidWebViewVerification": false,
-  "liveOrdinaryVerification": true,
-  "actualJavaBrokerTransport": true,
-  "credentialsPersisted": false,
-  "deviceOperations": false,
-  "globalToolsCopied": false,
-  "changes": [
-    "Always transparent system navigation in Lyrics, ignoring the old saved matching-mode flag.",
-    "Remove matching toggle, color sampling and protection overlays; preserve native navigation icons/insets and restore native window on close."
-  ],
-  "limitations": [
-    "No phone performance or Android WebView verification acceptance; no universal zero-stutter claim.",
-    "Desktop4x CPU results varied under concurrent load; the84ms/two-long-task rich run is retained alongside uncontended0-long-task cases.",
-    "Frame callback gaps are not GPU/display dropped-frame measurements and refresh transitions can affect them.",
-    "Native cold presentation/alternate recording-time limitations remain; no Shaders, device/MuMu, signing or installation operations.",
-    "New transparency has simulated/compiled checks only; real Samsung/One UI rendering remains unverified."
-  ],
   "sourceSha256": {
-    "BetterLyricsPanelView.java": "b6540d7121abcd336f06034c5a9652585db8c4e53dd308e4d34d076ecbc7bd77",
-    "BetterLyricsPreference.java": "dc20b2dab63589eabbc38418a23616dd58168fd0deda1439925c5ae0d926a90a",
-    "LyricsCatalog.java": "e5785098927a03e939726d2881b5a2d3e9e79b35dc4ef59db828c98970eeefc8",
-    "LyricsConfig.java": "007bc5d7a2d6d6a46c21699d851d2ffcaf02f7a561f317ced808cef44602ce9b",
-    "LyricsDiagnostics.java": "2b0b9d4c1939ae1d8676408e4703e986a4eedca1bac57fa29ef82213e12596a4",
-    "LyricsDiskCache.java": "0bb6be05304233dffb8c38a2fcf489e7ebd8d9975717f4702d978bd3456205e6",
-    "LyricsEnrichment.java": "d6719203a607a339677b982d2dffbe6ef7a977fd2cf8b1f6d19b4bf91e0b71a0",
-    "LyricsEntryButton.java": "8bc1d5e452dc2c13ae3ad1963d1783d074e33f9ea3b554c9c203facf9223d2da",
-    "LyricsEntryCoordinator.java": "553e75ecd6776e5352ac33230796f2dddebe0e7eb8c70c853caece0c738cc59f",
-    "LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
-    "LyricsNetwork.java": "9294a964c08393df2c776540fa229c514220334a366a3e6a1d4af4bfd975b14d",
-    "LyricsRepository.java": "f4928cbf4707be3d0eadf5b202bd6f29b7f9dcc1724a9cf1666d81976581e789",
-    "LyricsRetry.java": "623109ec2be59b1c819511eb20ff03ea8300d87a714469b765a46e6c7cc8d180",
-    "LyricsSettingsPage.java": "502e4bba4fe98c002b36580e67bf82c25733ce7b11cdffd2228c3b8a5224ce35",
-    "LyricsSliderPreference.java": "1e9cbdf156888b49c103d8d28d9d59c05abd4bdf3e6ac92479d9129168b1dabf",
-    "LyricsSourceOrderPreference.java": "cf107b3d6bd02ed7a01b63875209e8b19686acc0a5b207af448ef5653e12c947",
-    "LyricsSystemBars.java": "7bd6b36f38ba96c6584aaf2e276e41d6e74bde20466be475d48d5e5f571f13cf",
-    "NativeActionModel.java": "641fe727b5c1719fa388e63c050754a2f88019d7ddcf4babd08cf1dd3b8973fb",
-    "NativeLyricsBridge.java": "770a9cfafcfaa254a5e5a1f19a4b3259a64097187bde8deae321e7add7cb6327",
-    "NativeLyricsHost.java": "b38d48cc4e9f758bac6f8467d6b77911270906fc49e16681454b123e55e8af75",
-    "NativePanelWire.java": "11dbd7a3696d2ef32174f675a11386326f7e10224316a52ad08776c94a091645",
-    "ProtoWire.java": "d333d51895d63ee06aee1e78fc1d876b56fa6beae77ca49e6e3c48e4cf179f20",
-    "RendererPlayback.java": "132775c89c69fc552a489b8466a3d80827f3a53ea0ee7b5937786c65ecde4339",
-    "ServiceConnection.java": "122f123b878771ae5ab5b02c200e892d259caee68ed90e0458b6de8e97a81b1b",
-    "SourceVerification.java": "c6210087fce4ebe0fb8d118ad025ccef13f7fac33e9c207ad56008c44416beba",
-    "TokenExpiry.java": "ef4aa3bfa5b4642ee70d051312fe72e1b69364dcdfc7e32ef5b1cc4f9e8feb7f"
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/NavigationWindow.java": "76074f492eb5b42c785236b47c2462544088f6332bf1b5b3b36f1e934e5a7a31",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/PersonalCredits.java": "b29b5e0438ebf8b46971e66a49ff083883700c3e2a3b51fabbf498e06e8f8a64",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/PersonalRuntime.java": "eb9ead95c8849284ee323f091a0a7ad83e667abcabceff69d1771a8dba750204",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/PersonalSettings.java": "f10493bf05a823578921c252f8c93a01c7e9253421057af8db2fd96520894057",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/BetterLyricsPanelView.java": "6add2dafc82afdff2bc1bebaa1cb3ed53b3ed9a65292ee2ace2fe991a6c04724",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/BetterLyricsPreference.java": "dc20b2dab63589eabbc38418a23616dd58168fd0deda1439925c5ae0d926a90a",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricQuality.java": "2752f5bb95dc633a676a16c202016e7ed2fedb72c44bc013bab0b3d1e6dcf6f6",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsCatalog.java": "de357b72287d7595325178abc0eec7f6ac38ccbad054f8bdc8cfe3c52ae77e46",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsConfig.java": "b72afdccfe06aa18ecfc949fa03e42fb3c0a90e0f0054c2311c84eb980132b97",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java": "2b0b9d4c1939ae1d8676408e4703e986a4eedca1bac57fa29ef82213e12596a4",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsDiskCache.java": "677e0c7002c0333afb3762430621409d3ba09f4560becef8e434c3e66dbda1d1",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsEnrichment.java": "d6719203a607a339677b982d2dffbe6ef7a977fd2cf8b1f6d19b4bf91e0b71a0",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsEntryButton.java": "8bc1d5e452dc2c13ae3ad1963d1783d074e33f9ea3b554c9c203facf9223d2da",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsEntryCoordinator.java": "aad38534e7334b2ad8639223bf1bb0c350dabc92170d09d9144ab7e487535e00",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsLibrary.java": "02320e50349468e3818d9bf3dff5e88bc13c7e3b6f8c4c1ef9f3c641b06fd694",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsNetwork.java": "67ee990881d8b456c9c7919a062e7c075ddb5beced71d50367fb8709b0f40db0",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsRepository.java": "c07e2339ae948c0fb9b003ee293288e3b621eff7c2ee7baa09564f3c08d89948",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsRetry.java": "ca379c56180ca3c4198ea2b40780aed44312c2e350b0b5997dacda1edb5e083d",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsSettingsPage.java": "05f9f1493beb49edcf0176a5254e7a411d0dd101afac229701470e7fb1e23419",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsSliderPreference.java": "d7d0ae5a3c4dac8a81d4db972fd8eaafe9b9a489d52f2d5eea29f4ad511cd5f7",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsSourceOrderPreference.java": "cf107b3d6bd02ed7a01b63875209e8b19686acc0a5b207af448ef5653e12c947",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeActionModel.java": "641fe727b5c1719fa388e63c050754a2f88019d7ddcf4babd08cf1dd3b8973fb",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeLyricPayload.java": "995bd2d99f203f8acb1bcbcf33cb4df39501cd5b06b0ad918d3aee878e522c15",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeLyricsBridge.java": "770a9cfafcfaa254a5e5a1f19a4b3259a64097187bde8deae321e7add7cb6327",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeLyricsHost.java": "b38d48cc4e9f758bac6f8467d6b77911270906fc49e16681454b123e55e8af75",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativePanelWire.java": "11dbd7a3696d2ef32174f675a11386326f7e10224316a52ad08776c94a091645",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/ProtoWire.java": "4ec64157d8e34b226781d5707161713767bbc1331b1d298d2d468e2c67371e49",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/RendererPlayback.java": "132775c89c69fc552a489b8466a3d80827f3a53ea0ee7b5937786c65ecde4339",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/ServiceConnection.java": "122f123b878771ae5ab5b02c200e892d259caee68ed90e0458b6de8e97a81b1b",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/SourceVerification.java": "c6210087fce4ebe0fb8d118ad025ccef13f7fac33e9c207ad56008c44416beba",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/StoragePreference.java": "063ad512803f3646b64b7929f7d6f2406bff24f0ae33bee701deee6e08b78bf4",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/TokenExpiry.java": "ef4aa3bfa5b4642ee70d051312fe72e1b69364dcdfc7e32ef5b1cc4f9e8feb7f",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistHeaderModel.java": "a60c12d510f3ebd96ed259c9e399a0fda68b5bf0ac47c9d3477ab4479f57460a",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistPage.java": "f7fde766eda42f6400e77b0a6b24aaa39e2504bb8bb51a6cfd69517e252806b3",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistRuntime.java": "dc7cbfa683040da210c2b8f78f6efe68e4eb57797e7f290875c5c71507e88591",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistSettingsPage.java": "b16ef737e3eecfb1c62880702fd86246783389b8a30674d7c7f4bc243bc73bd1",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ArtworkRepository.java": "7853234343d8456b54a216457263735df51f1f5fb1bb56c4d4723c1ecd62848f",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ArtworkToken.java": "9c7d7a2c2902e2cbd837a214518aa362c834860d78fbf9a900b1461155a17dd4",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ShaderRuntime.java": "c8d42c8729d8489903a92ab656804e84835329f697cb67d39d4f82f73c737e1a",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ShaderSettingsPage.java": "6784b104ad12a54c8a6d546fe00705ff0ce355d66a45879454f8bb607507b6f9",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ShaderSurface.java": "d7b91b9a9a47fc552378b8710ce6afff21aedda3fb71291ad1838f377e167637"
   },
   "webSourceSha256": {
-    "web/src/main.js": "4cf4073a975c27dce13b53990858c0bc3c268e1f2a2521e223307bfb8b404741",
-    "web/src/playback-clock.js": "ce33baf1ca11380be35ec66e5a69d7789cad11e0905e540f2c0ee18cd5679ede",
+    "web/src/catalog.js": "19180d7f073deb27f74a0e89daa55da370500b84ed001a2d423b1a979ce5a779",
     "web/src/frame-budget.js": "1c13892608740200155779da584e3d90d72b2e054945b84b66e83a5e2f374dae",
-    "web/patch_braccato.py": "71a5835761587f73a86ced2884d534c3215347874a53a2f8f0b4d0ca29e6665f",
-    "web/braccato-local-patch.json": "0dc9f8e69ba45d99ecfa877afae2c41241f132efcf19176da3cdc09c3e1ecf5d",
+    "web/src/lyric-parse-utils.ts": "88ab51f66c9b70867f85ba039290d7ff4591f8f805ef8efc869bf9af34cd6490",
+    "web/src/main.js": "854a0edb1ae076481934a9227ab89f62276dee200e39e087cab73fe221acc388",
+    "web/src/playback-clock.js": "ce33baf1ca11380be35ec66e5a69d7789cad11e0905e540f2c0ee18cd5679ede",
+    "web/src/shaders.js": "b91e2823d767d2ee04e4e76445fe4cbe668b6fded51218fa96341c656cc7db5f",
+    "web/src/upstream-providers.ts": "ad45c40558d7e6428f44c9f7b312444cbe93fac45c659fa84e7dba8bde8df668",
+    "patches/src/main/resources/bdcrusher-lyrics/bd_lyrics_line.xml": "a6a86e8d055bbb0bbd9fcec2d61dcc050a5751d40d688666328a4dd2f6a2109a",
+    "patches/src/main/resources/bdcrusher-lyrics/bd_lyrics_syllable.xml": "d33ee78eab04530e082c3017e256e9420b711d50252c24dc9cf1b2a94e1250cd",
+    "patches/src/main/resources/bdcrusher-lyrics/bd_lyrics_unsynced.xml": "5d0d1c98eca5379e343f5e8e06140d2492ef6acf154f52e399d4dd4a5f88c187",
+    "patches/src/main/resources/bdcrusher-lyrics/bd_lyrics_word.xml": "1872ea451834262347689765ab572d2f0e374069288d2f1998fc50e30b0debc2",
+    "patches/src/main/resources/bdcrusher-lyrics/host.css": "5956581706921adb6791f2fae41267a38e6f1b59461918be73bfb44be1990049",
+    "patches/src/main/resources/bdcrusher-lyrics/image-highlights.css": "d21ece4181f104cfc8e012242b7cb47cca6f9f3b4041b6e4061294f830537e94",
     "patches/src/main/resources/bdcrusher-lyrics/index.html": "82ffc7d96992674244c08a73f9ae9bc4a589fa7db4be456aa22dd31739d6769d",
-    "patches/src/main/resources/bdcrusher-lyrics/renderer.js": "4d135faae6a72536a93909090cab8b95d629e94e1917723f7c9ca7ac9ba63d9f",
-    "patches/src/main/resources/bdcrusher-lyrics/host.css": "5956581706921adb6791f2fae41267a38e6f1b59461918be73bfb44be1990049"
+    "patches/src/main/resources/bdcrusher-lyrics/instrumental.css": "5f059474105380860565fcbc8cca67576fa4799753f6e13baeef08fb274805c0",
+    "patches/src/main/resources/bdcrusher-lyrics/lyrics.css": "aa2859f3be1f4e73e1d8609584fff6c276955c230c7652add22ea40477d32f7d",
+    "patches/src/main/resources/bdcrusher-lyrics/NOTICE.txt": "5f1bde6473503736987d1709ff8607c1b4e4bf403a3e47fe5e247922f0e11ec8",
+    "patches/src/main/resources/bdcrusher-lyrics/providers.json": "2b07b69360b95814567bac1e03bac78347bc19a10e77578f4afd9ad194ab678d",
+    "patches/src/main/resources/bdcrusher-lyrics/renderer.js": "37c10f4168997b30b8cedd424be9bf60ac64559ac679a27871c1034e34437a4e",
+    "patches/src/main/resources/bdcrusher-lyrics/Satoshi-Variable.woff2": "e739aff9b4d02c264341d6d4872edcda28e79373aeda936f659566a1cd3eb47f",
+    "patches/src/main/resources/bdcrusher-lyrics/stage.css": "bc3005988ec02216263c708ef6502b21079dc4257fe93b1349b4fc8112893399",
+    "patches/src/main/resources/bdcrusher-lyrics/variables.css": "590dc9abaadecbc99586afec6c06007b10d99929b71199df6b4296a72532e892",
+    "patches/src/main/resources/bdcrusher-shaders/index.html": "92cf78ba79096993812d9c448fd16b00c5639e7d7d91393e0de539507d8bd35b",
+    "patches/src/main/resources/bdcrusher-shaders/shaders.js": "9e306cfc307154b4ada23241d1e7408bbd444c6a629a7c1b113cf4d6b5381d96"
   },
-  "nativeHookSourceSha256": "3a32df901e223b74fa03fb842adf5744b429694c9a9b827c57440023176b55be",
-  "evidenceOrigin": {
-    "browserAndClockAndSourceTests": "0.2.10-beta.1; exact hashes unchanged",
-    "navigationWindowTests": "0.2.11-beta.1; fresh47 checks",
-    "compiledApkAudits": "0.2.11-beta.1; fresh four combinations"
+  "hookSourceSha256": {
+    "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/EditionSelection.kt": "dcaa0bb53b155b904f5eb9e2bdf3b426cb06f2454d77a783d280003f5efd7715",
+    "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/NativeLyricsHooks.kt": "3a32df901e223b74fa03fb842adf5744b429694c9a9b827c57440023176b55be",
+    "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/PersonalRuntimePatch.kt": "f104659a9df74cf25ba79c7167ee5090ec282819807eecf55b930dc5e6953be5",
+    "lyrics-addon/src/main/kotlin/app/bdcrusher/ytmusic/addon/LyricsAddon.kt": "cac290c06440e83b325c50acdd1981da3964367e708b4ae1b5d228db9ae17520",
+    "lyrics-addon/src/main/kotlin/app/bdcrusher/ytmusic/addon/ShadersPatch.kt": "da6577b27d0b4e3367b8913712e55a2356118a0ce3536f9ab874ca535f552f72",
+    "patches/src/main/kotlin/app/bdcrusher/ytmusic/playlists/PlaylistPatch.kt": "d6282b80f3ac4367ad1d7f798394a1a261527350f00f5478a55bc47064f6c837"
   },
-  "evidenceReuse": "Renderer/browser/clock/source/service evidence is inherited from0.2.10 only after exact source and web-asset hash checks; not newly measured."
+  "phoneVerified": false,
+  "deviceOperations": false,
+  "realPlaylistDownloadsLaunched": false,
+  "globalToolsCopied": false,
+  "limitations": [
+    "Recording-free Android phone smoothness and native-panel interaction need acceptance; no universal zero-stutter claim.",
+    "Real Samsung three-button/gesture transparency, keyboard, orientation and dialogs need device checks.",
+    "Android WebView/GPU/media transitions and native video preservation need phone checks.",
+    "Combined lyrics-service live verification timed out in the browser; direct sources and deterministic broker recovery passed.",
+    "Native playlist account handling, actual downloads, interruption and offline playback need device checks; automated tests launched no downloads.",
+    "Alternate video/audio recordings may have different timelines; timing is never invented.",
+    "Legacy positive-cache migration is lazy by recognized recording query; unknown hash filenames cannot be assigned recording IDs.",
+    "Cover media uses Android cache storage and LRU, so Android may reclaim it; permanent lyrics have no expiry/eviction."
+  ],
+  "completenessReview": {
+    "passed": true,
+    "reviewedImplementationFiles": 48,
+    "unfinishedMarkers": [],
+    "selectedNativeBridgeGuardsReplaced": true,
+    "inactiveBridgeGuards": "ShaderRuntime.nativePanelId/nativePanelView require the selected Shaders bytecode patch; no throw remains in selected compiled bridges.",
+    "compilerGeneratedHelper": "Only com.android.tools.r8.RecordTag lies outside owned packages; reviewed and no duplicates.",
+    "compiledReferencesAuditedApks": 16,
+    "nativeLyricsAuditedApks": 12,
+    "implementationSourceSha256": {
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/NavigationWindow.java": "76074f492eb5b42c785236b47c2462544088f6332bf1b5b3b36f1e934e5a7a31",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/PersonalCredits.java": "b29b5e0438ebf8b46971e66a49ff083883700c3e2a3b51fabbf498e06e8f8a64",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/PersonalRuntime.java": "eb9ead95c8849284ee323f091a0a7ad83e667abcabceff69d1771a8dba750204",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/common/PersonalSettings.java": "f10493bf05a823578921c252f8c93a01c7e9253421057af8db2fd96520894057",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/BetterLyricsPanelView.java": "6add2dafc82afdff2bc1bebaa1cb3ed53b3ed9a65292ee2ace2fe991a6c04724",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/BetterLyricsPreference.java": "dc20b2dab63589eabbc38418a23616dd58168fd0deda1439925c5ae0d926a90a",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricQuality.java": "2752f5bb95dc633a676a16c202016e7ed2fedb72c44bc013bab0b3d1e6dcf6f6",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsCatalog.java": "de357b72287d7595325178abc0eec7f6ac38ccbad054f8bdc8cfe3c52ae77e46",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsConfig.java": "b72afdccfe06aa18ecfc949fa03e42fb3c0a90e0f0054c2311c84eb980132b97",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsDiagnostics.java": "2b0b9d4c1939ae1d8676408e4703e986a4eedca1bac57fa29ef82213e12596a4",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsDiskCache.java": "677e0c7002c0333afb3762430621409d3ba09f4560becef8e434c3e66dbda1d1",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsEnrichment.java": "d6719203a607a339677b982d2dffbe6ef7a977fd2cf8b1f6d19b4bf91e0b71a0",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsEntryButton.java": "8bc1d5e452dc2c13ae3ad1963d1783d074e33f9ea3b554c9c203facf9223d2da",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsEntryCoordinator.java": "aad38534e7334b2ad8639223bf1bb0c350dabc92170d09d9144ab7e487535e00",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsLibrary.java": "02320e50349468e3818d9bf3dff5e88bc13c7e3b6f8c4c1ef9f3c641b06fd694",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsLookup.java": "6264001f3e87d8f2277f4e282c896a8c011f93a31128c146ce3111e8ee7ae459",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsNetwork.java": "67ee990881d8b456c9c7919a062e7c075ddb5beced71d50367fb8709b0f40db0",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsRepository.java": "c07e2339ae948c0fb9b003ee293288e3b621eff7c2ee7baa09564f3c08d89948",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsRetry.java": "ca379c56180ca3c4198ea2b40780aed44312c2e350b0b5997dacda1edb5e083d",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsSettingsPage.java": "05f9f1493beb49edcf0176a5254e7a411d0dd101afac229701470e7fb1e23419",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsSliderPreference.java": "d7d0ae5a3c4dac8a81d4db972fd8eaafe9b9a489d52f2d5eea29f4ad511cd5f7",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/LyricsSourceOrderPreference.java": "cf107b3d6bd02ed7a01b63875209e8b19686acc0a5b207af448ef5653e12c947",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeActionModel.java": "641fe727b5c1719fa388e63c050754a2f88019d7ddcf4babd08cf1dd3b8973fb",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeLyricPayload.java": "995bd2d99f203f8acb1bcbcf33cb4df39501cd5b06b0ad918d3aee878e522c15",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeLyricsBridge.java": "770a9cfafcfaa254a5e5a1f19a4b3259a64097187bde8deae321e7add7cb6327",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativeLyricsHost.java": "b38d48cc4e9f758bac6f8467d6b77911270906fc49e16681454b123e55e8af75",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/NativePanelWire.java": "11dbd7a3696d2ef32174f675a11386326f7e10224316a52ad08776c94a091645",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/ProtoWire.java": "4ec64157d8e34b226781d5707161713767bbc1331b1d298d2d468e2c67371e49",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/RendererPlayback.java": "132775c89c69fc552a489b8466a3d80827f3a53ea0ee7b5937786c65ecde4339",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/ServiceConnection.java": "122f123b878771ae5ab5b02c200e892d259caee68ed90e0458b6de8e97a81b1b",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/SourceVerification.java": "c6210087fce4ebe0fb8d118ad025ccef13f7fac33e9c207ad56008c44416beba",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/StoragePreference.java": "063ad512803f3646b64b7929f7d6f2406bff24f0ae33bee701deee6e08b78bf4",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/TokenExpiry.java": "ef4aa3bfa5b4642ee70d051312fe72e1b69364dcdfc7e32ef5b1cc4f9e8feb7f",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistHeaderModel.java": "a60c12d510f3ebd96ed259c9e399a0fda68b5bf0ac47c9d3477ab4479f57460a",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistPage.java": "f7fde766eda42f6400e77b0a6b24aaa39e2504bb8bb51a6cfd69517e252806b3",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistRuntime.java": "dc7cbfa683040da210c2b8f78f6efe68e4eb57797e7f290875c5c71507e88591",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistSettingsPage.java": "b16ef737e3eecfb1c62880702fd86246783389b8a30674d7c7f4bc243bc73bd1",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ArtworkRepository.java": "7853234343d8456b54a216457263735df51f1f5fb1bb56c4d4723c1ecd62848f",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ArtworkToken.java": "9c7d7a2c2902e2cbd837a214518aa362c834860d78fbf9a900b1461155a17dd4",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ShaderRuntime.java": "c8d42c8729d8489903a92ab656804e84835329f697cb67d39d4f82f73c737e1a",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ShaderSettingsPage.java": "6784b104ad12a54c8a6d546fe00705ff0ce355d66a45879454f8bb607507b6f9",
+      "extensions/music/src/main/java/app/bdcrusher/ytmusic/shaders/ShaderSurface.java": "d7b91b9a9a47fc552378b8710ce6afff21aedda3fb71291ad1838f377e167637",
+      "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/EditionSelection.kt": "dcaa0bb53b155b904f5eb9e2bdf3b426cb06f2454d77a783d280003f5efd7715",
+      "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/NativeLyricsHooks.kt": "3a32df901e223b74fa03fb842adf5744b429694c9a9b827c57440023176b55be",
+      "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/PersonalRuntimePatch.kt": "f104659a9df74cf25ba79c7167ee5090ec282819807eecf55b930dc5e6953be5",
+      "lyrics-addon/src/main/kotlin/app/bdcrusher/ytmusic/addon/LyricsAddon.kt": "cac290c06440e83b325c50acdd1981da3964367e708b4ae1b5d228db9ae17520",
+      "lyrics-addon/src/main/kotlin/app/bdcrusher/ytmusic/addon/ShadersPatch.kt": "da6577b27d0b4e3367b8913712e55a2356118a0ce3536f9ab874ca535f552f72",
+      "patches/src/main/kotlin/app/bdcrusher/ytmusic/playlists/PlaylistPatch.kt": "d6282b80f3ac4367ad1d7f798394a1a261527350f00f5478a55bc47064f6c837"
+    },
+    "phoneVerified": false
+  },
+  "nativeVideoBytecodeSha256": "33239f64b581080f499e221cba9efe5b4551441adbacfc0d9db76560c733abd3"
 }

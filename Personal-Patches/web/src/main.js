@@ -256,6 +256,8 @@ window.BDC = {
       if(payload.event) {
         await processStreamData(payload.event,payload.data,expected);
         if(id!==generation||params!==expected)return;
+      }else if(payload.kind==='cachedResult'){
+        if(payload.result?.lyrics?.length)put(payload.key,payload.result);
       }else if(payload.kind==='unison'){
         const data=payload.data?.data||payload.data;
         if(data.format==='ttml')fillTtml(data.lyrics,params,{richsyncKey:'unison-richsynced',syncedKey:'unison-synced',source:'Unison',sourceHref:'https://unison.betterlyrics.org',cacheAllowed:false});
@@ -273,6 +275,7 @@ window.BDC = {
       // A slower provider response may be empty or less detailed than an earlier
       // public result. Only a track change or explicit refresh clears good lyrics.
       for(const [key,result] of previous)if(!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length)expected.sourceMap[key].lyricSourceResult=result;
+      if(payload.kind!=='cachedResult')for(const key of PRIORITY){const result=expected.sourceMap[key]?.lyricSourceResult;if(result?.lyrics?.length&&result!==previous.get(key))native?.cacheResult?.(generation,key,JSON.stringify(result));}
       choose();
     } catch(error){
       if(cached){cache.delete(payloadKey);if(params===expected)seenPayloadBytes-=payloadKey.length*2;}

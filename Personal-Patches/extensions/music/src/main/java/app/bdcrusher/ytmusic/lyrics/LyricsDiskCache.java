@@ -21,10 +21,15 @@ final class LyricsDiskCache {
         return new File(directory,name+".json");
     }
     synchronized JSONObject get(String key){
+        return read(key,false);
+    }
+    /** The new permanent library validates this known recording/query before accepting it. */
+    synchronized JSONObject migrate(String key){return read(key,true);}
+    private JSONObject read(String key,boolean migration){
         try{
             File file=file(key);if(!file.isFile()||file.length()>4*1024*1024)return null;
             JSONObject wrapper=new JSONObject(new String(new AtomicFile(file).readFully(),StandardCharsets.UTF_8));
-            if(System.currentTimeMillis()-wrapper.getLong("saved")>7L*24*60*60*1000)return null;
+            if(!migration&&System.currentTimeMillis()-wrapper.getLong("saved")>7L*24*60*60*1000)return null;
             return wrapper.getJSONObject("payload");
         }catch(Exception ignored){return null;}
     }

@@ -23,6 +23,8 @@ tasks.named<Jar>("jar") {
     // Keep only the explicitly prepared personal runtime in this independent edition.
     eachFile { if(path.startsWith("extensions/")&&path!="extensions/lyrics-addon.mpe")exclude() }
     from(rootProject.file("patches/src/main/resources/bdcrusher-lyrics")) {into("bdcrusher-lyrics")}
+    from(rootProject.file("patches/src/main/resources/bdcrusher-shaders")) {into("bdcrusher-shaders")}
+    from(rootProject.file("patches/src/main/resources/bdcrusher-common")) {into("bdcrusher-common")}
     from(rootProject.file("patches/src/main/resources/copyvideolinkbutton/drawable/morphe_yt_copy_bold.xml")) {into("drawable")}
     from(rootProject.file("patches/src/main/resources/romanisationbutton/drawable/morphe_yt_romanize.xml")) {into("drawable")}
     from(rootProject.file("NOTICE"))

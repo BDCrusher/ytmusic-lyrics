@@ -4,6 +4,7 @@
  */
 package app.bdcrusher.ytmusic.addon
 import app.bdcrusher.ytmusic.nativeentry.installNativeLyricsHooks
+import app.bdcrusher.ytmusic.nativeentry.normalizePersonalLyricsAccessors
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.fieldAccess
 import app.morphe.patcher.methodCall
@@ -52,8 +53,7 @@ val lyricsAddon=bytecodePatch(
     default=false
 ){
     category("Lyrics-only Add-on")
-    dependsOn(app.bdcrusher.ytmusic.nativeentry.addonEditionGuard, assets)
-    extendWith("extensions/lyrics-addon.mpe")
+    dependsOn(app.bdcrusher.ytmusic.nativeentry.addonEditionGuard, app.bdcrusher.ytmusic.nativeentry.personalRuntimePatch, assets)
     compatibleWith(Compatibility(packageName="com.google.android.apps.youtube.music",name="YouTube Music",
         apkFileType=ApkFileType.APK_REQUIRED,appIconColor=0xFF0000,
         signatures=setOf("6a2f65ec694a6a632acdcb5080912a565f903d4b8d83f0eb8e44fbdf2660d8e1","a2a1ad7ba7f41dfca4514e2afeb90691719af6d0fdbed4b09bbf0ed897701ceb"),
@@ -66,13 +66,7 @@ val lyricsAddon=bytecodePatch(
         required(PREFIX+"settings/preference/MusicPreferenceFragment;")
         val manager=required(PREFIX+"patches/lyrics/LyricsManager;")
         val installer=required(PREFIX+"patches/lyrics/ui/LyricsPanelInstaller;")
-        if(manager.fields.none {it.name=="currentVideoId"&&it.type=="Ljava/lang/String;"})
-            throw PatchException("Unsupported official lyrics track identity contract")
-        if(manager.methods.none {it.name=="getCommittedVideoId"}){
-            val getter=MutableMethod(ImmutableMethod(manager.type,"getCommittedVideoId",emptyList(),"Ljava/lang/String;",AccessFlags.PUBLIC.value,null,null,MutableMethodImplementation(2)))
-            getter.addInstructions(0,"iget-object v0, p0, "+manager.type+"->currentVideoId:Ljava/lang/String;\nreturn-object v0")
-            manager.methods.add(getter)
-        }
+        normalizePersonalLyricsAccessors()
         val callbacks=required(PREFIX+"patches/lyrics/LyricsPatch;")
         for(name in listOf("onSetMetadata","onSetPlaybackState")){
             val callback=callbacks.methods.singleOrNull {it.name==name&&it.returnType=="V"&&it.parameterTypes.size==1}
@@ -93,14 +87,7 @@ val lyricsAddon=bytecodePatch(
             val call=target.getInstruction<FiveRegisterInstruction>(index)
             target.addInstruction(index,"invoke-static { v"+call.registerD+" }, "+PREFIX+"patches/lyrics/LyricsPatch;->"+method+"("+arg+")V")
         }
-        // Stable native payload contracts; never inject second app.morphe class definitions.
-        for((name,field,type) in listOf(Triple("isPlaybackPlaying","playing","Z"),Triple("getPlaybackSpeed","playbackSpeed","F"))){
-            if(manager.fields.none {it.name==field&&it.type==type})throw PatchException("Unsupported official lyrics clock contract: "+field)
-            if(manager.methods.none {it.name==name}){
-                val method=MutableMethod(ImmutableMethod(manager.type,name,emptyList(),type,AccessFlags.PUBLIC.value,null,null,MutableMethodImplementation(2)))
-                method.addInstructions(0,"iget"+(if(type=="Z")"-boolean" else "")+" v0, p0, "+manager.type+"->"+field+":"+type+"\nreturn v0");manager.methods.add(method)
-            }
-        }
+        // Shared personal infrastructure normalizes the compile-only clock accessors.
         val old=PREFIX+"patches/lyrics/ui/LyricsPanelView;"
         val replacement=OWN+"BetterLyricsPanelView;"
         for(method in installer.methods) {

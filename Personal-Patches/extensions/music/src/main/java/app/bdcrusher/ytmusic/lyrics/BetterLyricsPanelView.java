@@ -18,6 +18,7 @@ import android.webkit.RenderProcessGoneDetail;
 import android.widget.FrameLayout;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +41,6 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private final Handler handler=new Handler(Looper.getMainLooper());
     private WebView web;
     private boolean ready,attached,hasDisplay;
-    private boolean forceRefresh;
     private volatile int generation;
     private String identity="";
     private TrackInfo track;
@@ -79,7 +79,6 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         LyricsManager.getInstance().addListener(this);handler.post(tick);
     }
     @Override protected void onDetachedFromWindow(){
-        LyricsSystemBars.release(this);
         if(getViewTreeObserver().isAlive())getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
         restoreNativeContent();
         attached=false;handler.removeCallbacksAndMessages(null);
@@ -167,8 +166,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         restoreNativeContent();setVisibility(View.INVISIBLE);if(catalogSink!=null)LyricsRepository.unsubscribe(catalogSink);
         if(ready)sendTrack();
         int expected=generation;
-        boolean refresh=forceRefresh;forceRefresh=false;
-        LyricsRepository.ensure(getContext(),track,nextId,refresh);
+        LyricsRepository.ensure(getContext(),track,nextId,false);
         catalogSink=new LyricsCatalog.Sink(){
             public void health(JSONObject status){handler.post(()->{if(attached&&generation==expected){sourceHealth=status;call("health",expected+","+status);}});}
             public void reconnect(){handler.postDelayed(()->{if(attached&&generation==expected&&NativeLyricsHost.isOpen())ServiceConnection.renew(getContext());},700);}
@@ -186,30 +184,13 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         if(!ready){if(pending.size()<64)pending.add(payload);return;}
         call("source",expected+","+payload);
     }
-    private void reload(){identity="";updateTrack();}
     @Override public void onLyricsChanged(LyricsManager.State state,Lyrics lyrics){
         updateTrack();
         if(lyrics==null||lyrics.isEmpty()||track==null)return;
         try{
-            String name=lyrics.providerName();String key=switch(name){
-                case "YTMusic"->"yt-lyrics";case "Captions"->"yt-captions";default->null;
-            };
-            if(key==null)return;
-            JSONObject payload=new JSONObject().put("key",key).put("source",name);
-            if(lyrics.rawFormat()!=null&&!lyrics.rawFormat().isEmpty()&&java.util.Arrays.asList("ttml","lrc","qrc","txt","plain").contains(lyrics.formatType()))payload.put("raw",lyrics.rawFormat()).put("format",lyrics.formatType());
-            else{
-                JSONArray lines=new JSONArray();List<LyricsLine> source=lyrics.lines();
-                for(int i=0;i<source.size();i++){
-                    LyricsLine line=source.get(i);long start=Math.max(0,line.startTimeMs());
-                    long end=line.endTimeMs()>start?line.endTimeMs():i+1<source.size()?Math.max(start,source.get(i+1).startTimeMs()):track.durationSeconds()*1000L;
-                    JSONObject item=new JSONObject().put("startTimeMs",start).put("durationMs",lyrics.synced()?Math.max(0,end-start):0).put("words",line.text());
-                    if(line.agentId()!=null)item.put("agent",line.agentId());
-                    if(line.hasWords()){
-                        JSONArray parts=new JSONArray();for(Word word:line.words())parts.put(new JSONObject().put("startTimeMs",Math.max(0,word.startMs())).put("durationMs",Math.max(0,word.endMs()-word.startMs())).put("words",word.text()+(word.endsWithSpace()?" ":"")).put("isBackground",line.isBG()));item.put("parts",parts);
-                    }
-                    lines.put(item);
-                }payload.put("lyrics",lines);
-            }
+            JSONObject payload=NativeLyricPayload.from(lyrics,track);
+            if(payload==null)return;
+            new LyricsLibrary(getContext()).offer(VideoInformation.getVideoId(),payload);
             receive(generation,payload);
         }catch(Exception ex){Logger.printException(()->"Could not adapt native lyric fallback",ex);}
     }
@@ -219,10 +200,9 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     public void syncOverlay(){
         boolean show=Settings.LYRICS_ENABLED.get()&&hasDisplay&&NativeLyricsHost.owns(this);
         boolean keep=show&&Settings.LYRICS_KEEP_SCREEN_ON.get();if(getKeepScreenOn()!=keep)setKeepScreenOn(keep);
-        if(show&&getParent() instanceof android.view.ViewGroup parent){for(int i=0;i<parent.getChildCount();i++){View child=parent.getChildAt(i);if(child!=this){covered.putIfAbsent(child,child.getVisibility());if(child.getVisibility()!=View.INVISIBLE)child.setVisibility(View.INVISIBLE);}}}
+        if(show&&getParent() instanceof android.view.ViewGroup parent){for(int i=0;i<parent.getChildCount();i++){View child=parent.getChildAt(i);if(child!=this&&!app.bdcrusher.ytmusic.shaders.ShaderRuntime.isEffectSurface(child)){covered.putIfAbsent(child,child.getVisibility());if(child.getVisibility()!=View.INVISIBLE)child.setVisibility(View.INVISIBLE);}}}
         else restoreNativeContent();
         int visibility=show?View.VISIBLE:View.INVISIBLE;if(getVisibility()!=visibility)setVisibility(visibility);
-        LyricsSystemBars.sync(this,Settings.LYRICS_ENABLED.get()&&NativeLyricsHost.owns(this)&&getWindowVisibility()==View.VISIBLE);
     }
     // Preserve the installer's settings callbacks while the personal controls own rendering.
     public void applyToolbarButtonSettings(){applySettings();}public void applyTextSize(){applySettings();}
@@ -230,6 +210,12 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     public void applyHideInfo(){applySettings();}public void applyShowSection(){applySettings();}
     public void applyLineOverlaySettings(){applySettings();}
     public final class Bridge {
+        @JavascriptInterface public void cacheResult(int id,String key,String result){
+            if(result==null||result.length()>4*1024*1024||!key.matches("[A-Za-z-]{1,64}"))return;
+            handler.post(()->{if(id!=generation||track==null||enrichmentExecutor==null||enrichmentExecutor.isShutdown())return;String videoId=VideoInformation.getVideoId();
+                enrichmentExecutor.execute(()->{if(id!=generation)return;try{new LyricsLibrary(getContext()).offer(videoId,new JSONObject().put("kind","cachedResult").put("key",key).put("result",new JSONObject(result)));}catch(JSONException invalid){LyricsDiagnostics.record("Lyrics library","Invalid renderer result rejected");}});
+            });
+        }
         @JavascriptInterface public void ready(){handler.post(()->{if(!attached||web==null)return;ready=true;sendTrack();applySettings();for(JSONObject payload:pending)receive(generation,payload);pending.clear();if(sourceHealth!=null)call("health",generation+","+sourceHealth);});}
         @JavascriptInterface public void displayed(int id,String source){handler.post(()->{if(id==generation){hasDisplay=true;syncOverlay();}});}
         @JavascriptInterface public void noLyrics(int id){handler.post(()->{if(id==generation){hasDisplay=false;restoreNativeContent();setVisibility(View.INVISIBLE);}});}
@@ -244,7 +230,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             target=Math.max(0,duration>0?Math.min(duration,target):target);
             RendererPlayback.seek(VideoInformation.getVideoId(),target);VideoInformation.seekTo(target);
         });}
-        @JavascriptInterface public void refresh(){handler.post(()->{forceRefresh=true;reload();});}
+        @JavascriptInterface public void refresh(){handler.post(()->{if(track!=null)LyricsRepository.ensure(getContext(),track,VideoInformation.getVideoId(),true);});}
         @JavascriptInterface public void pin(int id,String key){
             if(!key.isEmpty()&&!key.matches("[a-zA-Z-]{1,64}"))return;
             handler.post(()->{String videoId=VideoInformation.getVideoId();if(id!=generation||videoId==null||videoId.isEmpty())return;

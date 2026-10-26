@@ -14,11 +14,11 @@ import app.morphe.extension.shared.theme.ThemeUtils;
 
 /** Inline numeric preference: a native accessible SeekBar, with its value always visible. */
 @SuppressWarnings("deprecation")
-final class LyricsSliderPreference extends Preference {
+public final class LyricsSliderPreference extends Preference {
     private final SharedPreferences preferences;
     private final String setting,unit;
     private final int minimum,maximum,step,defaultValue;
-    LyricsSliderPreference(Context c,SharedPreferences p,String key,String title,int min,int max,int increment,int def,String suffix){
+    public LyricsSliderPreference(Context c,SharedPreferences p,String key,String title,int min,int max,int increment,int def,String suffix){
         super(c);preferences=p;setting=key;unit=suffix;minimum=min;maximum=max;step=increment;defaultValue=def;
         setKey("bdcrusher_"+key);setTitle(title);setPersistent(false);setSelectable(false);
     }
@@ -27,6 +27,7 @@ final class LyricsSliderPreference extends Preference {
     protected View onCreateView(ViewGroup parent){
         Context c=getContext();int foreground=ThemeUtils.getAppForegroundColor();
         LinearLayout root=new LinearLayout(c);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(16),dp(14),dp(16),dp(10));
+        android.graphics.drawable.GradientDrawable card=new android.graphics.drawable.GradientDrawable();card.setColor((foreground&0xffffff)|0x0b000000);card.setCornerRadius(dp(16));root.setBackground(card);
         LinearLayout heading=new LinearLayout(c);heading.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView title=new TextView(c);title.setText(getTitle());title.setTextSize(16);title.setTextColor(foreground);
         heading.addView(title,new LinearLayout.LayoutParams(0,-2,1));

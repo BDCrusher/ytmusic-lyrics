@@ -5,7 +5,7 @@ group = "app.bdcrusher.ytmusic"
 patches {
     about {
         name = "BDCrusher YT-Music Lyrics"
-        description = "Choose Full Collection or Lyrics-only Add-on using the expandable categories. Never select both."
+        description = "Choose Full Collection or Lyrics-only Add-on. Optional Shaders and Playlist downloads work with either edition or compatible official Morphe patches."
         source = "https://github.com/BDCrusher/ytmusic-lyrics"
         contact = "na"
         website = "https://github.com/BDCrusher/ytmusic-lyrics"
@@ -45,7 +45,6 @@ tasks.named<Jar>("jar") {
     from(provider { zipTree(layout.buildDirectory.file("classpath/full-collection.jar").get().asFile) })
     // Dependencies may have been built for Android already. Re-dex this bundle once.
     exclude("classes*.dex")
-    from(project(":lyrics-addon").layout.buildDirectory.file("runtime/lyrics-addon.mpe")) { into("extensions") }
     from(rootProject.file("patches/src/main/resources/copyvideolinkbutton/drawable/morphe_yt_copy_bold.xml")) { into("drawable") }
     from(rootProject.file("patches/src/main/resources/romanisationbutton/drawable/morphe_yt_romanize.xml")) { into("drawable") }
     // Guava already owns license/; avoid a file/directory case collision on Android/Windows.

@@ -21,7 +21,7 @@ final class LyricsNetwork implements AutoCloseable {
     }
     static long retryAfter(String value){
         if(value==null)return 0;
-        try{long seconds=Long.parseLong(value.trim());return seconds<=0?0:seconds>86400?86400000:seconds*1000;}
+        try{long seconds=Long.parseLong(value.trim());return seconds<=0?0:seconds>Long.MAX_VALUE/1000?Long.MAX_VALUE:seconds*1000;}
         catch(NumberFormatException ignored){try{return Math.max(0,java.time.ZonedDateTime.parse(value,java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME).toInstant().toEpochMilli()-System.currentTimeMillis());}catch(java.time.format.DateTimeParseException invalid){return 0;}}
     }
     static final String BROKER="https://lyrics.api.dacubeking.com/";

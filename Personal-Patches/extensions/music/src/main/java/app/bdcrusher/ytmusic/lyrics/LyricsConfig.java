@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import android.net.Uri;
 import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONException;
 import java.util.Locale;
 import app.morphe.extension.shared.theme.ThemeUtils;
 
@@ -26,6 +27,11 @@ public final class LyricsConfig {
         JSONArray defaults=catalog(c).optJSONArray("providers");for(int i=0;i<defaults.length();i++)ids.add(defaults.optJSONObject(i).optString("key"));
         for(String id:ids)result.put(id);return result;
     }
+    static boolean enabled(Context c,String... keys){
+        try{JSONArray disabled=new JSONArray(preferences(c).getString("disabled","[]"));java.util.Set<String> off=new java.util.HashSet<>();for(int i=0;i<disabled.length();i++)off.add(disabled.optString(i));for(String key:keys)if(!off.contains(key))return true;return false;}
+        catch(JSONException invalid){return true;}
+    }
+    static boolean brokerEnabled(Context c){return enabled(c,"bLyrics-richsynced","bLyrics-synced","binimum-richsynced","binimum-synced","portato-richsynced","musixmatch-richsync","musixmatch-synced","legato-synced","lrclib-synced","lrclib-plain");}
     public static JSONObject read(Context c){
         SharedPreferences p=preferences(c);JSONObject r=new JSONObject(),agents=new JSONObject();
         try{

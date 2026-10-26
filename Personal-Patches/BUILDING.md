@@ -1,3 +1,25 @@
+# Current candidate - 0.3.0-beta.1
+
+This revision implements independently selectable Shaders and Download playlist, durable best-lyric storage, scheduled source recovery, native settings/storage cards and app-wide transparent navigation. The exact target remains original YouTube Music 9.42.52 / 94252240 arm64-v8a with official Morphe 1.48.0. Use Full Collection alone OR deselect every Full patch and use Lyrics-only Add-on with official Third-party lyrics disabled. Shaders and Download playlist are optional; either can be used with official patches and official lyrics. Download playlist requires Downloads. One root source has four native categories.
+
+Settings: Morphe > Lyrics, Morphe > Shaders, Morphe > Playlist downloads. The playlist patch reads the existing Downloads mode/app at click time. Global transparent navigation is shared infrastructure, installed once with a personal feature. Existing private preferences and credentials are retained. Lyrics never expire automatically; cover media uses an adjustable 512 MiB LRU cache and only downloads new loops on unmetered Wi-Fi.
+
+Read [the implementation report](../Research/FEATURES-0.3.0-2026-10-26.md), `dist/0.3.0-beta.1/verification.json` and the compatibility report for exact checks and limitations. Publication is complete only when `Verification/publication/v0.3.0-beta.1/publication-result.json` says published. Never rerun completed staging/publication generators or push the private checkout. Shared Toolkit stays in place. No MuMu/device/sign/install operations. Real phone smoothness, native presentation, Samsung navigation and Android graphics/download acceptance remain separate from compiled/simulated checks.
+
+## Earlier records (historical)
+
+# Published - 0.2.11-beta.1
+
+[0.2.11-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.2.11-beta.1) is published. Public source, all 10 assets and the dev feed were verified against the preparation; 7421 source files matched. Source `577aeaff26e4fc11a6c22537130a086a7ddc02c6`, feed `bb1b4cb3b19b6d8dad9fe92a858e3213d3973a93`. MPP SHA256 `9d050a85ebcdec12f089f04754814448c249638dd0ab3d3d41c5546d3d0d746a`. Exact receipt: Verification/publication/v0.2.11-beta.1/publication-result.json. Shared Toolkit ran in place; private history was not pushed.
+
+Lyrics system navigation is always transparent. The matching-color preference, background sampling and protection overlays are removed. Native icons and content insets are preserved, and previous native bar state is restored on close. Old private preferences are retained but cannot disable transparency. Both editions share this behavior.
+
+Fresh build, patch tests, music lint, 47 navigation checks, four final APK combinations including both source orders, five conflicting-selection checks and compiled native/SDK/isolation audits passed. Unchanged source/renderer evidence is reused only with exact source hashes; see the compatibility report for provenance. These are compiled and simulated checks. Actual Samsung/OneUI transparency and phone smoothness remain unverified. No device, MuMu, signing, installation or uninstallation operations were performed.
+
+Refresh the existing Morphe source with Pre-release patches and Experimental app versions enabled, then repatch original 9.42.52/94252240 arm64. Use Full alone OR deselect every Full patch and use Lyrics-only with official 1.48.0 defaults, official Third-party lyrics OFF. Settings remain Morphe > Lyrics. No copied globals.
+
+## Build and prior records
+
 # Current build - 0.2.11-beta.1
 
 Lyrics system navigation is always transparent. Remove the matching toggle, color sampling and opaque protection overlays; ignore saved transparentNavigation=false. Preserve native navigation icons/insets and restore native window state on close. Source/renderer/timing/status-dot assets and other personal logic are unchanged from0.2.10.

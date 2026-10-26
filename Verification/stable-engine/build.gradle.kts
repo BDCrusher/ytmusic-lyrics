@@ -1,4 +1,6 @@
 plugins { kotlin("jvm") version "2.4.21" }
+tasks.register<JavaExec>("auditPersonalFeatures"){dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.AuditPersonalFeaturesKt");workingDir=rootDir;maxHeapSize="5g";doFirst {setArgs(listOf(providers.gradleProperty("auditManifest").get()))}}
+tasks.register<JavaExec>("inspectPersonalFeatures") {dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectPersonalFeaturesKt");workingDir=rootDir;maxHeapSize="4g"}
 repositories { mavenLocal(); mavenCentral(); google(); maven { url=uri("https://jitpack.io") } }
 
 tasks.register<JavaExec>("inspectMusicActions") {
@@ -60,3 +62,4 @@ tasks.register<JavaExec>("inspectModelContracts") { dependsOn("classes");classpa
 tasks.register<JavaExec>("inspectActionReplay") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectActionReplayKt");workingDir=rootDir }
 tasks.register<JavaExec>("inspectLyricsPresentation") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectLyricsPresentationKt");workingDir=rootDir }
 tasks.register<JavaExec>("inspectLyricsBackground") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectLyricsBackgroundKt");workingDir=rootDir }
+tasks.register<JavaExec>("inspectShaderVideo") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectShaderVideoKt");workingDir=rootDir;maxHeapSize="4g" }

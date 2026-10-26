@@ -29,13 +29,19 @@ final class LyricsRepository {
     static void ensure(Context context, TrackInfo track, String id, boolean refresh) {
         String next = identity(track, id);
         if (!refresh && next.equals(identity)) return;
-        clear();
+        if(refresh&&next.equals(identity)){
+            generation++;if(catalog!=null)catalog.close();catalog=null;finished=false;definitelyNotFound=null;
+        }else clear();
         identity = next;
         int expected = generation;
         catalog = new LyricsCatalog(context.getApplicationContext(), track, id, refresh, new LyricsCatalog.Sink() {
             public void health(JSONObject value){main.post(()->{if(expected!=generation)return;health=value;for(var sink:new ArrayList<>(sinks))sink.health(value);});}
             public void result(JSONObject payload) { main.post(() -> {
                 if (expected != generation) return;
+                String key=payload.optString("key",payload.optString("kind",payload.optString("event")));
+                if("provider".equals(payload.optString("event"))&&payload.optJSONObject("data")!=null)key="provider:"+payload.optJSONObject("data").optString("provider");
+                final String identityKey=key;
+                results.removeIf(old->{String k=old.optString("key",old.optString("kind",old.optString("event")));if("provider".equals(old.optString("event"))&&old.optJSONObject("data")!=null)k="provider:"+old.optJSONObject("data").optString("provider");return identityKey.equals(k)&&LyricsCatalog.hasLyricsPayload(payload);});
                 if (results.size() < 64) results.add(payload);
                 for (var sink : new ArrayList<>(sinks)) sink.result(payload);
             }); }
@@ -52,6 +58,7 @@ final class LyricsRepository {
     }
 
     static void connectionChanged() { if(catalog!=null)catalog.connectionChanged(); }
+    static void rerank(Context context,String videoId){if(videoId==null||!identity.startsWith(videoId+"\u0000"))return;LyricsLibrary library=new LyricsLibrary(context);for(JSONObject result:new ArrayList<>(results))library.offer(videoId,result);}
 
     static void subscribe(LyricsCatalog.Sink sink) {
         if (sinks.contains(sink)) return;

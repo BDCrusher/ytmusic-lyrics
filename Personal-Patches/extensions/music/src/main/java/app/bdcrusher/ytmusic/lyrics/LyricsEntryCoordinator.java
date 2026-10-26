@@ -23,6 +23,11 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
     private SharedPreferences preferences;
     private final SharedPreferences.OnSharedPreferenceChangeListener preferencesListener = (p, key) -> {
         if ("serviceJwt".equals(key)) main.post(LyricsRepository::connectionChanged);
+        else if("disabled".equals(key))main.post(()->{
+            LyricsManager manager=LyricsManager.getInstance();TrackInfo track=manager.getCurrentTrack();String id=VideoInformation.getVideoId();
+            if(track!=null&&id!=null&&id.equals(manager.getCommittedVideoId())&&Utils.getActivity()!=null)LyricsRepository.ensure(Utils.getActivity(),track,id,true);
+        });
+        else if("priority".equals(key)||"cachePolicy".equals(key))main.post(()->LyricsRepository.rerank(Utils.getContext(),VideoInformation.getVideoId()));
     };
     private final LyricsCatalog.Sink sink = new LyricsCatalog.Sink() {
         public void result(JSONObject payload) {
@@ -57,7 +62,13 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
         });
     }
 
-    @Override public void onLyricsChanged(LyricsManager.State state, Lyrics lyrics) { sync(false); }
+    @Override public void onLyricsChanged(LyricsManager.State state, Lyrics lyrics) {
+        sync(false);
+        LyricsManager manager=LyricsManager.getInstance();String id=VideoInformation.getVideoId();
+        if(lyrics==null||lyrics.isEmpty()||manager.getCurrentTrack()==null||id==null||!id.equals(manager.getCommittedVideoId()))return;
+        try{JSONObject payload=NativeLyricPayload.from(lyrics,manager.getCurrentTrack());if(payload!=null&&Utils.getActivity()!=null)new LyricsLibrary(Utils.getActivity()).offer(id,payload);}
+        catch(Exception ex){LyricsDiagnostics.record("Lyrics library","Native lyric adaptation failed: "+ex.getClass().getSimpleName());}
+    }
 
     private void sync(boolean refresh) {
         try { syncNow(refresh); } catch (Exception ex) {
@@ -86,7 +97,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
             preferences = LyricsConfig.preferences(activity.getApplicationContext());
             preferences.registerOnSharedPreferenceChangeListener(preferencesListener);
         }
-        ServiceConnection.ensure(activity);
+        if(LyricsConfig.brokerEnabled(activity))ServiceConnection.ensure(activity);else ServiceConnection.cancel();
         String next = LyricsRepository.identity(track, id);
         if (!next.equals(identity) || refresh) {
             identity = next; available = false;definitelyNotFound=false; entry.trackChanged(next);
