@@ -1,43 +1,39 @@
 # BDCrusher YT-Music personal patches
 
-One Morphe source with four expandable categories. Exact experimental target: original YouTube Music **9.42.52 / 94252240 arm64-v8a**. Personal derivative; real phone acceptance remains pending.
+One Morphe source with four expandable categories. Exact experimental target: original YouTube Music **9.42.52 / 94252240 arm64-v8a**.
 
-**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.3.0-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.3.0-beta.1)
+**[Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music)** | [Release 0.3.0-beta.2](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.3.0-beta.2)
+
+## Fixes in this release
+
+One native animated-cover decoder replaces competing HTML video players. Complete animation fitting and native timeline finalization address fragmented service files such as MAMMAMIA. Existing cached loops are repaired without downloading them again. Player/Lyrics backgrounds use Kawarp motion over still artwork or a first-frame fallback, capped at 960 pixels on the longest edge.
+
+Fix settings text showing through the Morphe screen. Extend the native Lyrics body behind transparent navigation, apply safe insets once, place the collapsed opener at the bottom and keep the compact status popup above the controls. Preserve Braccato text motion and remove redundant host work and continuous control blur.
 
 ## Categories and selections
 
-| Category | How to use it |
+| Category | Selection |
 | --- | --- |
-| Full Collection | Use by itself; leave Lyrics-only Add-on and official collection unselected. |
-| Lyrics-only Add-on | Deselect **every Full patch**. Use with official Morphe 1.48.0 defaults, official **Third-party lyrics OFF**. |
-| Shaders | Optional animated covers/artwork backgrounds. Works with either edition or official patches; does not enable personal lyrics. |
-| Playlist downloads | Optional native Download playlist action. Requires compatible **Downloads**; follows its existing mode/app. Works with official lyrics. |
+| Full Collection | Use by itself; do not select Lyrics-only or official collection patches. |
+| Lyrics-only Add-on | Deselect every Full patch. Use official Morphe 1.48.0 defaults with official Third-party lyrics OFF. |
+| Shaders | Optional; works with either edition or official patches, including official lyrics. Does not enable personal lyrics. |
+| Playlist downloads | Optional; requires compatible Downloads and follows its existing mode/app selection. |
 
-Tap category headings to expand/collapse. Collapsing does not deselect patches. Full keeps normal defaults; add-on/new optional patches default OFF. Review saved selections after updating. Conflicting editions and missing runtime requirements fail with guidance.
+Tap category headings to expand or collapse. Collapsing does not deselect patches. Add-on and new optional patches default OFF; review saved selections after updates.
 
 ## Add or update
 
 1. Enable Expert mode in Morphe Manager 2.0.0 or newer.
-2. Open [Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music), or add `https://github.com/BDCrusher/ytmusic-lyrics` under Sources > + > Remote. Reuse the existing root source if already added.
-3. Enable **Pre-release patches** and **Experimental app versions**, then refresh. This prerelease advances dev; main retains its earlier bootstrap feed.
-4. Select the original **9.42.52 / 94252240 arm64-v8a APK**, review the categories above and repatch. A source update does not change an installed app.
+2. Use [Add to Morphe](https://morphe.software/add-source?github=BDCrusher%2Fytmusic-lyrics&name=BDCrusher%20YT-Music%20Lyrics&app=com.google.android.apps.youtube.music), or add `https://github.com/BDCrusher/ytmusic-lyrics` under Sources > + > Remote. Reuse the existing root source.
+3. Enable **Pre-release patches** and **Experimental app versions**, then refresh. This release advances dev; main retains its earlier bootstrap feed.
+4. Repatch the original **9.42.52 / 94252240 arm64-v8a APK** with the selections above. A source update does not change an installed app.
 
-Settings: **YouTube Music > Settings > Morphe > Lyrics / Shaders / Playlist downloads**.
+Settings: **YouTube Music > Settings > Morphe > Lyrics / Shaders / Playlist downloads**. Existing credentials, offsets, source order and saved lyrics are retained.
 
-## What changed
+## Verification limits
 
-Shaders provides silent animated album covers and actual Kawarp backgrounds inside native containers. Three independent controls, 30 FPS default (24/30/60 choices), reduced motion, pause/visibility handling and a 512 MiB adjustable Wi-Fi-only media cache. Native music video remains native; no video/audio sampling, Tacet or floating windows.
+Build/JVM/lint, 23 compatibility cases, 16 feature audits, 12 native Lyrics audits and 220 actual-source checks pass: 86 fresh and 134 inherited only after source hashes match. Browser checks cover all 16 variants, reference Braccato transitions, dock/status layout, real Kawarp pacing/high DPI and graphics failure. Ordinary artwork verification/lookup succeeded for MAMMAMIA. Its reference-normalized service frames play and loop on desktop; production Android muxing/hardware playback remains unverified.
 
-Lyrics retain one best rich version per recording indefinitely, with timing-first or source-first ranking. Every source can contribute. Existing preferences/credentials remain. Four transports use scheduled retries: six transient attempts plus30/120/300-second recovery checks while current/active. Offline time consumes no budget. Valid/manual results survive refresh/late replies. Both entry paths retain the native panel shell and Braccato text motion; scrollbars stay hidden.
-
-The native playlist-header action follows existing Default/In-app/External choices. In-app batches page through the native authenticated client, preserve order/duplicate positions, run at most two downloads and support pause/resume/cancel-remaining/retry plus ordered offline playlists. External apps receive one canonical playlist URL through normal review.
-
-Navigation is transparent across the app, with native controls/icons and safe insets. Native settings add sliders/switches, source reordering, storage/quality bars and separate confirmed clearing actions. Clearing artwork/lyrics never removes downloaded music or credentials.
-
-## Verification and limitations
-
-Build/JVM/lint,23 compatibility cases,16 compiled API/hook/resource/duplicate audits and197 deterministic actual-source checks passed. Browser checks cover16 variants, reference Braccato transitions/follow/seek, real Kawarp, generated silent MP4 and graphics failure. Three live direct song lookups and normal artwork challenge/mint/lookup passed. The combined lyrics-service challenge timed out in a fresh browser check; it was not bypassed.
-
-**No universal zero-stutter or phone acceptance claim.** Recording-free Android smoothness, Samsung navigation, native panel/graphics/video transitions and real playlist/download/offline playback need device checks. Automated checks launched no real downloads. No device/MuMu/sign/install/uninstall operations occurred. Permanent app-private lyrics survive normal restarts/updates; clearing app data/uninstall removes them. Android may reclaim cover cache files.
+**Phone acceptance is still required.** Recording-free smoothness, Samsung navigation, native panel/video/graphics behavior and real playlist downloading need device checks. No universal zero-stutter claim. The previous combined-lyrics-service challenge timeout remains a limitation. No device, MuMu, signing or installation operations occurred. Permanent lyrics survive ordinary updates/restarts; clearing app data or uninstalling removes app-private data. Android may reclaim cover cache files.
 
 [Build](BUILDING.md) | [Compatibility](COMPATIBILITY.md) | [Implementation](IMPLEMENTATION.md) | [Exact checks](verification.json) | [Patch metadata](patches-list.json) | [Pins](SOURCE-PINS.json) | [Notices](THIRD-PARTY-NOTICES.txt)

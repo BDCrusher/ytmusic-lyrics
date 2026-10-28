@@ -1,3 +1,19 @@
+# Published - 0.3.0-beta.1
+
+[0.3.0-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.3.0-beta.1) is published. Toolkit verified all11 public assets,7473 exact source files and the dev feed. Source `eec35588e9fad485c66af88566c2f9e6b9d4de68`; feed `3759aef9f41eef1f5f4c371c1369ccb373a7a1a7`. MPP SHA256 `30439704544ef0ab5c87b57f295c8e0c88d01478491f770fbd599bde3c42ae96`. Exact receipt: `Verification/publication/v0.3.0-beta.1/publication-result.json`. Shared tools ran in place; private Git history was never pushed.
+
+Four expandable categories: Full Collection, Lyrics-only Add-on, Shaders and Playlist downloads. New patches are optional and independent. Use Full alone OR deselect every Full patch and use personal lyrics with official1.48.0 defaults, official Third-party lyrics OFF. Shaders/downloads alone permit official lyrics; Download playlist requires Downloads. Enable Pre-release patches and Experimental app versions, refresh the existing root source and repatch original9.42.52 /94252240 arm64-v8a. Settings: Morphe > Lyrics, Shaders and Playlist downloads.
+
+Implemented: actual Kawarp/native artwork surfaces and Wi-Fi MP4 cache; durable best-lyric library from all sources; six-attempt scheduled retries plus three recovery checks; native settings/storage/quality controls; shared transparent navigation; native playlist-header action, existing mode routing, authenticated pagination, typed completion, persistent batches and ordered offline playlists. Both Lyrics paths retain native shell and Braccato motion. Read `Research/FEATURES-0.3.0-2026-10-26.md` and `Personal-Patches/dist/0.3.0-beta.1/COMPATIBILITY.md`.
+
+Final build/JVM/lint,23 catalog/application/conflict cases,16 compiled reference/independence audits,12 native Lyrics audits and197 deterministic actual-source checks passed. Browser16-format/reference-motion/Kawarp/generated-MP4/fallback checks and three live direct song lookups passed. Normal artwork verification/mint/lookup passed. The combined lyrics-service normal challenge timed out in the fresh browser test; it was not bypassed. Public export normalizes newlines/private home prefixes; implementation changes match the tested canonical source. Source archive matches the complete public Git tree.
+
+Phone acceptance remains: recording-free smoothness, native panel interactions, Samsung three-button/gesture navigation across screens/dialogs/keyboard/orientation, WebView/GPU/MP4/video transitions, normal source verification on the phone and actual playlist downloading/offline playback. No universal zero-stutter claim. No device, MuMu, signing, installation/uninstallation or real automated media downloads. Isolated browser/loopback fixture server are closed.
+
+Retained revision32 compatibility scratch is11.27 GiB across67 generated run directories; small reports and outputs remain inside this app home. No cleanup was authorized. Current successful matrix prefix is `revision32-finalrelease`; earlier failed candidates are not delivery evidence. Never rerun completed staging/publication generators, rebuild immutable releases or push the private checkout. Future changes need new versions/fresh output paths.
+
+## Earlier records (historical)
+
 # Current candidate - 0.3.0-beta.1
 
 This revision implements independently selectable Shaders and Download playlist, durable best-lyric storage, scheduled source recovery, native settings/storage cards and app-wide transparent navigation. The exact target remains original YouTube Music 9.42.52 / 94252240 arm64-v8a with official Morphe 1.48.0. Use Full Collection alone OR deselect every Full patch and use Lyrics-only Add-on with official Third-party lyrics disabled. Shaders and Download playlist are optional; either can be used with official patches and official lyrics. Download playlist requires Downloads. One root source has four native categories.

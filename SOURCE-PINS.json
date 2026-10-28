@@ -150,5 +150,15 @@
     "bundledWebSha256": "9e306cfc307154b4ada23241d1e7408bbd444c6a629a7c1b113cf4d6b5381d96",
     "nativeVideoSampling": false,
     "phoneVerified": false
+  },
+  "playbackUiRevision": {
+    "version": "0.3.0-beta.2",
+    "report": "Research/PLAYBACK-UI-0.3.0-BETA.2-2026-10-28.md",
+    "artworkRegression": "WHmexVwElEE",
+    "artworkFileSha256": "94c5312d26ba2cc1b93f893b7a5681ab9afbf4cdeaa20526e0aa6117d6cdf77d",
+    "coverDecoder": "Android MediaPlayer/TextureView, one decoder",
+    "containerFinalizer": "Android MediaExtractor/MediaMuxer; no re-encoding",
+    "background": "Kawarp still-art mesh, no additional HTML video decoder",
+    "deviceAcceptance": false
   }
 }

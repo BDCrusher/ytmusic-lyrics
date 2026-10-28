@@ -43,6 +43,8 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private boolean ready,attached,hasDisplay;
     private volatile int generation;
     private String identity="";
+    private String lastSettings="",lastInsets="";
+    private int insetLeft,insetRight,insetBottom;
     private TrackInfo track;
     private final java.util.Map<View,Integer> covered=new java.util.IdentityHashMap<>();
     private final android.view.ViewTreeObserver.OnGlobalLayoutListener layoutListener=()->{if(hasDisplay)syncOverlay();};
@@ -86,7 +88,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         LyricsManager.getInstance().removeListener(this);if(catalogSink!=null){LyricsRepository.unsubscribe(catalogSink);catalogSink=null;}
         if(enrichmentNetwork!=null)enrichmentNetwork.close();if(enrichmentExecutor!=null)enrichmentExecutor.shutdownNow();
         if(web!=null){web.removeJavascriptInterface("BDNative");web.stopLoading();removeView(web);web.destroy();web=null;}
-        ready=false;identity="";pending.clear();super.onDetachedFromWindow();
+        ready=false;identity="";lastSettings="";lastInsets="";pending.clear();super.onDetachedFromWindow();
     }
     private void createWebView(){
         if(web!=null)return;
@@ -126,7 +128,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         if(!ready)return;
         try{JSONObject options=LyricsConfig.read(getContext());options.put("offset",Settings.LYRICS_OFFSET_MS.get()+LyricsManager.getInstance().getTemporaryOffsetMs());
             if(cachedIcons!=null)options.put("buttonIcons",cachedIcons);else loadToolbarIcons();
-            int pill=app.morphe.extension.shared.ResourceUtils.getColor("ytm_color_white_at_10pct",0x1AFFFFFF);options.put("pillColor",String.format(java.util.Locale.ROOT,"rgba(%d,%d,%d,%.3f)",android.graphics.Color.red(pill),android.graphics.Color.green(pill),android.graphics.Color.blue(pill),android.graphics.Color.alpha(pill)/255.0));call("settings",options.toString());
+            int pill=app.morphe.extension.shared.ResourceUtils.getColor("ytm_color_white_at_10pct",0x1AFFFFFF);options.put("pillColor",String.format(java.util.Locale.ROOT,"rgba(%d,%d,%d,%.3f)",android.graphics.Color.red(pill),android.graphics.Color.green(pill),android.graphics.Color.blue(pill),android.graphics.Color.alpha(pill)/255.0));String value=options.toString();if(!value.equals(lastSettings)){lastSettings=value;call("settings",value);}
         }catch(Exception ex){LyricsDiagnostics.record("settings",ex.getClass().getSimpleName());}
     }
     private JSONObject cachedIcons;
@@ -204,6 +206,12 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         else restoreNativeContent();
         int visibility=show?View.VISIBLE:View.INVISIBLE;if(getVisibility()!=visibility)setVisibility(visibility);
     }
+    public void setNavigationInsets(int left,int right,int bottom){
+        insetLeft=left;insetRight=right;insetBottom=bottom;if(!ready)return;
+        float density=getResources().getDisplayMetrics().density;
+        String value="{\"left\":"+(left/density)+",\"right\":"+(right/density)+",\"bottom\":"+(bottom/density)+"}";
+        if(!value.equals(lastInsets)){lastInsets=value;call("insets",value);}
+    }
     // Preserve the installer's settings callbacks while the personal controls own rendering.
     public void applyToolbarButtonSettings(){applySettings();}public void applyTextSize(){applySettings();}
     public void applyLyricLayoutSettings(){applySettings();}public void applyWordSyncSetting(){applySettings();}
@@ -216,7 +224,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
                 enrichmentExecutor.execute(()->{if(id!=generation)return;try{new LyricsLibrary(getContext()).offer(videoId,new JSONObject().put("kind","cachedResult").put("key",key).put("result",new JSONObject(result)));}catch(JSONException invalid){LyricsDiagnostics.record("Lyrics library","Invalid renderer result rejected");}});
             });
         }
-        @JavascriptInterface public void ready(){handler.post(()->{if(!attached||web==null)return;ready=true;sendTrack();applySettings();for(JSONObject payload:pending)receive(generation,payload);pending.clear();if(sourceHealth!=null)call("health",generation+","+sourceHealth);});}
+        @JavascriptInterface public void ready(){handler.post(()->{if(!attached||web==null)return;ready=true;lastSettings="";lastInsets="";sendTrack();applySettings();setNavigationInsets(insetLeft,insetRight,insetBottom);for(JSONObject payload:pending)receive(generation,payload);pending.clear();if(sourceHealth!=null)call("health",generation+","+sourceHealth);});}
         @JavascriptInterface public void displayed(int id,String source){handler.post(()->{if(id==generation){hasDisplay=true;syncOverlay();}});}
         @JavascriptInterface public void noLyrics(int id){handler.post(()->{if(id==generation){hasDisplay=false;restoreNativeContent();setVisibility(View.INVISIBLE);}});}
         @JavascriptInterface public void dock(boolean collapsed){handler.post(()->LyricsConfig.preferences(getContext()).edit().putBoolean("dockCollapsed",collapsed).apply());}
@@ -239,6 +247,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             });
         }
         @JavascriptInterface public void configure(){handler.post(()->LyricsConfig.show(getContext()));}
+        @JavascriptInterface public void diagnostics(){handler.post(()->LyricsDiagnostics.show(getContext()));}
         @JavascriptInterface public void connect(){handler.post(()->ServiceConnection.show(getContext()));}
         @JavascriptInterface public void toggle(String kind){handler.post(()->{String key="translate".equals(kind)?"translation":"romanize".equals(kind)?"romanization":null;if(key!=null){SharedPreferences p=LyricsConfig.preferences(getContext());p.edit().putBoolean(key,!p.getBoolean(key,false)).apply();}});}
         @JavascriptInterface public void enrich(int id,String source,String body){

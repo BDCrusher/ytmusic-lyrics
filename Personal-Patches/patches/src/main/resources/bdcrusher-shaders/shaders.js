@@ -624,17 +624,17 @@
      * instance skips frames from a playing video and draws single frames from a
      * paused one, so seeking while paused stays visible.
      */
-    loadVideo(video2, options = {}) {
+    loadVideo(video, options = {}) {
       if (this.disposed)
         return;
-      if (typeof video2.requestVideoFrameCallback !== "function") {
+      if (typeof video.requestVideoFrameCallback !== "function") {
         throw new Error("Video sources require requestVideoFrameCallback");
       }
-      const isNewVideo = this.video !== video2;
+      const isNewVideo = this.video !== video;
       if (isNewVideo) {
         this.videoLoadCount++;
         this.unloadVideo();
-        this.video = video2;
+        this.video = video;
         this.videoFrameShown = false;
         this.hasVideoHistory = false;
         this.videoSampleSlot = Number.NEGATIVE_INFINITY;
@@ -653,8 +653,8 @@
       }
       this.videoOptions = nextOptions;
       this.requestVideoFrame();
-      if (video2.readyState >= video2.HAVE_CURRENT_DATA && (isNewVideo || video2.paused && this.videoTargetsStale)) {
-        this.processVideoFrame(performance.now(), video2.currentTime);
+      if (video.readyState >= video.HAVE_CURRENT_DATA && (isNewVideo || video.paused && this.videoTargetsStale)) {
+        this.processVideoFrame(performance.now(), video.currentTime);
       }
     }
     /**
@@ -662,14 +662,14 @@
      * image or video is loaded.
      */
     unloadVideo() {
-      const video2 = this.video;
-      if (!video2)
+      const video = this.video;
+      if (!video)
         return;
       if (this.videoCallbackId !== null) {
-        video2.cancelVideoFrameCallback(this.videoCallbackId);
+        video.cancelVideoFrameCallback(this.videoCallbackId);
         this.videoCallbackId = null;
       }
-      video2.removeEventListener("pause", this.resumeVideoCallbacks);
+      video.removeEventListener("pause", this.resumeVideoCallbacks);
       this.video = null;
       this.videoFramePending = false;
       this.releaseVideoTargets();
@@ -776,19 +776,19 @@
     }
     handleVideoFrame = (now, metadata) => {
       this.videoCallbackId = null;
-      const video2 = this.video;
-      if (!video2 || this.disposed)
+      const video = this.video;
+      if (!video || this.disposed)
         return;
-      if (!this.isPlaying && !video2.paused) {
+      if (!this.isPlaying && !video.paused) {
         this.videoFramePending = true;
-        video2.addEventListener("pause", this.resumeVideoCallbacks, {
+        video.addEventListener("pause", this.resumeVideoCallbacks, {
           once: true
         });
         return;
       }
       this.requestVideoFrame();
       const { frameRate } = this.videoOptions;
-      if (frameRate > 0 && !video2.paused) {
+      if (frameRate > 0 && !video.paused) {
         const interval = 1e3 / frameRate;
         if (now < this.videoSampleSlot + interval * 0.75)
           return;
@@ -799,18 +799,18 @@
       this.requestVideoFrame();
     };
     processVideoFrame(now, mediaTime) {
-      const video2 = this.video;
-      if (!video2 || video2.readyState < video2.HAVE_CURRENT_DATA || video2.videoWidth === 0 || video2.videoHeight === 0) {
+      const video = this.video;
+      if (!video || video.readyState < video.HAVE_CURRENT_DATA || video.videoWidth === 0 || video.videoHeight === 0) {
         return;
       }
       const gl = this.gl;
       const elapsedMs = now - this.videoFrameTime;
       try {
-        this.prepareVideoTargets(video2.videoWidth, video2.videoHeight);
+        this.prepareVideoTargets(video.videoWidth, video.videoHeight);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.videoUploadTexture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video2);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
       } catch (error) {
         const { onError } = this.videoOptions;
         this.unloadVideo();
@@ -827,9 +827,9 @@
       const { smoothing } = this.videoOptions;
       let easedByRenderLoop = false;
       if (smoothing > 0) {
-        const expectedMediaAdvance = elapsedMs / 1e3 * video2.playbackRate;
+        const expectedMediaAdvance = elapsedMs / 1e3 * video.playbackRate;
         const seeked = Math.abs(mediaTime - this.videoMediaTime - expectedMediaAdvance) > VIDEO_SEEK_THRESHOLD_SECONDS;
-        const snap = !this.hasVideoHistory || !this.videoFrameShown || !this.isPlaying || video2.paused || seeked;
+        const snap = !this.hasVideoHistory || !this.videoFrameShown || !this.isPlaying || video.paused || seeked;
         if (snap) {
           frameTexture = this.drawSmoothing(frameTexture, 1);
           this.videoSmoothingTarget = null;
@@ -1480,16 +1480,13 @@ ${source}` : source);
   // web/src/shaders.js
   var native = window.BDShader;
   var canvas = document.querySelector("canvas");
-  var video = document.querySelector("video");
   var engine;
   var config = {};
   var state = {};
   var generation = -1;
   var lastImage = "";
-  var lastVideo = "";
   var lastPaint = 0;
   var closed = false;
-  var sampling = "";
   var graphicsFailed = false;
   function fail(error) {
     native?.failure(String(error?.message || error).slice(0, 160));
@@ -1509,28 +1506,20 @@ ${source}` : source);
     };
   }
   function visibility() {
-    const motion = state.visible && state.playing && !config.reducedMotion && !document.hidden;
-    if (state.video && motion && (state.cover || state.background && config.animateBackground)) {
-      video.play().catch(() => {
-      });
-    } else video.pause();
     if (!engine) return;
-    engine.animationSpeed = config.animateBackground && motion ? config.speed ?? 1 : 0;
-    if (state.background && motion) {
-      engine.start();
-    } else {
+    const motion = state.visible && state.playing && config.animateBackground && !config.reducedMotion && !document.hidden;
+    engine.animationSpeed = motion ? config.speed ?? 1 : 0;
+    if (state.background && motion) engine.start();
+    else {
       engine.stop();
       engine.renderFrame();
     }
   }
   function update() {
     try {
-      const strength = Math.max(0, Math.min(1, config.opacity ?? 0.75));
       canvas.hidden = !state.background;
-      canvas.style.opacity = String(strength);
+      canvas.style.opacity = String(Math.max(0, Math.min(1, config.opacity ?? 0.75)));
       canvas.style.filter = `brightness(${1 - (config.dimming ?? 0.3)})`;
-      video.hidden = !state.cover;
-      video.style.opacity = state.cover ? "1" : "0";
       try {
         create();
       } catch (error) {
@@ -1540,8 +1529,6 @@ ${source}` : source);
       engine?.setOptions({ warpIntensity: config.strength ?? 1, saturation: config.saturation ?? 1.5, transitionDuration: config.transition ?? 1e3, animationSpeed: config.animateBackground ? config.speed ?? 1 : 0, blurPasses: 8, dithering: 8e-3 });
       if (engine && state.image && state.image !== lastImage) {
         lastImage = state.image;
-        engine.unloadVideo();
-        sampling = "";
         engine.loadImage(state.image).then(() => {
           if (!closed) visibility();
         }).catch((error) => {
@@ -1549,35 +1536,11 @@ ${source}` : source);
           fail(error);
         });
       }
-      if (state.video !== lastVideo) {
-        lastVideo = state.video || "";
-        video.pause();
-        video.removeAttribute("src");
-        engine?.unloadVideo();
-        sampling = "";
-        if (lastVideo) {
-          video.src = lastVideo;
-          video.load();
-        }
-      }
-      const nextSampling = state.video && state.background && config.animateBackground && video.readyState >= 2 ? `${state.video}|${config.fps || 30}` : "";
-      if (engine && nextSampling !== sampling) {
-        sampling = nextSampling;
-        engine.unloadVideo();
-        if (sampling) engine.loadVideo(video, { sampleWidth: 208, sampleHeight: 117, downsampleFactor: 2, frameRate: config.fps || 30, smoothing: 250, onError: fail });
-      }
       visibility();
     } catch (error) {
       fail(error);
     }
   }
-  video.addEventListener("loadeddata", () => {
-    native?.mediaReady(generation);
-    update();
-  });
-  video.addEventListener("error", () => {
-    if (lastVideo) native?.mediaError(generation);
-  });
   canvas.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
     engine?.stop();
@@ -1588,7 +1551,6 @@ ${source}` : source);
     engine = void 0;
     graphicsFailed = false;
     lastImage = "";
-    sampling = "";
     update();
   });
   document.addEventListener("visibilitychange", visibility);
@@ -1596,8 +1558,7 @@ ${source}` : source);
     for (const entry of entries) {
       const rect = entry.contentRect;
       if (rect.width <= 0 || rect.height <= 0) continue;
-      const scale = Math.min(devicePixelRatio || 1, 2, 2048 / Math.max(rect.width, rect.height));
-      const width = Math.max(1, Math.round(rect.width * scale)), height = Math.max(1, Math.round(rect.height * scale));
+      const scale = Math.min(1, 960 / Math.max(rect.width, rect.height)), width = Math.max(1, Math.round(rect.width * scale)), height = Math.max(1, Math.round(rect.height * scale));
       if (canvas.width !== width || canvas.height !== height) {
         canvas.width = width;
         canvas.height = height;
@@ -1615,12 +1576,7 @@ ${source}` : source);
     state(next) {
       if (next.generation !== generation) {
         generation = next.generation;
-        lastVideo = "";
         lastImage = "";
-        sampling = "";
-        video.pause();
-        video.removeAttribute("src");
-        engine?.unloadVideo();
       }
       state = next;
       update();
@@ -1636,9 +1592,6 @@ ${source}` : source);
     close() {
       closed = true;
       sizeObserver.disconnect();
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
       engine?.dispose();
       engine = void 0;
     }

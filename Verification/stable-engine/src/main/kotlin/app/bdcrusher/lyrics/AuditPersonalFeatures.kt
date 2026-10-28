@@ -67,6 +67,9 @@ fun main(args:Array<String>){
    }
    require(missing.isEmpty()){ "Unresolved owned/native contracts: "+missing.joinToString(" | ") }
    require(lifecycle==1&&oldBars==0&&dialogHooks>0){"Shared navigation ownership: lifecycle=$lifecycle old=$oldBars dialog=$dialogHooks"}
+   val rootSettings=types.getValue("Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;").methods.single {it.name=="onViewCreated"}
+   val rootBindings=rootSettings.implementation!!.instructions.count {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass=="Lapp/bdcrusher/ytmusic/common/PersonalSettings;"&&it.name=="bindRoot"}==true}
+   require(rootBindings==1){"Native settings must bind one opaque root: $rootBindings"}
    val shaders=zip.getEntry("assets/bdcrusher-features/shaders.enabled")!=null
    val playlists=zip.getEntry("assets/bdcrusher-features/playlists.enabled")!=null
    val lyrics=zip.getEntry("assets/bdcrusher-lyrics/providers.json")!=null
@@ -76,6 +79,14 @@ fun main(args:Array<String>){
    if(shaders)for(name in listOf("nativePanelId","nativePanelView")){
     val m=types.getValue("Lapp/bdcrusher/ytmusic/shaders/ShaderRuntime;").methods.single {it.name==name}
     require(m.implementation!!.instructions.none {it.opcode.toString()=="THROW"}){"Unreplaced native Shaders bridge: $name"}
+   }
+   if(shaders){
+    val cover=types.getValue("Lapp/bdcrusher/ytmusic/shaders/AnimatedCoverSurface;")
+    val refs=cover.methods.flatMap {m->m.implementation?.instructions?.mapNotNull {((it as? ReferenceInstruction)?.reference as? MethodReference)}?.toList()?:emptyList()}
+    require(cover.superclass=="Landroid/widget/FrameLayout;"&&refs.none {it.definingClass=="Landroid/webkit/WebView;"}){"Cover must use native decoding, without HTML playback controls"}
+    require(refs.count {it.definingClass=="Landroid/media/MediaPlayer;"&&it.name=="prepareAsync"}==1&&refs.any {it.definingClass=="Landroid/media/MediaPlayer;"&&it.name=="setLooping"}){"Cover decoder preparation or looping contract changed"}
+    val finalizer=types.getValue("Lapp/bdcrusher/ytmusic/shaders/ArtworkFile;")
+    require(finalizer.methods.any {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass=="Landroid/media/MediaMuxer;"&&it.name=="writeSampleData"}==true}==true}){"Native artwork timeline finalizer missing"}
    }
    if(playlists){
     val resolver=types.values.flatMap {it.methods.toList()}.singleOrNull {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass=="Lapp/bdcrusher/ytmusic/playlists/PlaylistRuntime;"&&it.name=="command"}==true}==true}?:error("Playlist command owner ambiguous")

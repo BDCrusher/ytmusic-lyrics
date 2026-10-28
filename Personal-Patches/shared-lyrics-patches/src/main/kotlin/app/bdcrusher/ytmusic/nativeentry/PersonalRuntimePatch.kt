@@ -14,6 +14,7 @@ import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
 import com.android.tools.smali.dexlib2.AccessFlags
 
@@ -67,6 +68,13 @@ val personalRuntimePatch=bytecodePatch {
         val index=init.implementation!!.instructions.indexOfFirst {((it as? ReferenceInstruction)?.reference as? MethodReference)?.name=="sortPreferenceGroups"}
         if(index<0)throw PatchException("Morphe Music settings sorting contract missing")
         init.addInstruction(index,"invoke-static { p0 }, Lapp/bdcrusher/ytmusic/common/PersonalSettings;->install(Landroid/preference/PreferenceFragment;)V")
+        // Own the preference content background, rather than exposing the activity below.
+        val viewCreated=settings.methods.singleOrNull {it.name=="onViewCreated"&&it.parameterTypes==listOf("Landroid/view/View;","Landroid/os/Bundle;")}
+        if(viewCreated==null){
+            val method=MutableMethod(ImmutableMethod(settings.type,"onViewCreated",listOf(ImmutableMethodParameter("Landroid/view/View;",null,null),ImmutableMethodParameter("Landroid/os/Bundle;",null,null)),"V",AccessFlags.PUBLIC.value,null,null,MutableMethodImplementation(3)))
+            method.addInstructions(0,"invoke-super { p0, p1, p2 }, ${settings.superclass}->onViewCreated(Landroid/view/View;Landroid/os/Bundle;)V\ninvoke-static { p1 }, Lapp/bdcrusher/ytmusic/common/PersonalSettings;->bindRoot(Landroid/view/View;)V\nreturn-void")
+            settings.methods.add(method)
+        }else viewCreated.addInstruction(0,"invoke-static { p1 }, Lapp/bdcrusher/ytmusic/common/PersonalSettings;->bindRoot(Landroid/view/View;)V")
         // Typed Android dialog calls only; keep every native builder, listener and layout.
         val builders=ImmutableMethodReference("Lapp/bdcrusher/ytmusic/common/PersonalRuntime;","showBuilder",listOf("Landroid/app/AlertDialog\$Builder;"),"Landroid/app/AlertDialog;")
         classDefForEach { owner->

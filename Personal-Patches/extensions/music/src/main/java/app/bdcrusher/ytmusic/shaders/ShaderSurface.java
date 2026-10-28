@@ -20,7 +20,8 @@ final class ShaderSurface extends WebView {
     private volatile byte[] image;
     private volatile File media;
     private int imageRevision,imageRequest;
-    private static final java.util.concurrent.ExecutorService IMAGES=java.util.concurrent.Executors.newSingleThreadExecutor();
+    private Bitmap lastBitmap;private int lastBitmapRevision,lastBitmapTrack;
+    static final java.util.concurrent.ExecutorService IMAGES=java.util.concurrent.Executors.newSingleThreadExecutor();
     private JSONObject state,settings;
     private String lastState="",lastSettings="";
     ShaderSurface(Context c){
@@ -50,9 +51,9 @@ final class ShaderSurface extends WebView {
         return new WebResourceResponse("video/mp4",null,range==null?200:206,range==null?"OK":"Partial Content",headers,new FilterInputStream(input){long left=length;@Override public int read()throws IOException{if(left<=0)return -1;int n=super.read();if(n>=0)left--;return n;}@Override public int read(byte[] b,int offset,int count)throws IOException{if(left<=0)return -1;int n=super.read(b,offset,(int)Math.min(count,left));if(n>0)left-=n;return n;}});
     }
     @Override @SuppressLint("ClickableViewAccessibility") public boolean onTouchEvent(MotionEvent event){return false;} // Deliberately non-interactive; native gestures pass through.
-    void clearImage(){imageRequest++;image=null;imageRevision++;}
+    void clearImage(){imageRequest++;image=null;lastBitmap=null;imageRevision++;}
     String imageUrl(){return image==null?"":ROOT+"art.jpg?g="+ShaderRuntime.generation()+"&r="+imageRevision;}
-    void image(Bitmap bitmap,int expected){int request=++imageRequest;IMAGES.execute(()->{try{if(closed||request!=imageRequest||bitmap==null||bitmap.isRecycled())return;int width=bitmap.getWidth(),height=bitmap.getHeight();float scale=Math.min(1,512f/Math.max(width,height));Bitmap small=scale<1?Bitmap.createScaledBitmap(bitmap,Math.max(1,Math.round(width*scale)),Math.max(1,Math.round(height*scale)),true):bitmap;ByteArrayOutputStream output=new ByteArrayOutputStream();small.compress(Bitmap.CompressFormat.JPEG,85,output);byte[] data=output.toByteArray();if(small!=bitmap)small.recycle();post(()->{if(closed||request!=imageRequest||expected!=ShaderRuntime.generation())return;image=data;imageRevision++;ShaderRuntime.refresh();});}catch(Exception ignored){}});}
+    void image(Bitmap bitmap,int expected){if(bitmap==null||bitmap.isRecycled())return;int revision=bitmap.getGenerationId();if(bitmap==lastBitmap&&revision==lastBitmapRevision&&expected==lastBitmapTrack)return;lastBitmap=bitmap;lastBitmapRevision=revision;lastBitmapTrack=expected;int request=++imageRequest;IMAGES.execute(()->{try{if(closed||request!=imageRequest||bitmap==null||bitmap.isRecycled())return;int width=bitmap.getWidth(),height=bitmap.getHeight();float scale=Math.min(1,512f/Math.max(width,height));Bitmap small=scale<1?Bitmap.createScaledBitmap(bitmap,Math.max(1,Math.round(width*scale)),Math.max(1,Math.round(height*scale)),true):bitmap;ByteArrayOutputStream output=new ByteArrayOutputStream();small.compress(Bitmap.CompressFormat.JPEG,85,output);byte[] data=output.toByteArray();if(small!=bitmap)small.recycle();post(()->{if(closed||request!=imageRequest||expected!=ShaderRuntime.generation())return;image=data;imageRevision++;ShaderRuntime.refresh();});}catch(Exception ignored){}});}
     void update(JSONObject value,JSONObject configuration,File file){
         if(closed)return;state=value;settings=configuration;media=file;
         if(!ready)return;String next=value.toString(),options=configuration.toString();
@@ -60,7 +61,7 @@ final class ShaderSurface extends WebView {
         if(!next.equals(lastState)){lastState=next;evaluateJavascript("BDS.state("+next+")",null);}
     }
     boolean solve(int id,JSONObject challenge){if(!ready||closed)return false;evaluateJavascript("BDS.solve("+id+","+challenge+")",null);return true;}
-    void closeSurface(){if(closed)return;closed=true;if(ready)evaluateJavascript("BDS.close()",null);removeJavascriptInterface("BDShader");stopLoading();image=null;media=null;destroy();}
+    void closeSurface(){if(closed)return;closed=true;if(ready)evaluateJavascript("BDS.close()",null);removeJavascriptInterface("BDShader");stopLoading();image=null;media=null;lastBitmap=null;destroy();}
     private final class Bridge {
         @JavascriptInterface public void ready(){post(()->{if(closed)return;ready=true;lastState="";lastSettings="";if(state!=null)update(state,settings,media);ArtworkToken.ensure(getContext());});}
         @JavascriptInterface public void proof(int id,String solution){ArtworkToken.proof(getContext(),id,solution);}

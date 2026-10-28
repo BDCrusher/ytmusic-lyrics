@@ -8985,8 +8985,8 @@
     lastHealthLabel = color + "|" + label;
     $("source-health").dataset.state = color;
     $("source-health").setAttribute("aria-label", label);
-    $("source-health").title = label;
-    $("source-summary").textContent = label;
+    $("connect").hidden = !sourceHealth.connectionNeeded;
+    $("source-summary").textContent = `${availableKeys.length} ${availableKeys.length === 1 ? "format" : "formats"} \xB7 ${sourceHealth.connectionNeeded ? "Verification needed" : pending ? "Checking sources" : sourceHealth.failed ? "Some sources unavailable" : found ? "Checks complete" : "No lyrics found"}`;
   }
   var active = true;
   var raf = 0;
@@ -9093,7 +9093,7 @@
   var lastDockClearance = -1;
   function settleDockLayout() {
     clearTimeout(dockLayoutTimer);
-    const height = Math.round($("dock").getBoundingClientRect().height + 12);
+    const height = Math.round(innerHeight - $("dock").getBoundingClientRect().top + 12);
     if (height === lastDockClearance) return;
     lastDockClearance = height;
     document.documentElement.style.setProperty("--dock-clearance", `${height}px`);
@@ -9101,6 +9101,7 @@
   }
   var dockResize = new ResizeObserver(() => {
     if ($("source-menu").classList.contains("open")) positionSources();
+    if (!$("connection").hidden) positionStatus();
     clearTimeout(dockLayoutTimer);
     dockLayoutTimer = setTimeout(settleDockLayout, 64);
   });
@@ -9374,6 +9375,11 @@
         }
       }
     },
+    insets(value) {
+      for (const key of ["left", "right", "bottom"]) document.documentElement.style.setProperty(`--safe-${key}`, `${Math.max(0, Number(value[key]) || 0)}px`);
+      settleDockLayout();
+      if (!$("connection").hidden) positionStatus();
+    },
     state(sample) {
       if (sample.generation !== generation) return;
       clock.accept(sample, performance.now(), Date.now());
@@ -9407,6 +9413,7 @@
       setCollapsed(settings.dockCollapsed);
       for (const [key, url] of Object.entries(next.buttonIcons || {})) {
         if (!$(key) || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(url)) continue;
+        if ($(key).firstElementChild?.getAttribute("src") === url) continue;
         const img = document.createElement("img");
         img.src = url;
         img.alt = "";
@@ -9418,6 +9425,7 @@
       $("offset").textContent = `${settings.offset || 0} ms`;
       if (next.textColor) {
         const style = document.documentElement.style;
+        style.setProperty("--bd-status-bg", /^#(?:f|e|d|c|b|a)/i.test(next.textColor) ? "rgba(28,28,32,.96)" : "rgba(248,248,250,.97)");
         style.setProperty("--blyrics-text-color", next.textColor);
         style.setProperty("--bd-foreground", next.textColor);
         if (/^#[0-9a-f]{6}$/i.test(next.textColor)) {
@@ -9453,7 +9461,6 @@
         $("empty").textContent = finished ? "No lyrics found. YouTube Music\u2019s lyrics remain available behind this panel." : message;
       }
       $("notice").textContent = message;
-      $("connect").hidden = !/connect|expired|verification|authorization/i.test(message);
       lookupFinished = finished;
       updateHealth();
     },
@@ -9464,10 +9471,29 @@
       renderer.destroy();
     }
   };
+  var statusCloseTimer;
+  function closeStatus() {
+    clearTimeout(statusCloseTimer);
+    $("connection").hidden = true;
+    $("source-health").setAttribute("aria-expanded", "false");
+  }
+  function positionStatus() {
+    const box = $("connection"), dock = $("dock").getBoundingClientRect(), anchor = $("source-health").getBoundingClientRect();
+    box.style.maxHeight = `${Math.max(48, Math.min(116, dock.top - 16))}px`;
+    box.style.left = `${Math.max(12, Math.min(anchor.left + anchor.width / 2 - box.offsetWidth / 2, innerWidth - box.offsetWidth - 12))}px`;
+    box.style.bottom = `${innerHeight - dock.top + 8}px`;
+  }
   $("source-health").onclick = () => {
     const open = $("connection").hidden;
-    $("connection").hidden = !open;
-    $("source-health").setAttribute("aria-expanded", String(open));
+    closeStatus();
+    if (!open) return;
+    closeSources();
+    $("connection").hidden = false;
+    $("source-health").setAttribute("aria-expanded", "true");
+    positionStatus();
+    statusCloseTimer = setTimeout(() => {
+      if (!$("connection").contains(document.activeElement)) closeStatus();
+    }, 6e3);
   };
   $("sources").addEventListener("change", () => {
     pinned = $("sources").value;
@@ -9504,6 +9530,7 @@
   });
   window.addEventListener("resize", () => {
     if ($("source-menu").classList.contains("open")) positionSources();
+    if (!$("connection").hidden) positionStatus();
   });
   for (const [id, direction] of [["previous", -1], ["next", 1]]) $(id).onclick = () => {
     if (availableKeys.length > 1) selectSource(availableKeys[(Math.max(0, availableKeys.indexOf(selected)) + direction + availableKeys.length) % availableKeys.length]);
@@ -9512,7 +9539,11 @@
   $("copy").onclick = () => native?.copy(generation, (currentResult?.lyrics || []).map((line) => line.words).join("\n").slice(0, 1e5));
   $("refresh").addEventListener("click", () => native?.refresh());
   $("connect").addEventListener("click", () => native?.connect());
-  $("configure").addEventListener("click", () => native?.configure());
+  $("configure").addEventListener("click", () => {
+    closeStatus();
+    if (native?.diagnostics) native.diagnostics();
+    else native?.configure();
+  });
   $("resume").addEventListener("click", resumeFollow);
   for (const kind of ["translate", "romanize"]) $(kind).addEventListener("click", () => native?.toggle(kind));
   $("earlier").addEventListener("click", () => native?.offset(-100));

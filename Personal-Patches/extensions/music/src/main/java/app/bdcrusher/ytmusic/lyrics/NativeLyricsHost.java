@@ -91,6 +91,7 @@ public final class NativeLyricsHost {
                     if(attempt<30)attach(expected,attempt+1);
                     return;
                 }
+                app.bdcrusher.ytmusic.common.PersonalRuntime.lyricsViewport(body);
                 BetterLyricsPanelView view=renderer.get();
                 if(view!=null&&view.getParent()==body){view.syncOverlay();return;}
                 if(view!=null&&view.getParent() instanceof android.view.ViewGroup parent)parent.removeView(view);

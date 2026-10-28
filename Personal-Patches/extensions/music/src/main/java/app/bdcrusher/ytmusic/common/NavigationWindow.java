@@ -15,6 +15,7 @@ final class NavigationWindow implements AutoCloseable {
     private int color,divider;
     private final int flags;
     private boolean contrast,applied;
+    private LyricsViewport lyrics;
     private final Map<View,Padding> padding=new WeakHashMap<>();
     private final Map<Integer,String> idNames=new HashMap<>();
     private static final class Padding {final int[] base,last;Padding(View v){base=new int[]{v.getPaddingLeft(),v.getPaddingTop(),v.getPaddingRight(),v.getPaddingBottom()};last=base.clone();}}
@@ -26,6 +27,7 @@ final class NavigationWindow implements AutoCloseable {
     NavigationWindow(Window w){window=w;decor=w.getDecorView();color=w.getNavigationBarColor();divider=Build.VERSION.SDK_INT>=28?w.getNavigationBarDividerColor():0;contrast=Build.VERSION.SDK_INT>=29&&w.isNavigationBarContrastEnforced();flags=decor.getSystemUiVisibility();}
     void start(){decor.getViewTreeObserver().addOnGlobalLayoutListener(layout);decor.getViewTreeObserver().addOnWindowFocusChangeListener(focus);update();}
     void update(){if(!closed&&!queued){queued=true;decor.post(apply);}}
+    void lyricsViewport(View root){if(lyrics!=null&&lyrics.root==root)return;if(lyrics!=null)lyrics.close();lyrics=new LyricsViewport(root,decor);update();}
     private void apply(){
         queued=false;if(closed||!decor.isAttachedToWindow())return;
         if(applied){if(window.getNavigationBarColor()!=Color.TRANSPARENT)color=window.getNavigationBarColor();if(Build.VERSION.SDK_INT>=28&&window.getNavigationBarDividerColor()!=0)divider=window.getNavigationBarDividerColor();if(Build.VERSION.SDK_INT>=29&&window.isNavigationBarContrastEnforced())contrast=true;}applied=true;
@@ -39,13 +41,19 @@ final class NavigationWindow implements AutoCloseable {
         int left,right,bottom;
         if(Build.VERSION.SDK_INT>=30){android.graphics.Insets n=insets.getInsets(WindowInsets.Type.navigationBars());left=n.left;right=n.right;bottom=n.bottom;}
         else{left=Math.min(insets.getSystemWindowInsetLeft(),insets.getStableInsetLeft());right=Math.min(insets.getSystemWindowInsetRight(),insets.getStableInsetRight());bottom=Math.min(insets.getSystemWindowInsetBottom(),insets.getStableInsetBottom());}
+        if(lyrics!=null)lyrics.update(bottom);
         if(window.getAttributes().width==ViewGroup.LayoutParams.MATCH_PARENT&&window.getAttributes().height==ViewGroup.LayoutParams.MATCH_PARENT)protect(decor,left,right,bottom);
     }
     private void protect(View view,int left,int right,int bottom){
         String name=view.getClass().getName();String id="";if(view.getId()!=View.NO_ID){id=idNames.get(view.getId());if(id==null){try{id=view.getResources().getResourceEntryName(view.getId());}catch(Exception ignored){id="";}idNames.put(view.getId(),id);}}
         boolean scroll=view instanceof AbsListView||view instanceof ScrollView||view instanceof HorizontalScrollView||name.endsWith("RecyclerView");
-        boolean controls="player_bottom_ui_container".equals(id)||name.equals("app.bdcrusher.ytmusic.lyrics.BetterLyricsPanelView");
-        if(scroll||controls){
+        if(view instanceof app.bdcrusher.ytmusic.lyrics.BetterLyricsPanelView panel){
+            int[] position=new int[2];view.getLocationInWindow(position);
+            int overlap=Math.max(0,Math.min(bottom,position[1]+view.getHeight()-(decor.getHeight()-bottom)));
+            panel.setNavigationInsets(left,right,overlap);return;
+        }
+        boolean controls="player_bottom_ui_container".equals(id)||name.equals("app.morphe.extension.music.patches.lyrics.ui.LyricsPanelView");
+        if((scroll||controls)&&(lyrics==null||!lyrics.contains(view))){
             Padding state=padding.computeIfAbsent(view,Padding::new);int[] current={view.getPaddingLeft(),view.getPaddingTop(),view.getPaddingRight(),view.getPaddingBottom()};for(int i=0;i<4;i++)if(current[i]!=state.last[i])state.base[i]=current[i];int[] old=state.base;
             // Native consumers may already include the system inset. Never add it twice.
             int l=Math.max(old[0],left),r=Math.max(old[2],right),b=Math.max(old[3],bottom);
@@ -58,6 +66,7 @@ final class NavigationWindow implements AutoCloseable {
     }
     public void close(){
         if(closed)return;closed=true;decor.removeCallbacks(apply);
+        if(lyrics!=null){lyrics.close();lyrics=null;}
         if(decor.getViewTreeObserver().isAlive()){decor.getViewTreeObserver().removeOnGlobalLayoutListener(layout);decor.getViewTreeObserver().removeOnWindowFocusChangeListener(focus);}
         window.setNavigationBarColor(color);if(Build.VERSION.SDK_INT>=28)window.setNavigationBarDividerColor(divider);if(Build.VERSION.SDK_INT>=29)window.setNavigationBarContrastEnforced(contrast);
         decor.setSystemUiVisibility((decor.getSystemUiVisibility()&~(View.SYSTEM_UI_FLAG_LAYOUT_STABLE|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION))|(flags&(View.SYSTEM_UI_FLAG_LAYOUT_STABLE|View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION)));

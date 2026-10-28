@@ -19,6 +19,7 @@ final class ArtworkRepository {
     private static final Map<String,List<Callback>> pending=new HashMap<>();
     private static volatile String activeAlbum="";
     private static volatile HttpURLConnection downloading;
+    private static boolean temporaryCleaned;
     private static final class DownloadPaused extends IOException {}
     interface Callback{void result(File file,String key);}
     record Track(String id,String song,String artist,String album,int duration){}
@@ -32,11 +33,12 @@ final class ArtworkRepository {
         synchronized(pending){List<Callback> callbacks=pending.get(albumKey);if(callbacks!=null){callbacks.add(callback);return;}callbacks=new ArrayList<>();callbacks.add(callback);pending.put(albumKey,callbacks);}
         io.execute(()->{File result=null;String key="";
             try{
+                cleanTemporary(c);
                 key=digest(albumKey.isBlank()?track.id():albumKey);File metadata=new File(metadataDirectory(c),key+".json");JSONObject data=read(metadata);
                 String stored=data==null?key:data.optString("mediaKey",key);if(!stored.matches("[a-f0-9]{64}"))stored=key;
                 File media=new File(mediaDirectory(c),stored+".mp4");
                 ArtworkToken.ensure(c);
-                if(media.isFile()&&media.length()>0){media.setLastModified(System.currentTimeMillis());result=media;}
+                if(recover(media)){checkProfile(media,metadata,data);media.setLastModified(System.currentTimeMillis());result=media;}
                 else if(unmeteredWifi(c)){
                     boolean missing=data!=null&&data.optLong("notFoundAt",0)>0&&System.currentTimeMillis()-data.optLong("notFoundAt")<7L*24*60*60*1000;
                     if(!missing){
@@ -49,9 +51,9 @@ final class ArtworkRepository {
                         String url=data.optString("videoUrl");
                         if(!url.isEmpty()){
                             URL cover=new URL(url);String coverKey=digest(cover.getHost()+"|"+cover.getPath());media=new File(mediaDirectory(c),coverKey+".mp4");data.put("mediaKey",coverKey);write(metadata,data);
-                            if(media.isFile()&&media.length()>0){media.setLastModified(System.currentTimeMillis());result=media;}
+                            if(recover(media)){checkProfile(media,metadata,data);media.setLastModified(System.currentTimeMillis());result=media;}
                             else{
-                            try{download(c,url,media,albumKey);result=media;}
+                            try{download(c,url,media,albumKey);data.put("fileProfile",2);write(metadata,data);result=media;}
                             catch(Exception stale){if(!(stale instanceof DownloadPaused))metadata.delete();throw stale;}
                             }
                         }
@@ -64,6 +66,20 @@ final class ArtworkRepository {
         });
     }
     private static String encode(String value)throws Exception{return URLEncoder.encode(value==null?"":value,"UTF-8");}
+    private static boolean recover(File media)throws IOException{
+        if(new File(media.getPath()+".bak").isFile())try(var ignored=new AtomicFile(media).openRead()){}
+        return media.isFile()&&media.length()>0;
+    }
+    private static void cleanTemporary(Context c)throws IOException{
+        if(temporaryCleaned)return;temporaryCleaned=true;
+        File[] files=mediaDirectory(c).listFiles((d,n)->n.matches("[a-f0-9]{64}\\.mp4(?:\\.part(?:\\.normalize)?(?:\\.bak|\\.new)?|\\.normalize)"));
+        if(files!=null)for(File file:files)if(!file.delete())throw new IOException("Could not reset interrupted artwork work");
+    }
+    private static void checkProfile(File media,File metadata,JSONObject data)throws Exception{
+        if(data!=null&&data.optInt("fileProfile")==2)return;
+        ArtworkFile.ensure(media);
+        if(data!=null){data.put("fileProfile",2);write(metadata,data);}
+    }
     static boolean unmeteredWifi(Context c){try{ConnectivityManager manager=(ConnectivityManager)c.getSystemService(Context.CONNECTIVITY_SERVICE);NetworkCapabilities cap=manager.getNetworkCapabilities(manager.getActiveNetwork());return cap!=null&&cap.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)&&cap.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)&&!manager.isActiveNetworkMetered();}catch(Exception unavailable){return false;}}
     static JSONObject request(String value,String method,JSONObject body,String token)throws Exception{
         URL url=new URL(value);if(!"https".equals(url.getProtocol())||!"artwork.boidu.dev".equals(url.getHost()))throw new IOException("Unsupported artwork origin");
@@ -89,11 +105,13 @@ final class ArtworkRepository {
         try{if(connection.getResponseCode()!=200)throw new IOException("Cover HTTP "+connection.getResponseCode());long expected=connection.getContentLengthLong();if(expected>limit)throw new IOException("Cover exceeds cache budget");
             try(var in=connection.getInputStream();var out=new FileOutputStream(part)){byte[] bytes=new byte[65536];int count;long total=0;while((count=in.read(bytes))!=-1){if(!unmeteredWifi(c)||!album.equals(activeAlbum))throw new DownloadPaused();total+=count;if(total>limit)throw new IOException("Cover download limit");out.write(bytes,0,count);}out.getFD().sync();if(total==0||expected>=0&&total!=expected)throw new IOException("Incomplete cover download");}
             android.media.MediaMetadataRetriever media=new android.media.MediaMetadataRetriever();try{media.setDataSource(part.getPath());if(media.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)==null)throw new IOException("Invalid cover video");}finally{media.release();}
+            ArtworkFile.ensure(part);
+            if(part.length()>limit)throw new IOException("Finalized cover exceeds cache budget");
             if(!part.renameTo(destination))throw new IOException("Could not commit cover");evict(c,destination);
         }finally{connection.disconnect();if(downloading==connection)downloading=null;if(part.isFile())part.delete();}
     }
     static void invalidate(Context c,String key){if(key==null||!key.matches("[a-f0-9]{64}"))return;io.execute(()->{File metadata=new File(metadataDirectory(c),key+".json");JSONObject data=read(metadata);String media=data==null?key:data.optString("mediaKey",key);if(media.matches("[a-f0-9]{64}"))new File(mediaDirectory(c),media+".mp4").delete();metadata.delete();});}
     static void trim(Context c){io.execute(()->evict(c,null));}
     private static void evict(Context c,File keep){File[] files=mediaDirectory(c).listFiles((d,n)->n.matches("[a-f0-9]{64}\\.mp4"));if(files==null)return;Arrays.sort(files,Comparator.comparingLong(File::lastModified));long total=0;for(File f:files)total+=f.length();long cap=Math.max(128,Math.min(2048,preferences(c).getInt("mediaLimit",512)))*1024L*1024;for(File f:files){if(total<=cap)break;if(f.equals(keep))continue;long bytes=f.length();if(f.delete())total-=bytes;}}
-    static void clear(Context c,Runnable done){io.execute(()->{for(File folder:new File[]{mediaDirectory(c),metadataDirectory(c)}){File[] files=folder.listFiles((d,n)->n.matches("[a-f0-9]{64}\\.(?:mp4|json)(?:\\.part|\\.bak|\\.new)?"));if(files!=null)for(File f:files)f.delete();}new Handler(Looper.getMainLooper()).post(done);});}
+    static void clear(Context c,Runnable done){io.execute(()->{for(File folder:new File[]{mediaDirectory(c),metadataDirectory(c)}){File[] files=folder.listFiles((d,n)->n.matches("[a-f0-9]{64}\\.(?:mp4(?:\\.part)?(?:\\.normalize)?|json)(?:\\.bak|\\.new)?"));if(files!=null)for(File f:files)f.delete();}new Handler(Looper.getMainLooper()).post(done);});}
 }

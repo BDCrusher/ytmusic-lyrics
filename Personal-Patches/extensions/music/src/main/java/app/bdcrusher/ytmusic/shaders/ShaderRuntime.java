@@ -25,6 +25,7 @@ public final class ShaderRuntime {
     private static String identity="",mediaKey="";
     private static int generation;
     private static int panelEpoch;
+    private static String frameFor="";
     private static boolean playing,watching;
     private static volatile boolean effectsActive;
     private static SharedPreferences preferences;
@@ -34,7 +35,7 @@ public final class ShaderRuntime {
     private static WeakReference<Object> panelOwner=new WeakReference<>(null);
     private ShaderRuntime(){}
     static int generation(){return generation;}
-    public static boolean isEffectSurface(View view){return view instanceof ShaderSurface;}
+    public static boolean isEffectSurface(View view){return view instanceof ShaderSurface||view instanceof AnimatedCoverSurface;}
     private static boolean enabled(Context c){return PersonalRuntime.installed(c,"shaders");}
     private static final SharedPreferences.OnSharedPreferenceChangeListener changed=(p,k)->main.post(()->{refresh();if("mediaLimit".equals(k))ArtworkRepository.trim(Utils.getContext());if("artworkToken".equals(k)||"enabled".equals(k)){lastLookup=0;retryArtwork();}});
     private static void init(Context c){if(!watching){watching=true;preferences=ArtworkRepository.preferences(c);preferences.registerOnSharedPreferenceChangeListener(changed);VideoInformation.addVideoIdListener(id->main.post(ShaderRuntime::track));
@@ -44,7 +45,7 @@ public final class ShaderRuntime {
     static void retryArtwork(){
         if(currentTrack==null||media!=null||!active()||lastLookup!=0&&SystemClock.elapsedRealtime()-lastLookup<30000)return;
         lastLookup=SystemClock.elapsedRealtime();int expected=generation;
-        ArtworkRepository.lookup(Utils.getContext(),currentTrack,(file,key)->{if(generation!=expected)return;media=file;mediaKey=key;refresh();});
+        ArtworkRepository.lookup(Utils.getContext(),currentTrack,(file,key)->{if(generation!=expected)return;media=file;mediaKey=key;if(artwork==null&&file!=null)firstCoverFrame(file,expected);refresh();});
     }
     public static void onMetadata(MediaMetadata value){main.post(()->{metadata=value;track();});}
     public static void onPlayback(PlaybackState value){boolean active=value!=null&&value.getState()==PlaybackState.STATE_PLAYING;main.post(()->{playing=active;refresh();});}
@@ -54,16 +55,16 @@ public final class ShaderRuntime {
         String mediaId=metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);if(mediaId!=null&&mediaId.matches("[A-Za-z0-9_-]{11}")&&!id.equals(mediaId))return;
         String title=metadata.getString(MediaMetadata.METADATA_KEY_TITLE),artist=metadata.getString(MediaMetadata.METADATA_KEY_ARTIST),album=metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
         if(title==null||artist==null)return;String next=id+"|"+title+"|"+artist+"|"+album;
-        if(next.equals(identity)){refresh();return;}identity=next;generation++;int expected=generation;media=null;mediaKey="";
-        Bitmap cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ART);if(cover==null)cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);artwork=cover;
-        for(Binding binding:new ArrayList<>(surfaces.values())){binding.surface.clearImage();if(artwork!=null)binding.surface.image(artwork,expected);}
+        if(next.equals(identity)){refresh();return;}boolean sameRecording=identity.startsWith(id+"|");identity=next;if(!sameRecording){generation++;media=null;mediaKey="";frameFor="";}int expected=generation;
+        Bitmap cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ART);if(cover==null)cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);if(cover!=null||!sameRecording)artwork=cover;
+        for(Binding binding:new ArrayList<>(surfaces.values())){if(!sameRecording)binding.clearImage();if(artwork!=null)binding.image(artwork,expected);}
         currentTrack=new ArtworkRepository.Track(id,title,artist,album==null?"":album,(int)(metadata.getLong(MediaMetadata.METADATA_KEY_DURATION)/1000));lastLookup=0;retryArtwork();refresh();
     }
     @android.annotation.SuppressLint("ResourceType")
     public static void onArtwork(View player,Bitmap bitmap){
-        if(!enabled(player.getContext()))return;artwork=bitmap;
+        if(!enabled(player.getContext()))return;if(bitmap!=null)artwork=bitmap;
         View anchor=player.findViewById(0x7f0b0943); // Exact APK resource verified with the artwork-owner fingerprint.
-        if(anchor!=null)watch(anchor,true);for(Binding binding:new ArrayList<>(surfaces.values())){if(bitmap!=null)binding.surface.image(bitmap,generation);else binding.surface.clearImage();}refresh();
+        if(anchor!=null)watch(anchor,true);for(Binding binding:new ArrayList<>(surfaces.values())){if(bitmap!=null)binding.image(bitmap,generation);}refresh();
     }
     public static void onPlayerBackground(View view){if(enabled(view.getContext()))watch(view,false);}
     private static void watch(View anchor,boolean cover){
@@ -71,9 +72,9 @@ public final class ShaderRuntime {
         if(anchor.getParent() instanceof ViewGroup parent&&anchor.isAttachedToWindow()){Binding binding=new Binding(anchor,parent,cover);surfaces.put(anchor,binding);track();binding.update();}
         else anchor.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){v.removeOnAttachStateChangeListener(this);watch(v,cover);}public void onViewDetachedFromWindow(View v){}});
     }
-    static void refresh(){effectsActive=false;for(Binding binding:new ArrayList<>(surfaces.values())){binding.update();effectsActive|=!binding.closed&&binding.anchor.isShown()&&binding.anchor.hasWindowFocus()&&ArtworkRepository.preferences(binding.anchor.getContext()).getBoolean("enabled",true);}if(effectsActive)retryArtwork();}
+    static void refresh(){effectsActive=false;for(Binding binding:new ArrayList<>(surfaces.values())){binding.update();effectsActive|=binding.active;}if(effectsActive)retryArtwork();}
     static void mediaFailed(){ArtworkRepository.invalidate(Utils.getContext(),mediaKey);media=null;lastLookup=SystemClock.elapsedRealtime();refresh();}
-    static boolean requestProof(int id,JSONObject challenge){for(Binding binding:new ArrayList<>(surfaces.values()))if(binding.surface.solve(id,challenge))return true;return false;}
+    static boolean requestProof(int id,JSONObject challenge){for(Binding binding:new ArrayList<>(surfaces.values()))if(binding.surface instanceof ShaderSurface background&&background.solve(id,challenge))return true;return false;}
     public static void onNativePanel(Object panel){
         main.post(()->{
             if(panel==panelOwner.get()){refresh();return;}panelOwner=new WeakReference<>(panel);
@@ -88,37 +89,57 @@ public final class ShaderRuntime {
         if(epoch!=panelEpoch)return;
         try{View root=nativePanelView(panel);if(root==null||!enabled(root.getContext()))return;if(!(root instanceof FrameLayout body))return;
             if(!root.isAttachedToWindow()){if(attempt<30)main.postDelayed(()->attachLyrics(panel,attempt+1,epoch),32);return;}
-            Binding binding=new Binding(root,body,false);surfaces.put(root,binding);lyricsBody=new WeakReference<>(root);refresh();
+            Binding binding=new Binding(root,body,false);surfaces.put(root,binding);lyricsBody=new WeakReference<>(root);PersonalRuntime.lyricsViewport(root);refresh();
         }catch(Exception ignored){}
     }
     // Replaced with typed native panel calls by the exact-target Shaders patch.
     private static String nativePanelId(Object value){throw new IllegalStateException("Missing native panel identity hook");}
     private static View nativePanelView(Object value){throw new IllegalStateException("Missing native panel root hook");}
+    private static boolean visible(View view){return view!=null&&view.isShown()&&view.getWindowVisibility()==View.VISIBLE&&view.hasWindowFocus()&&view.getAlpha()>0&&view.getGlobalVisibleRect(new android.graphics.Rect());}
+    private static void firstCoverFrame(File file,int expected){
+        String key=expected+"|"+file.getAbsolutePath();if(key.equals(frameFor))return;frameFor=key;
+        ShaderSurface.IMAGES.execute(()->{
+            Bitmap frame=null;android.media.MediaMetadataRetriever retriever=new android.media.MediaMetadataRetriever();
+            try{retriever.setDataSource(file.getAbsolutePath());frame=Build.VERSION.SDK_INT>=27?retriever.getScaledFrameAtTime(0,android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC,512,512):retriever.getFrameAtTime(0);}
+            catch(Exception unavailable){}finally{try{retriever.release();}catch(Exception ignored){}}
+            final Bitmap still=frame;if(still!=null)main.post(()->{if(expected!=generation||artwork!=null){still.recycle();return;}artwork=still;for(Binding binding:new ArrayList<>(surfaces.values()))binding.image(still,expected);refresh();});
+        });
+    }
     private static final class Binding implements AutoCloseable {
-        final View anchor;final ViewGroup parent;final ShaderSurface surface;final boolean cover;
-        boolean closed;
+        final View anchor;final ViewGroup parent;final View surface;final boolean cover;
+        boolean closed,active;
         final ViewTreeObserver.OnGlobalLayoutListener layout=this::update;
         final ViewTreeObserver.OnWindowFocusChangeListener focus=this::focusChanged;
         void focusChanged(boolean focused){refresh();if(focused){retryArtwork();ArtworkToken.ensure(anchor.getContext());}}
         final View.OnAttachStateChangeListener attachment=new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){update();}public void onViewDetachedFromWindow(View v){surfaces.remove(anchor);close();}};
-        Binding(View a,ViewGroup p,boolean image){anchor=a;parent=p;cover=image;surface=new ShaderSurface(a.getContext());surface.setClipToOutline(true);surface.setOutlineProvider(a.getOutlineProvider());
+        Binding(View a,ViewGroup p,boolean image){
+            anchor=a;parent=p;cover=image;surface=image?new AnimatedCoverSurface(a.getContext()):new ShaderSurface(a.getContext());
+            surface.setClipToOutline(true);
+            surface.setOutlineProvider(new ViewOutlineProvider(){@Override public void getOutline(View v,android.graphics.Outline out){ViewOutlineProvider provider=anchor.getOutlineProvider();if(provider!=null)provider.getOutline(anchor,out);}});
             ViewGroup.LayoutParams params=a==p?new FrameLayout.LayoutParams(-1,-1):a.getLayoutParams();
             int index=a==p?0:p.indexOfChild(a)+1;p.addView(surface,index,params);
-            a.addOnAttachStateChangeListener(attachment);a.getViewTreeObserver().addOnGlobalLayoutListener(layout);a.getViewTreeObserver().addOnWindowFocusChangeListener(focus);if(artwork!=null)surface.image(artwork,generation);update();
+            a.addOnAttachStateChangeListener(attachment);a.getViewTreeObserver().addOnGlobalLayoutListener(layout);a.getViewTreeObserver().addOnWindowFocusChangeListener(focus);
+            if(artwork!=null)image(artwork,generation);update();
         }
-        void update(){if(closed)return;SharedPreferences prefs=ArtworkRepository.preferences(anchor.getContext());boolean master=prefs.getBoolean("enabled",true);
+        void image(Bitmap value,int expected){if(surface instanceof ShaderSurface background)background.image(value,expected);}
+        void clearImage(){if(surface instanceof ShaderSurface background)background.clearImage();}
+        void update(){
+            if(closed)return;SharedPreferences prefs=ArtworkRepository.preferences(anchor.getContext());boolean master=prefs.getBoolean("enabled",true);
             if(anchor!=parent){if(surface.getLayoutParams()!=anchor.getLayoutParams())surface.setLayoutParams(anchor.getLayoutParams());if(surface.getTranslationX()!=anchor.getTranslationX())surface.setTranslationX(anchor.getTranslationX());if(surface.getTranslationY()!=anchor.getTranslationY())surface.setTranslationY(anchor.getTranslationY());if(surface.getScaleX()!=anchor.getScaleX())surface.setScaleX(anchor.getScaleX());if(surface.getScaleY()!=anchor.getScaleY())surface.setScaleY(anchor.getScaleY());}
-            boolean visible=master&&anchor.isShown()&&anchor.getWindowVisibility()==View.VISIBLE&&anchor.hasWindowFocus()&&anchor.getAlpha()>0;
-            View panel=lyricsBody.get();if(panel!=null&&panel!=anchor&&panel.isShown())visible=false;
-            boolean show=cover?prefs.getBoolean("animatedCover",true)&&media!=null:prefs.getBoolean("background",true);
-            surface.setVisibility(visible&&show?View.VISIBLE:View.INVISIBLE);surface.setAlpha(anchor==parent?1:anchor.getAlpha());
-            try{boolean reduced=prefs.getBoolean("reducedMotion",false)||SettingsMotion.reduced(anchor.getContext());
+            boolean shown=master&&visible(anchor);View panel=lyricsBody.get();if(panel!=null&&panel!=anchor&&visible(panel))shown=false;
+            active=shown&&(cover?prefs.getBoolean("animatedCover",true):prefs.getBoolean("background",true));
+            int visibility=active?View.VISIBLE:View.INVISIBLE;if(surface.getVisibility()!=visibility)surface.setVisibility(visibility);
+            surface.setAlpha(anchor==parent?1:anchor.getAlpha());
+            boolean reduced=prefs.getBoolean("reducedMotion",false)||SettingsMotion.reduced(anchor.getContext());
+            if(surface instanceof AnimatedCoverSurface animation){animation.update(media,active,playing,reduced);return;}
+            try{
+                ShaderSurface background=(ShaderSurface)surface;
                 JSONObject options=new JSONObject().put("animateBackground",prefs.getBoolean("animateBackground",true)).put("fps",Integer.parseInt(prefs.getString("fps","30"))).put("speed",prefs.getInt("speed",100)/100.0).put("strength",prefs.getInt("strength",100)/100.0).put("saturation",prefs.getInt("saturation",150)/100.0).put("opacity",prefs.getInt("opacity",75)/100.0).put("dimming",prefs.getInt("dimming",30)/100.0).put("transition",prefs.getInt("transition",1000)).put("reducedMotion",reduced);
-                JSONObject state=new JSONObject().put("generation",generation).put("playing",playing).put("visible",visible&&show).put("cover",cover).put("background",!cover).put("image",surface.imageUrl()).put("video",media==null?"":ShaderSurface.ROOT+"cover.mp4?g="+generation);
-                surface.update(state,options,media);
+                JSONObject state=new JSONObject().put("generation",generation).put("playing",playing).put("visible",active).put("background",true).put("image",background.imageUrl());
+                background.update(state,options,null);
             }catch(Exception invalid){surface.setVisibility(View.INVISIBLE);}
         }
-        public void close(){if(closed)return;closed=true;anchor.removeOnAttachStateChangeListener(attachment);if(anchor.getViewTreeObserver().isAlive()){anchor.getViewTreeObserver().removeOnGlobalLayoutListener(layout);anchor.getViewTreeObserver().removeOnWindowFocusChangeListener(focus);}parent.removeView(surface);surface.closeSurface();}
+        public void close(){if(closed)return;closed=true;active=false;anchor.removeOnAttachStateChangeListener(attachment);if(anchor.getViewTreeObserver().isAlive()){anchor.getViewTreeObserver().removeOnGlobalLayoutListener(layout);anchor.getViewTreeObserver().removeOnWindowFocusChangeListener(focus);}parent.removeView(surface);if(surface instanceof ShaderSurface background)background.closeSurface();else ((AnimatedCoverSurface)surface).closeSurface();}
     }
     private static final class SettingsMotion {static boolean reduced(Context c){try{return android.provider.Settings.Global.getFloat(c.getContentResolver(),android.provider.Settings.Global.ANIMATOR_DURATION_SCALE,1)==0;}catch(Exception unavailable){return false;}}}
 }

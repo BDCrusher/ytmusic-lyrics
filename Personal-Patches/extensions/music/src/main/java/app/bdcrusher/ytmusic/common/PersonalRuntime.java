@@ -18,6 +18,10 @@ public final class PersonalRuntime implements Application.ActivityLifecycleCallb
         if(instance==null){instance=new PersonalRuntime();activity.getApplication().registerActivityLifecycleCallbacks(instance);}
         instance.onActivityCreated(activity,null);
     }
+    public static void lyricsViewport(View root){
+        if(instance==null||root==null||root.getWindowToken()==null)return;
+        for(var entry:instance.windows.entrySet())if(entry.getKey().getWindow().getDecorView().getWindowToken()==root.getWindowToken()){entry.getValue().lyricsViewport(root);break;}
+    }
     /** Exact Android Builder replacement preserves native construction and result handling. */
     public static AlertDialog showBuilder(AlertDialog.Builder builder){AlertDialog dialog=builder.show();dialog(dialog);return dialog;}
     public static void dialog(Dialog dialog){
