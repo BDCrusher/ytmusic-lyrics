@@ -25,7 +25,7 @@ final class LyricsCatalog implements AutoCloseable {
     private synchronized void recovered(String source){failedSources.remove(source);lookupFailed.set(!failedSources.isEmpty());}
     private final Context context;private final String videoId;
     private final LyricsDiskCache cache;private final Sink sink;
-    private final TrackInfo normalized;
+    private volatile TrackInfo normalized;
     private final java.util.Set<String> connectionTokens=ConcurrentHashMap.newKeySet();
     private final java.util.Set<String> delivered=ConcurrentHashMap.newKeySet();
     LyricsCatalog(Context context,TrackInfo track,String videoId,boolean refresh,Sink sink){
@@ -41,6 +41,15 @@ final class LyricsCatalog implements AutoCloseable {
         if(LyricsConfig.enabled(context,"unison-richsynced","unison-wordsynced","unison-synced","unison-plain"))task("Unison",()->unison(normalized));
         connectionChanged();
         finished();
+    }
+    synchronized void refine(TrackInfo track){
+        if(closed)return;
+        TrackInfo next=new TrackInfo(LyricsLookup.title(track.title()),LyricsLookup.artist(track.artist()),clean(track.album()),track.durationSeconds());
+        TrackInfo old=normalized;
+        if(!old.title().equals(next.title())||!old.artist().equals(next.artist()))return;
+        if(old.durationSeconds()==next.durationSeconds()&&old.album().equals(next.album()))return;
+        if(next.durationSeconds()<=0&&old.durationSeconds()>0)return;
+        normalized=next;LyricsDiagnostics.record("Metadata-refinement","recording="+videoId+"; improved metadata without clearing sources");direct(next);
     }
     synchronized void connectionChanged(){
         if(closed)return;
@@ -78,7 +87,7 @@ final class LyricsCatalog implements AutoCloseable {
         String q="s="+LyricsNetwork.encode(t.title())+"&a="+LyricsNetwork.encode(t.artist());
         if(!t.album().isEmpty())q+="&al="+LyricsNetwork.encode(t.album());if(t.durationSeconds()>0)q+="&d="+t.durationSeconds();return q;
     }
-    private void direct(TrackInfo t){
+    private synchronized void direct(TrackInfo t){
         String q=query(t);if(requested.size()>=4||!requested.add(q)||closed)return;
         String cacheKey="v2|"+videoId+"|"+q;
         if(LyricsConfig.enabled(context,"bLyrics-richsynced","bLyrics-synced"))task("Better Lyrics",()->{
@@ -142,7 +151,7 @@ final class LyricsCatalog implements AutoCloseable {
                     renewed=true;connectionNeeded=true;
                     new android.os.Handler(android.os.Looper.getMainLooper()).post(()->ServiceConnection.renew(context));
                 }
-                failed(source);LyricsDiagnostics.record(source,"Lookup stopped: "+failure.getClass().getSimpleName()+(failure instanceof LyricsNetwork.HttpFailure http?" HTTP "+http.status:""));finish();
+                failed(source);LyricsDiagnostics.record(source,"recording="+videoId+"; lookup stopped: "+failure.getClass().getSimpleName()+(failure instanceof LyricsNetwork.HttpFailure http?" HTTP "+http.status+(http.status==401||http.status==403?" (request rejected; not a not-found result)":""):""));finish();
             }
         }
     }

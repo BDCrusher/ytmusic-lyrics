@@ -8,5 +8,5 @@ import app.morphe.extension.shared.theme.ThemeUtils;
 public final class LyricsDiagnostics {
     public static void record(String source,String message){app.bdcrusher.ytmusic.common.FeatureDiagnostics.record(source,message);}
     public static String snapshot(){return app.bdcrusher.ytmusic.common.FeatureDiagnostics.snapshot();}
-    static void show(Context c){app.bdcrusher.ytmusic.common.DiagnosticsPage.show(c);}
+    
 }

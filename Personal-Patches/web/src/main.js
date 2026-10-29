@@ -226,7 +226,7 @@ function renderFrame(now) {
   raf=0;
   if(!active||document.hidden)return;
   if(!clock.initialized){raf=requestAnimationFrame(renderFrame);return;}
-  const timing=frameBudget.sample(now,clock.playing);if(timing)native?.diagnostic(generation,'Frame-timing',timing);
+  if(diagnostics.enabled){const timing=frameBudget.sample(now,clock.playing);if(timing)native?.diagnostic(generation,'Frame-timing',timing);}
   // Android delivers asynchronous snapshots, not a synchronous HTML media element.
   // Extrapolate once at the supplied rate on a monotonic clock; hand Braccato "now".
   const position=clock.read(now);
@@ -239,7 +239,7 @@ function renderFrame(now) {
 function startClock(){if(!raf&&active&&!document.hidden)raf=requestAnimationFrame(renderFrame);}
 
 window.BDC = {
-  debug(value){diagnostics.enable(value===true);},
+  debug(value){if(diagnostics.enabled!==(value===true))frameBudget.reset(performance.now());diagnostics.enable(value===true);},
   track(track) {
     
     reportedMismatches.clear();autoPreferred='';seenPayloads=new Set();seenPayloadBytes=0;clock.reset();frameBudget.reset(performance.now());sourceHealth={pending:1,failed:false,connectionNeeded:false};parsing=0;lookupFinished=false;emptyReported=false;$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');
@@ -302,7 +302,7 @@ window.BDC = {
   },
   visible(visible){
     const next=visible===true;if(active===next)return;active=next;
-    if(!active){cancelAnimationFrame(raf);raf=0;}
+    if(!active){diagnostics.pause();cancelAnimationFrame(raf);raf=0;}
     renderer.noteVisibilityChange();if(active){frameBudget.reset(performance.now());renderer.relayout();startClock();}
   },
   settings(next) {
@@ -383,5 +383,5 @@ function userScroll(){resumeScrollUntil=0;renderer.noteUserScroll(true);}
 for(const type of ['wheel','touchmove'])$('scroll').addEventListener(type,userScroll,{passive:true});
 $('scroll').addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))userScroll();});
 
-document.addEventListener('visibilitychange',()=>{renderer.noteVisibilityChange();if(!document.hidden)startClock();});
+document.addEventListener('visibilitychange',()=>{diagnostics.pause();frameBudget.reset(performance.now());renderer.noteVisibilityChange();if(!document.hidden)startClock();});
 dockResize.observe($('dock'));theme();startClock();native?.ready();

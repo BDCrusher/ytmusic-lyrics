@@ -22,13 +22,12 @@ final class LyricsRepository {
     private static JSONObject health;
 
     static String identity(TrackInfo track, String id) {
-        return id + "\u0000" + track.title() + "\u0000" + track.artist() + "\u0000"
-                + track.durationSeconds() + "\u0000" + track.album();
+        return id + "\u0000" + track.title() + "\u0000" + track.artist();
     }
 
     static void ensure(Context context, TrackInfo track, String id, boolean refresh) {
         String next = identity(track, id);
-        if (!refresh && next.equals(identity)) return;
+        if (!refresh && next.equals(identity)) {if(catalog!=null)catalog.refine(track);return;}
         if(refresh&&next.equals(identity)){
             generation++;if(catalog!=null)catalog.close();catalog=null;finished=false;definitelyNotFound=null;
         }else clear();

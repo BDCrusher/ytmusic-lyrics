@@ -31,12 +31,15 @@ fun main(args: Array<String>) {
     require(!workspace.exists()) { "Verification requires an unused directory" }
     val hash=digest(input)
     val bundleHash=digest(bundle)
-    require(hash == "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56") { "Unexpected original APK: $hash" }
+    require(hash in setOf("9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56","da28424a01714090f392f963c2d822dff10eed9dc397b443e3e34e3691cf4dd9")) { "Unexpected original APK: $hash" }
     val featureMode=args[3].contains("features")||args[3].contains("shaders")||args[3].contains("playlists")
     val noPersonal=args[3].startsWith("standalone-")||args[3].startsWith("without-lyrics")
     val officialFirst=args.size==5&&args[3].contains("official-first")
     val firstOfficial=if(officialFirst)loadPatchesFromJar(setOf(File(args[4])))else emptySet()
     val patches=loadPatchesFromJar(setOf(bundle))
+    val targetVersion=if(hash.startsWith("da28424"))"9.43.51" else "9.42.52"
+    // Model Manager's version-specific selection instead of forcing incompatible patches.
+    val available=patches.filter {p->p.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music" && c.targets.any {it.version==null||it.version==targetVersion}}==true}.toSet()
     val isAddon=args.size==5
     val allLyrics=patches.filter { it.name?.startsWith("Third-party lyrics")==true && it.compatibility?.any { c->c.packageName=="com.google.android.apps.youtube.music" }==true }
     val combined=allLyrics.size==2
@@ -56,17 +59,18 @@ fun main(args: Array<String>) {
     val officialSelected=official.filter { p->(!args[3].contains("missing-downloads")||p.name!="Downloads")&&p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(p.name!="Third-party lyrics"||args[3]=="conflict"||noPersonal)}
     val selected=if(featureMode){
         val features=patches.filter {it.name=="Shaders"&& !args[3].contains("playlists-only")||it.name=="Download playlist"&&!args[3].contains("shaders-only")}
-        val full=patches.filter {p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(!args[3].contains("missing-downloads")||p.name!="Downloads")}
+        val full=available.filter {p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(!args[3].contains("missing-downloads")||p.name!="Downloads")}
         val base=if(noPersonal&&fullOnly)full.filter {it.name!="Third-party lyrics"}else if(noPersonal)officialSelected else if(isAddon)officialSelected+lyrics else full
         if(officialFirst)(base+features).toSet()else(features+base).toSet()
     }else when(args[3]){
+        "jam-unsupported"->(available.filter {it.default}+patches.single {it.name=="Jam queue sharing"}).toSet()
         "lyrics","missing-official"->lyrics.toSet()
         "addon-first"->(lyrics+officialSelected).toSet()
         "official-first","conflict"->(officialSelected+lyrics).toSet()
         "editions-both"->allLyrics.toSet()
         "editions-reverse"->allLyrics.reversed().toSet()
         "addon-full-other"->(lyrics+patches.single {it.name=="Hide ads"&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true}).toSet()
-        else->patches.filter { p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true}.toSet()
+        else->available.filter { p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true}.toSet()
     }
     val sdk=File(System.getenv("ANDROID_HOME") ?: error("ANDROID_HOME is required"))
     workspace.mkdirs()
@@ -80,7 +84,14 @@ fun main(args: Array<String>) {
         """{"name":${quote(patch.name?:"")},"description":${quote(patch.description?:"")},"package":${quote(c.packageName?:"")},"targets":[$targets]}"""
     }
     workspace.resolve("lyrics-catalog.json").writeText("""{"bundleSha256":${quote(bundleHash)},"patches":[$catalog]}""")
-    if(args[3]=="catalog"){println("PASS: compiled catalog exported");return}
+    if(args[3]=="catalog"){
+        val music=patches.filter {it.name!=null&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true}
+        val metadata=music.joinToString(",") {p-> val c=p.compatibility!!.single {it.packageName=="com.google.android.apps.youtube.music"};val targets=c.targets.joinToString(",") {t->"""{"version":${quote(t.version?:"")},"experimental":${t.isExperimental},"versionCodes":${quote(t.versionCodes.toString())}}"""};"""{"name":${quote(p.name!!)},"targets":[$targets]}"""}
+        require(music.single {it.name=="Jam queue sharing"}.compatibility!!.single().targets.map {it.version}==listOf("9.42.52"))
+        for(name in listOf("Third-party lyrics","Shaders","Download playlist"))require(music.single {it.name==name}.compatibility!!.single().targets.map {it.version}.toSet()==setOf("9.42.52","9.43.51"))
+        workspace.resolve("target-metadata.json").writeText("""{"passed":true,"bundleSha256":${quote(bundleHash)},"patches":[$metadata]}""")
+        println("PASS: compiled catalog and exact per-patch targets exported");return
+    }
     val output=workspace.resolve("verified-unsigned.apk")
     try {
     Patcher(PatcherConfig(input,workspace.resolve("patcher"),verifier=SdkDexVerifier(sdk))).use { patcher ->
@@ -93,9 +104,9 @@ fun main(args: Array<String>) {
     }
     }catch(ex:Exception){
         val editionConflict=args[3] in setOf("editions-both","editions-reverse","addon-full-other")
-        if(args[3]!="conflict"&&args[3]!="missing-official"&&!editionConflict&&!args[3].contains("missing-downloads"))throw ex
+        if(args[3]!="conflict"&&args[3]!="missing-official"&&!editionConflict&&!args[3].contains("missing-downloads")&&args[3]!="jam-unsupported")throw ex
         val messages=generateSequence(ex as Throwable?){it.cause}.mapNotNull {it.message}.joinToString(" | ")
-        require(if(args[3].contains("missing-downloads"))messages.contains("requires the Downloads patch")else if(editionConflict)messages.contains("Choose one personal edition")else if(args[3]=="conflict")messages.contains("Two lyrics patches selected")else messages.contains("Missing official Morphe runtime")||messages.contains("Select compatible Morphe Music settings")){"Unexpected negative failure: "+messages}
+        require(if(args[3]=="jam-unsupported")messages.contains("Jam queue sharing currently supports 9.42.52 only")else if(args[3].contains("missing-downloads"))messages.contains("requires the Downloads patch")else if(editionConflict)messages.contains("Choose one personal edition")else if(args[3]=="conflict")messages.contains("Two lyrics patches selected")else messages.contains("Missing official Morphe runtime")||messages.contains("Select compatible Morphe Music settings")){"Unexpected negative failure: "+messages}
         workspace.resolve("verification.json").writeText("""{"expectedFailure":true,"mode":${quote(args[3])},"bundleSha256":${quote(bundleHash)},"officialSha256":${quote(officialHash)},"reason":${quote(messages)}}""")
         println("PASS: expected actionable rejection: "+args[3]);return
     }

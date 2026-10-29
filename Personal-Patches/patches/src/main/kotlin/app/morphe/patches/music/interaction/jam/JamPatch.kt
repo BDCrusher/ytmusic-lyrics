@@ -9,6 +9,8 @@ package app.morphe.patches.music.interaction.jam
 
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.patch.Compatibility
+import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
 import app.morphe.patches.music.misc.extension.sharedExtensionPatch
@@ -95,9 +97,20 @@ val jamQueueSharingPatch = bytecodePatch(
         musicVideoInformationPatch,
         versionCheckPatch,
     )
-    compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
+    // 9.43 changes the player palette ownership; do not advertise an unported Jam UI.
+    compatibleWith(Compatibility(
+        packageName = COMPATIBILITY_YOUTUBE_MUSIC.packageName!!,
+        name = COMPATIBILITY_YOUTUBE_MUSIC.name!!,
+        apkFileType = COMPATIBILITY_YOUTUBE_MUSIC.apkFileType,
+        appIconColor = COMPATIBILITY_YOUTUBE_MUSIC.appIconColor,
+        signatures = COMPATIBILITY_YOUTUBE_MUSIC.signatures,
+        targets = COMPATIBILITY_YOUTUBE_MUSIC.targets.filter { it.version == "9.42.52" }
+    ))
 
     execute {
+        if (packageMetadata.versionName != "9.42.52") {
+            throw PatchException("Jam queue sharing currently supports 9.42.52 only. Disable Jam on 9.43.51; other Full Collection patches remain available.")
+        }
         val baseQueue = resolveJamQueueAbi()
         val ui = resolveJamUiAbi(baseQueue)
         val queue = baseQueue.copy(item = baseQueue.item.copy(menuPayload = ui.queueRow.menuPayload))

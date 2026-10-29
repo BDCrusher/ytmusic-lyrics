@@ -73,7 +73,7 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
  NativeLyricsFactory.clearMatch()
  val recipe=NativeLyricsFactory.method.implementation!!.instructions.joinToString("\n") { "${it.opcode}|${(it as? ReferenceInstruction)?.reference?:""}|${(it as? WideLiteralInstruction)?.wideLiteral?:""}" }
  val recipeHash=MessageDigest.getInstance("SHA-256").digest(recipe.toByteArray(Charsets.UTF_8)).joinToString(""){"%02x".format(it)}
- if(recipeHash!="7bc335a95608014c5d4d9ba2ca5e97752cc4b34706dfc8a69fdc225203229727")fail("native Lyrics factory profile")
+ if(recipeHash!=mapOf("9.42.52" to "7bc335a95608014c5d4d9ba2ca5e97752cc4b34706dfc8a69fdc225203229727","9.43.51" to "aca0edec453c3c649ea16d9df628b68ade76652552dc742ecce68be99ba6f339")[packageMetadata.versionName])fail("native Lyrics factory profile")
  val host=mutableClassDefBy(OWN+"NativeLyricsHost;")
  fun body(name:String,registers:Int,code:String){val old=host.methods.single {it.name==name};val m=MutableMethod(ImmutableMethod(old.definingClass,old.name,old.parameters,old.returnType,old.accessFlags,old.annotations,old.hiddenApiRestrictions,MutableMethodImplementation(registers)));host.methods.remove(old);m.addInstructions(0,code);host.methods.add(m)}
  body("registerNative",5,"""

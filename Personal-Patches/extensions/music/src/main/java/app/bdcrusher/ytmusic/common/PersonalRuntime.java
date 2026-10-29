@@ -39,7 +39,7 @@ public final class PersonalRuntime implements Application.ActivityLifecycleCallb
     public void onActivityResumed(Activity a){app.bdcrusher.ytmusic.shaders.ShaderRuntime.hostVisible(true);NavigationWindow owner=windows.get(a);if(owner!=null)owner.update();new Handler(Looper.getMainLooper()).post(app.bdcrusher.ytmusic.playlists.PlaylistRuntime::init);}
     public void onActivityPaused(Activity a){FeatureDiagnostics.event("Lifecycle","Activity paused; background playback unchanged");app.bdcrusher.ytmusic.shaders.ShaderRuntime.hostVisible(false);}
     public void onActivityStarted(Activity a){}
-    public void onActivityStopped(Activity a){FeatureDiagnostics.event("Lifecycle","Activity stopped");FeatureDiagnostics.persist(a);}
+    public void onActivityStopped(Activity a){FeatureDiagnostics.event("Lifecycle","Activity stopped");}
     public void onActivitySaveInstanceState(Activity a,Bundle b){}
     public void onActivityDestroyed(Activity a){NavigationWindow owner=windows.remove(a);if(owner!=null)owner.close();}
 }

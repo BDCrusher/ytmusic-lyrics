@@ -39,7 +39,7 @@ val playlistDownloadsPatch=bytecodePatch(name="Download playlist",description="A
     category("Playlist downloads")
     dependsOn(personalRuntimePatch,playlistResources)
     compatibleWith(Compatibility(packageName="com.google.android.apps.youtube.music",name="YouTube Music",apkFileType=ApkFileType.APK_REQUIRED,
-        targets=listOf(AppTarget(version="9.42.52",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94252240),minSdk=26,isExperimental=true))))
+        targets=listOf(AppTarget(version="9.42.52",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94252240),minSdk=26,isExperimental=true),AppTarget(version="9.43.51",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94351240),minSdk=26,isExperimental=true))))
     execute {
         PlaylistHeader.clearMatch();val presenter=PlaylistHeader.classDef
         // The header factory consumes an extensible generated element and returns a byte-backed render model.

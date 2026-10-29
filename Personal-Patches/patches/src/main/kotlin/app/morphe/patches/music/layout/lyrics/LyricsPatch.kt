@@ -100,7 +100,7 @@ val lyricsPatch = bytecodePatch(
         apkFileType = COMPATIBILITY_YOUTUBE_MUSIC.apkFileType,
         appIconColor = COMPATIBILITY_YOUTUBE_MUSIC.appIconColor,
         signatures = COMPATIBILITY_YOUTUBE_MUSIC.signatures,
-        targets = listOf(AppTarget(
+        targets = listOf(AppTarget(version="9.43.51",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94351240),minSdk=26,isExperimental=true), AppTarget(
             version = "9.42.52",
             versionCodes = mapOf(SupportedAbi.ARM64_V8A to 94252240),
             minSdk = 26,

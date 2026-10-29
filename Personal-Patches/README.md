@@ -1,3 +1,21 @@
+# Published - 0.4.0-beta.1
+
+[0.4.0-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.4.0-beta.1) is published. Toolkit verified 11 public assets, 7514 source files and the dev feed. Source `f5c4ba71a77f0b82d40fea8bd9e92c88347f5dbd`; feed `ed38b470671fdb07cc97d5691e3f0a206a7dcda3`. MPP SHA256 `28a30d73090e6e6fbbc4cfcad40bf1c1f4410a219400e95c88e97b7b09ec0456`. Exact receipt: `Verification/publication/v0.4.0-beta.1/publication-result.json`. Existing public history is preserved; no global tools were copied.
+
+Full Collection only, with optional Shaders and Playlist downloads. Review saved selections and use the collection alone; the old Lyrics-only Add-on is retired from new delivery. Original 9.42.52 / 94252240 arm64-v8a remains the exact experimental target. Enable Pre-release patches and Experimental app versions, refresh the source and repatch the original APK.
+
+Correct Lyrics inset ownership/panel settling, moving resume-follow action and inline translucent source status. Keep Braccato as the text-motion engine. Shaders waits for valid images, keeps native fallbacks and streams cover URLs while retaining only lookup/availability records. Recognized old animation-file cache is removed on initialization; permanent lyrics/preferences/credentials remain. Recents swipe requests own-session pause/stop; Home/Back keep background playback.
+
+Morphe Debugging adds opt-in 60-second capture of Native/Fallback entry, source outcomes, renderer gaps/ticks, Android Window FrameMetrics and shader/media failures. One bounded redacted private last report; no lyric text, credentials or automatic uploads. Open Morphe > Miscellaneous > Debugging, or the personal Debugging page when native debugging is absent. Capture, reproduce without screen recording, then copy Lyrics and Shaders report. Lyrics settings also opens the report.
+
+Build/JVM/lint, nine catalog/application/invalid-selection cases, seven compiled feature audits, four native Lyrics audits and 226 actual-source checks pass (92 fresh; 134 inherited after exact source hashes match). Current browser provider/reference-motion/UI/Kawarp/fallback checks pass. Ordinary artwork verification and metadata lookup succeeded. Failed raw fragmented-MP4 browser loop observation is retained and is not a native streaming verdict. Prior combined-source verification timeout remains a limitation.
+
+Phone smoothness, Samsung navigation, native panel/graphics/video behavior, streamed-cover looping, Recents audio-stop timing and real playlist downloads remain unverified. No zero-stutter claim; no device, MuMu, signing, install/uninstall or real playlist download operations occurred.
+
+Read Research/IMPLEMENTATION-0.4.0-BETA.1-2026-10-28.md and dist/0.4.0-beta.1/verification.json. About 5.0 GiB / 141,513 files of regenerable revision34 scratch remain (Verification/revision34-retained-scratch.json). Regenerable generated compatibility scratch remains in Verification/scratch/revision34-accepted-* and earlier preflight directories; no cleanup was authorized. Source, private inputs and immutable deliveries are preserved. Never rerun completed staging/publication recipes.
+
+## Earlier records
+
 # Verified candidate - 0.4.0-beta.1
 
 Full Collection only with optional Shaders and Playlist downloads. The exact MPP SHA256 is `28a30d73090e6e6fbbc4cfcad40bf1c1f4410a219400e95c88e97b7b09ec0456`. Build/JVM/lint, nine catalog/application/invalid-selection cases, seven compiled feature audits, four native Lyrics audits, 226 source-backed checks and current browser fixtures pass. Phone acceptance remains unverified. See Personal-Patches/dist/0.4.0-beta.1/verification.json, COMPATIBILITY.md and Research/IMPLEMENTATION-0.4.0-BETA.1-2026-10-28.md. Publication is pending until the new Toolkit receipt confirms it. All work stays in YT-Music; no global tools are copied or device/MuMu/sign/install operations performed.

@@ -3,6 +3,7 @@ package app.morphe.patches.music.shared
 import app.morphe.patcher.patch.ApkFileType
 import app.morphe.patcher.patch.AppTarget
 import app.morphe.patcher.patch.Compatibility
+import app.morphe.patcher.patch.SupportedAbi
 
 internal object Constants {
     val COMPATIBILITY_YOUTUBE_MUSIC = Compatibility(
@@ -17,29 +18,8 @@ internal object Constants {
             "a2a1ad7ba7f41dfca4514e2afeb90691719af6d0fdbed4b09bbf0ed897701ceb"
         ),
         targets = listOf(
-            AppTarget(
-                version = "9.42.52",
-                minSdk = 26,
-                isExperimental = true,
-            ),
-            AppTarget(
-                version = "9.41.52",
-                minSdk = 26,
-                isExperimental = true,
-            ),
-            AppTarget(
-                version = "9.40.51",
-                minSdk = 26,
-                isExperimental = true,
-            ),
-            AppTarget(
-                version = "9.20.53",
-                minSdk = 26
-            ),
-            AppTarget(
-                version = "9.15.51",
-                minSdk = 26
-            )
+            AppTarget(version="9.42.52",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94252240),minSdk=26,isExperimental=true),
+            AppTarget(version="9.43.51",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94351240),minSdk=26,isExperimental=true)
         )
     )
 }

@@ -1,3 +1,17 @@
+# YT-Music personal patches 0.5.0-beta.1
+
+Support both original arm64 YouTube Music **9.42.52 / 94252240** and **9.43.51 / 94351240**. Full Collection only; Shaders and Download playlist stay optional. Use this source alone. Enable Pre-release patches and Experimental app versions, refresh and repatch the original APK. Jam queue sharing is limited to 9.42.52; disable an old saved Jam selection on 9.43.51.
+
+Fix stale recording metadata/lookup restarts and handle the complete verified native Lyrics action state enum. Retain the genuine action's second position while pending/available. Reduce hidden hierarchy work; request an appropriate local animation frame rate on Android 35+ while respecting pause/reduced motion and the app refresh selection. Keep Better Lyrics/Braccato text motion, equivalent-source state, the existing dock and transparent navigation.
+
+Improve the **existing Enable debug logging / Export debug logs** workflow. Remove the 60-second capture and separate report. Add exact APK/WebView/entry context, line/clock/source events, actual Android frame deadlines and bounded renderer cadence. Throttle heavy component dumps before construction, bound/redact log entries and omit routine feature stacks. The native error-stack preference remains available. Dedupe artwork network/metadata work and request own-session Recents pause/stop before effect cleanup.
+
+Fourteen successful two-target APK combinations, two missing-Downloads rejections, target/catalog validation, fourteen compiled feature/reference audits and eight native Lyrics audits. Build/JVM/lint and 286 actual-source checks pass (192 fresh; 94 inherited after hashes match). Browser checks cover 16 source variants, reference motion/follow/seek, controls/status, debug cadence and Kawarp/fallback. Three fresh public Java lyric lookups succeeded. A direct Better Lyrics401 was observed while Unison succeeded for the cover; rejection is distinguished from not-found. Prior combined-service browser verification timeout remains a limitation.
+
+**Phone acceptance remains required.** This does not establish zero stutter, Samsung navigation appearance, native graphics/media looping, Recents stop timing or actual playlist/offline downloads. Desktop old/current traces both scrolled without reverse steps; they do not demonstrate a phone performance improvement. No device/MuMu/sign/install/uninstall or real playlist download operations. Permanent lyrics/settings remain; artwork retains lookup/availability notes rather than animation files.
+
+## Prior releases
+
 # YT-Music personal patches 0.4.0-beta.1
 
 Full Collection only, with optional Shaders and Playlist downloads. The Lyrics-only Add-on is retired from this delivery; use this source by itself and review saved selections. Exact experimental target remains original 9.42.52 / 94252240 arm64-v8a.

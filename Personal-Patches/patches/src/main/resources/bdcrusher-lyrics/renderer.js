@@ -8923,14 +8923,29 @@
       this.enabled = false;
       this.last = 0;
       this.index = -1;
-      this.lastSlow = 0;
       this.schedule = [];
+      this.gaps = [];
+      this.frames = 0;
+      this.gapMax = 0;
+      this.cpuMax = 0;
+      this.reportAt = 0;
+      this.nominal = 1e3 / 60;
     }
     enable(value) {
       if (this.enabled === value) return;
       this.enabled = value;
       this.last = 0;
-      this.log("Capture", value ? "Renderer timing enabled" : "Renderer timing disabled");
+      this.frames = 0;
+      this.gaps = [];
+      this.reportAt = 0;
+      this.log("Debug", value ? "Renderer diagnostics enabled" : "Renderer diagnostics disabled");
+    }
+    pause() {
+      this.last = 0;
+      this.frames = 0;
+      this.gaps = [];
+      this.reportAt = 0;
+      this.gapMax = this.cpuMax = 0;
     }
     lines(lines) {
       this.schedule = lines.map((line, index) => ({ time: line.time, index })).filter((x) => Number.isFinite(x.time)).sort((a, b) => a.time - b.time);
@@ -8938,11 +8953,18 @@
     }
     sample(now, position, cpu, playing) {
       if (!this.enabled || !playing) {
-        this.last = 0;
+        this.pause();
         return;
       }
       const gap = this.last ? now - this.last : 0;
       this.last = now;
+      if (gap > 0) {
+        this.gaps.push(gap);
+        if (this.gaps.length > 120) this.gaps.shift();
+        this.gapMax = Math.max(this.gapMax, gap);
+        this.frames++;
+      }
+      this.cpuMax = Math.max(this.cpuMax, cpu);
       let lo = 0, hi = this.schedule.length;
       while (lo < hi) {
         const mid = lo + hi >>> 1;
@@ -8954,9 +8976,13 @@
         this.log("Line-transition", `line=${index} playbackMs=${Math.round(position * 1e3)} callbackGapMs=${gap.toFixed(1)} tickCpuMs=${cpu.toFixed(2)}`);
         this.index = index;
       }
-      if ((gap > 32 || cpu > 12) && now - this.lastSlow >= 250) {
-        this.lastSlow = now;
-        this.log("Renderer-stall", `line=${index} callbackGapMs=${gap.toFixed(1)} tickCpuMs=${cpu.toFixed(2)}`);
+      if (!this.reportAt) this.reportAt = now + 2e3;
+      if (now >= this.reportAt) {
+        const sorted = [...this.gaps].sort((a, b) => a - b), median = sorted[Math.floor(sorted.length / 2)] || 0;
+        this.log("Renderer-cadence", `line=${index} samples=${this.frames} intervalMedianMs=${median.toFixed(1)} callbackGapMaxMs=${this.gapMax.toFixed(1)} tickCpuMaxMs=${this.cpuMax.toFixed(2)} estimatedFps=${median ? (1e3 / median).toFixed(1) : 0}; callback cadence is not a dropped-frame count`);
+        this.frames = 0;
+        this.gapMax = this.cpuMax = 0;
+        this.reportAt = now + 2e3;
       }
     }
   };
@@ -9311,8 +9337,10 @@
       raf = requestAnimationFrame(renderFrame);
       return;
     }
-    const timing = frameBudget.sample(now, clock.playing);
-    if (timing) native?.diagnostic(generation, "Frame-timing", timing);
+    if (diagnostics.enabled) {
+      const timing = frameBudget.sample(now, clock.playing);
+      if (timing) native?.diagnostic(generation, "Frame-timing", timing);
+    }
     const position = clock.read(now);
     const before = diagnostics.enabled ? performance.now() : 0;
     renderer.tick(position / 1e3, {
@@ -9330,6 +9358,7 @@
   }
   window.BDC = {
     debug(value) {
+      if (diagnostics.enabled !== (value === true)) frameBudget.reset(performance.now());
       diagnostics.enable(value === true);
     },
     track(track) {
@@ -9446,6 +9475,7 @@
       if (active === next) return;
       active = next;
       if (!active) {
+        diagnostics.pause();
         cancelAnimationFrame(raf);
         raf = 0;
       }
@@ -9607,6 +9637,8 @@
     if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) userScroll();
   });
   document.addEventListener("visibilitychange", () => {
+    diagnostics.pause();
+    frameBudget.reset(performance.now());
     renderer.noteVisibilityChange();
     if (!document.hidden) startClock();
   });

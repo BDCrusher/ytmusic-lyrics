@@ -25,7 +25,7 @@ tasks.register<JavaExec>("verifyBundle") {
     maxHeapSize = "6g"
     doFirst {
         setArgs(listOf(
-            rootDir.resolve("../../Inputs/youtube-music-9.42.52-original.apk").canonicalPath,
+            providers.gradleProperty("inputApk").getOrElse(rootDir.resolve("../../Inputs/youtube-music-9.42.52-original.apk").canonicalPath),
             providers.gradleProperty("bundlePath").getOrElse(rootDir.resolve("../../Personal-Patches/patches/build/libs/patches-0.2.0-beta.1.mpp").canonicalPath),
             rootDir.resolve(providers.gradleProperty("verificationDir").get()).canonicalPath,
             providers.gradleProperty("mode").getOrElse("defaults")

@@ -20,16 +20,16 @@ final class ArtworkRepository {
   Context c=context.getApplicationContext();String album=track.album().isBlank()?"recording|"+track.id():track.artist()+"|"+track.album();
   synchronized(pending){if(pending.containsKey(album)){pending.get(album).add(callback);return;}List<Callback> list=new ArrayList<>();list.add(callback);pending.put(album,list);}
   io.execute(()->{String result=null,key="";
-   try{migrate(c);key=digest(album);File meta=new File(metadataDirectory(c),key+".json");JSONObject data=read(meta);ArtworkToken.ensure(c);
+   try{migrate(c);key=digest(album);File meta=new File(metadataDirectory(c),key+".json");JSONObject data=read(meta);boolean fetched=false;ArtworkToken.ensure(c);
     boolean missing=data!=null&&data.optLong("notFoundAt",0)>0&&System.currentTimeMillis()-data.optLong("notFoundAt")<7L*24*60*60*1000;
     if(data==null||!missing&&!validMedia(data.optString("videoUrl"))){
-     data=fetch(c,track.song(),track.artist(),track.album(),track.duration());
+     fetched=true;data=fetch(c,track.song(),track.artist(),track.album(),track.duration());
      if(!validMedia(data.optString("videoUrl"))){String song=normalizedTitle(track.song(),track.artist()),artist=track.artist().replaceFirst("(?i) - Topic$","");if(!song.equals(track.song())||!artist.equals(track.artist()))data=fetch(c,song,artist,track.album(),track.duration());}
      if(!validMedia(data.optString("videoUrl")))data.put("notFoundAt",System.currentTimeMillis());data.put("checkedAt",System.currentTimeMillis());write(meta,data);
     }
     if(validMedia(data.optString("videoUrl")))result=data.optString("videoUrl");
-    if(track.id().matches("[A-Za-z0-9_-]{11}"))write(new File(recordingsDirectory(c),track.id()+".json"),new JSONObject().put("videoId",track.id()).put("title",track.song()).put("artist",track.artist()).put("album",track.album()).put("albumKey",key).put("animated",result!=null).put("checkedAt",System.currentTimeMillis()));
-    FeatureDiagnostics.event("Artwork-lookup",result==null?"No matching animated artwork; native still retained":"Animated artwork URL available; metadata only");
+    if(track.id().matches("[A-Za-z0-9_-]{11}")){File record=new File(recordingsDirectory(c),track.id()+".json");JSONObject before=read(record);if(fetched||before==null||!key.equals(before.optString("albumKey"))||before.optBoolean("animated")!=(result!=null))write(record,new JSONObject().put("videoId",track.id()).put("title",track.song()).put("artist",track.artist()).put("album",track.album()).put("albumKey",key).put("animated",result!=null).put("checkedAt",System.currentTimeMillis()));}
+    FeatureDiagnostics.event("Artwork-lookup",("recording="+track.id()+" cache="+(fetched?"network":missing?"not-found":"positive")+"; ")+(result==null?"No matching animated artwork; native still retained":"Animated artwork URL available; metadata only"));
    }catch(Exception e){FeatureDiagnostics.record("Artwork-lookup","Lookup failed: "+e.getClass().getSimpleName());}
    String url=result,identity=key;List<Callback> list;synchronized(pending){list=pending.remove(album);}if(list!=null)new Handler(Looper.getMainLooper()).post(()->{for(Callback cb:list)cb.result(url,identity);});
   });

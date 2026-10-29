@@ -45,6 +45,11 @@ final class NavigationWindow implements AutoCloseable {
         if(Build.VERSION.SDK_INT>=30){android.graphics.Insets n=insets.getInsets(WindowInsets.Type.navigationBars());left=n.left;right=n.right;bottom=n.bottom;}
         else{left=Math.min(insets.getSystemWindowInsetLeft(),insets.getStableInsetLeft());right=Math.min(insets.getSystemWindowInsetRight(),insets.getStableInsetRight());bottom=Math.min(insets.getSystemWindowInsetBottom(),insets.getStableInsetBottom());}
         if(lyrics!=null)lyrics.update(bottom);FeatureDiagnostics.panel(lyrics!=null&&lyrics.root.isShown());
+        // The owned renderer handles its safe inset. Avoid walking the hidden native
+        // lyric collection and the whole player hierarchy on every panel layout.
+        if(lyrics!=null&&lyrics.root.isShown()&&lyrics.root instanceof ViewGroup group){
+            for(int i=0;i<group.getChildCount();i++)if(group.getChildAt(i) instanceof app.bdcrusher.ytmusic.lyrics.BetterLyricsPanelView panel){protect(panel,left,right,bottom);return;}
+        }
         if(window.getAttributes().width==ViewGroup.LayoutParams.MATCH_PARENT&&window.getAttributes().height==ViewGroup.LayoutParams.MATCH_PARENT)protect(decor,left,right,bottom);
     }
     private void protect(View view,int left,int right,int bottom){

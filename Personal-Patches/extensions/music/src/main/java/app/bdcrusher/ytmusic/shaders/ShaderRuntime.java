@@ -45,7 +45,7 @@ public final class ShaderRuntime {
     private static boolean enabled(Context c){return PersonalRuntime.installed(c,"shaders");}
     private static final SharedPreferences.OnSharedPreferenceChangeListener changed=(p,k)->main.post(()->{refresh();if("mediaLimit".equals(k))ArtworkRepository.trim(Utils.getContext());if("artworkToken".equals(k)||"enabled".equals(k)){lastLookup=0;retryArtwork();}});
     private static void init(Context c){if(!watching){watching=true;preferences=ArtworkRepository.preferences(c);preferences.registerOnSharedPreferenceChangeListener(changed);ArtworkRepository.trim(c);VideoInformation.addVideoIdListener(id->main.post(ShaderRuntime::track));
-        try{android.net.ConnectivityManager connectivity=(android.net.ConnectivityManager)c.getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);connectivity.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback(){@Override public void onCapabilitiesChanged(android.net.Network n,android.net.NetworkCapabilities capabilities){if(capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)&&capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED))main.post(()->{lastLookup=0;retryArtwork();});}});}catch(Exception unavailable){}
+        try{android.net.ConnectivityManager connectivity=(android.net.ConnectivityManager)c.getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);connectivity.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback(){private boolean usable;@Override public void onCapabilitiesChanged(android.net.Network n,android.net.NetworkCapabilities capabilities){boolean next=capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)&&capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED);boolean recovered=next&&!usable;usable=next;if(recovered)main.post(()->{lastLookup=0;retryArtwork();});}@Override public void onLost(android.net.Network n){usable=false;}});}catch(Exception unavailable){}
     }}
     static boolean active(){return effectsActive;}
     static void retryArtwork(){
@@ -69,7 +69,7 @@ public final class ShaderRuntime {
     @android.annotation.SuppressLint("ResourceType")
     public static void onArtwork(View player,Bitmap bitmap){
         if(!enabled(player.getContext()))return;if(bitmap!=null)artwork=bitmap;
-        View anchor=player.findViewById(0x7f0b0943); // Exact APK resource verified with the artwork-owner fingerprint.
+        View anchor=player.findViewById(thumbnailId()); // Exact APK resource verified with the artwork-owner fingerprint.
         if(anchor!=null)watch(anchor,true);for(Binding binding:new ArrayList<>(surfaces.values())){if(bitmap!=null)binding.image(bitmap,generation);}refresh();
     }
     public static void onPlayerBackground(View view){if(enabled(view.getContext()))watch(view,false);}
@@ -99,6 +99,7 @@ public final class ShaderRuntime {
         }catch(Exception ignored){}
     }
     // Replaced with typed native panel calls by the exact-target Shaders patch.
+    private static int thumbnailId(){throw new IllegalStateException("Missing exact native artwork resource hook");}
     private static String nativePanelId(Object value){throw new IllegalStateException("Missing native panel identity hook");}
     private static View nativePanelView(Object value){throw new IllegalStateException("Missing native panel root hook");}
     private static boolean visible(View view){return view!=null&&view.isShown()&&view.getWindowVisibility()==View.VISIBLE&&view.hasWindowFocus()&&view.getAlpha()>0&&view.getGlobalVisibleRect(new android.graphics.Rect());}

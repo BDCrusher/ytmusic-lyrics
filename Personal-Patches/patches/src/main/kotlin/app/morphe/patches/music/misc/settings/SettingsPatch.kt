@@ -146,7 +146,7 @@ val settingsPatch = bytecodePatch(
         ),
         experimentalAppNoticePatch(
             mainActivityFingerprint = youTubeMusicApplicationInitOnCreateHook.fingerprint,
-            recommendedAppVersion = COMPATIBILITY_YOUTUBE_MUSIC.targets.first { !it.isExperimental }.version!!
+            recommendedAppVersion = (COMPATIBILITY_YOUTUBE_MUSIC.targets.firstOrNull { !it.isExperimental } ?: COMPATIBILITY_YOUTUBE_MUSIC.targets.first()).version!!
         ),
         initializationPatch(
             extensionPatch = sharedExtensionPatch

@@ -12,6 +12,7 @@ import app.morphe.patcher.InstructionLocation.MatchAfterImmediately
 import app.morphe.patcher.InstructionLocation.MatchAfterWithin
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.fieldAccess
 import app.morphe.patcher.methodCall
@@ -221,6 +222,35 @@ val enableSwipeToDismissMiniplayerPatch = bytecodePatch(
 
         // region Disable player page motion event
 
+        if(packageMetadata.versionName=="9.43.51"){
+            // 9.43 inlines the old zero-argument setter. The first event-gating
+            // boolean in the same native intercept routine is the verified flag.
+            val behavior=mutableClassDefBy("Lcom/google/android/apps/youtube/music/watchpage/ui/PlayerPageBehavior;")
+            val intercept=behavior.methods.single {it.name=="onInterceptTouchEvent"&&it.returnType=="Z"}
+            val flag=intercept.implementation!!.instructions.first {i->i.opcode==Opcode.IGET_BOOLEAN&&i.getReference<FieldReference>()?.definingClass==behavior.type}.getReference<FieldReference>()!!
+            val hook="bdcrusherSetMotionFlag"
+            val call=com.android.tools.smali.dexlib2.immutable.reference.ImmutableMethodReference(behavior.type,hook,listOf(behavior.type,"Z"),"V")
+            var writes=0
+            classDefForEach {c->for(original in c.methods){
+                val matches=original.implementation?.instructions?.withIndex()?.filter {(_,i)->i.opcode==Opcode.IPUT_BOOLEAN&&i.getReference<FieldReference>()?.toString()==flag.toString()}?.toList().orEmpty()
+                if(matches.isEmpty())continue
+                val method=mutableClassDefBy(c.type).methods.single {it.name==original.name&&it.parameterTypes==original.parameterTypes&&it.returnType==original.returnType}
+                for((at,i) in matches.reversed()){val registers=i as TwoRegisterInstruction;method.replaceInstruction(at,com.android.tools.smali.dexlib2.builder.instruction.BuilderInstruction35c(Opcode.INVOKE_STATIC,2,registers.registerB,registers.registerA,0,0,0,call));writes++}
+            }}
+            if(writes<2)throw app.morphe.patcher.patch.PatchException("Unsupported 9.43 native miniplayer motion flag writes")
+            val bridge=app.morphe.patcher.util.proxy.mutableTypes.MutableMethod(ImmutableMethod(behavior.type,hook,listOf(ImmutableMethodParameter(behavior.type,null,null),ImmutableMethodParameter("Z",null,null)),"V",AccessFlags.PUBLIC.value or AccessFlags.STATIC.value,null,null,MutableMethodImplementation(3)))
+            bridge.addInstructionsWithLabels(0,"""
+                if-eqz p1, :write
+                invoke-static {}, $EXTENSION_CLASS->enableSwipeToDismissMiniplayer()Z
+                move-result v0
+                if-nez v0, :done
+                :write
+                iput-boolean p1, p0, $flag
+                :done
+                return-void
+            """)
+            behavior.methods.add(bridge)
+        }else{
         PlayerPageBehaviorFingerprint.method.addInstructionsWithLabels(
             0,
             """
@@ -232,6 +262,8 @@ val enableSwipeToDismissMiniplayerPatch = bytecodePatch(
                 nop
             """
         )
+
+        }
 
         // endregion
 

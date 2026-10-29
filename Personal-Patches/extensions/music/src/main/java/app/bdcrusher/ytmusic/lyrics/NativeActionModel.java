@@ -80,8 +80,9 @@ final class NativeActionModel {
         byte[] patched=mode==2?ProtoWire.at(buttons.get(lyrics).data,BUTTON_PATH,0,raw->{
             ProtoWire vm=new ProtoWire(raw);ProtoWire.Field state=vm.one(14),title=vm.one(3);
             if(title==null||title.wire!=2||title.data.length>256)throw new IllegalArgumentException("Lyrics title");
-            if(state!=null&&(state.wire!=0||state.value!=3))throw new IllegalArgumentException("unrecognized Lyrics state");
-            // Absent state is the same normal enabled state used by Comments/Share/Save.
+            if(state!=null&&(state.wire!=0||state.value<0||state.value>3))throw new IllegalArgumentException("unrecognized Lyrics state wire="+state.wire+" value="+state.value);
+            // The APK's field14 verifier accepts enum values0..3. Found external lyrics
+            // use the normal absent/enabled state; unknown future states remain rejected.
             if(state!=null){vm.remove(14);vm.remove(38);changed[0]=true;}
             if(vm.one(4)==null){vm.put(ProtoWire.blob(4,ProtoWire.message(ProtoWire.blob(169495254,NativePanelWire.command()))));changed[0]=true;}
             return changed[0]?vm.bytes():raw;

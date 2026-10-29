@@ -52,7 +52,7 @@ val personalRuntimePatch=bytecodePatch {
     extendWith("extensions/lyrics-addon.mpe")
     execute {
         if(packageMetadata.packageName!="com.google.android.apps.youtube.music")throw PatchException("Personal features require YouTube Music")
-        if(packageMetadata.versionName!="9.42.52"||packageMetadata.versionCode!="94252240")throw PatchException("Personal features require original 9.42.52 / 94252240 arm64-v8a")
+        if(mapOf("9.42.52" to "94252240","9.43.51" to "94351240")[packageMetadata.versionName]!=packageMetadata.versionCode)throw PatchException("Personal Full Collection requires original 9.42.52 / 94252240 or 9.43.51 / 94351240, arm64-v8a")
         val activity=mutableClassDefBy("Lcom/google/android/apps/youtube/music/activities/MusicActivity;")
         val create=activity.methods.singleOrNull {it.name=="onCreate"&&it.parameterTypes==listOf("Landroid/os/Bundle;")}
             ?:throw PatchException("Native Music Activity lifecycle contract missing")
@@ -73,6 +73,25 @@ val personalRuntimePatch=bytecodePatch {
     }
     finalize {
         normalizePersonalLyricsAccessors()
+        val logger=mutableClassDefBy("Lapp/morphe/extension/shared/Logger;")
+        val policy="Lapp/bdcrusher/ytmusic/common/DebugLogPolicy;"
+        logger.methods.single {it.name=="logInternal"&&it.parameterTypes.size==5}.addInstructions(0,"invoke-static/range { p1 .. p3 }, $policy->stack(Lapp/morphe/extension/shared/Logger\$LogMessage;Ljava/lang/Throwable;Z)Z\nmove-result p3")
+        logger.methods.single {it.name=="appendToLogBuffer"&&it.parameterTypes==listOf("Ljava/lang/String;")}.addInstructions(0,"invoke-static { p0 }, $policy->bound(Ljava/lang/String;)Ljava/lang/String;\nmove-result-object p0")
+        val export=logger.methods.single {it.name=="getFilteredLogs"&&it.parameterTypes.isEmpty()}
+        for(i in export.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_OBJECT}.map {it.index}.reversed()){
+            val register=(export.implementation!!.instructions.elementAt(i) as com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction).registerA
+            export.addInstructions(i,"invoke-static/range { v$register .. v$register }, $policy->export(Ljava/lang/String;)Ljava/lang/String;\nmove-result-object v$register")
+        }
+        mutableClassDefByOrNull("Lapp/morphe/extension/shared/patches/components/LithoFilterPatch;")?.methods?.forEach {m->
+            for((i,instruction) in m.implementation?.instructions?.withIndex()?.toList().orEmpty().reversed()){
+                val ref=(instruction as? ReferenceInstruction)?.reference as? MethodReference?:continue
+                if(ref.definingClass==logger.type&&ref.name=="printDebug"&&ref.parameterTypes==listOf("Lapp/morphe/extension/shared/Logger\$LogMessage;")){
+                    val call=instruction as? FiveRegisterInstruction?:throw PatchException("Unsupported component logger call")
+                    m.replaceInstruction(i,BuilderInstruction35c(Opcode.INVOKE_STATIC,1,call.registerC,0,0,0,0,ImmutableMethodReference(policy,"component",ref.parameterTypes,"V")))
+                }
+            }
+        }
+
         val settings=mutableClassDefByOrNull("Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;")
             ?:throw PatchException("Select compatible Morphe Music settings/default patches for personal features")
         val init=settings.methods.single {it.name=="initialize"&&it.parameterTypes.isEmpty()}

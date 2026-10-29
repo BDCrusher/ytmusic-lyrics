@@ -73,6 +73,8 @@ fun main(args:Array<String>){
    }
    require(taskStops==2&&sessionCaptures>=1){"Missing exact Recents/session hooks: $taskStops/$sessionCaptures"}
    require(types.getValue("Lapp/bdcrusher/ytmusic/common/FrameDiagnostics;").methods.any {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.name=="addOnFrameMetricsAvailableListener"}==true}){"Android frame diagnostics missing"}
+   val log=types.getValue("Lapp/morphe/extension/shared/Logger;")
+   for((name,hook) in listOf("logInternal" to "stack","appendToLogBuffer" to "bound","getFilteredLogs" to "export"))require(log.methods.single {it.name==name}.implementation!!.instructions.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass=="Lapp/bdcrusher/ytmusic/common/DebugLogPolicy;"&&it.name==hook}==true}){"Missing existing logger integration: $name"}
    require(missing.isEmpty()){ "Unresolved owned/native contracts: "+missing.joinToString(" | ") }
    require(lifecycle==1&&oldBars==0&&dialogHooks>0){"Shared navigation ownership: lifecycle=$lifecycle old=$oldBars dialog=$dialogHooks"}
    val rootSettings=types.getValue("Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;").methods.single {it.name=="onViewCreated"}
@@ -86,11 +88,18 @@ fun main(args:Array<String>){
    require(!lyrics||personalCallbacks>0){"Selected personal lyrics has no coordinator path"}
    require((shaderCallbacks>0)==shaders){"Incorrect Shaders activation"}
    require((playlistCommands==1&&completions>0&&nativeBrowse>0&&nativeHeader==1)==playlists){"Incorrect native playlist integration: $playlistCommands/$completions/$nativeBrowse/$nativeHeader"}
-   if(shaders)for(name in listOf("nativePanelId","nativePanelView")){
+   if(shaders)for(name in listOf("nativePanelId","nativePanelView","thumbnailId")){
     val m=types.getValue("Lapp/bdcrusher/ytmusic/shaders/ShaderRuntime;").methods.single {it.name==name}
     require(m.implementation!!.instructions.none {it.opcode.toString()=="THROW"}){"Unreplaced native Shaders bridge: $name"}
    }
    if(shaders){
+    val verification=file.parentFile.resolve("verification.json").readText()
+    val expectedThumbnail=when {
+        verification.contains("da28424a01714090f392f963c2d822dff10eed9dc397b443e3e34e3691cf4dd9")->0x7f0b0948L
+        verification.contains("9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56")->0x7f0b0943L
+        else->error("Unknown exact target for Shaders resource audit")
+    }
+    require(types.getValue("Lapp/bdcrusher/ytmusic/shaders/ShaderRuntime;").methods.single {it.name=="thumbnailId"}.implementation!!.instructions.any {(it as? com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction)?.wideLiteral==expectedThumbnail}){"Wrong exact APK artwork resource bridge"}
     val cover=types.getValue("Lapp/bdcrusher/ytmusic/shaders/AnimatedCoverSurface;")
     val refs=cover.methods.flatMap {m->m.implementation?.instructions?.mapNotNull {((it as? ReferenceInstruction)?.reference as? MethodReference)}?.toList()?:emptyList()}
     require(cover.superclass=="Landroid/widget/FrameLayout;"&&refs.none {it.definingClass=="Landroid/webkit/WebView;"}){"Cover must use native decoding, without HTML playback controls"}

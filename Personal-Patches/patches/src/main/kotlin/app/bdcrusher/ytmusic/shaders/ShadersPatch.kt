@@ -19,6 +19,8 @@ import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 private const val SHADERS="Lapp/bdcrusher/ytmusic/shaders/ShaderRuntime;"
 private object ShaderMetadata:Fingerprint(filters=listOf(methodCall(definingClass="Landroid/media/session/MediaSession;",name="setMetadata",parameters=listOf("Landroid/media/MediaMetadata;"))))
 private object ShaderPlayback:Fingerprint(filters=listOf(methodCall(definingClass="Landroid/media/session/MediaSession;",name="setPlaybackState",parameters=listOf("Landroid/media/session/PlaybackState;"))))
+private object ArtworkOwner943:Fingerprint(name="<init>",filters=listOf(literal(0x7f0b0948L)))
+private object BackgroundOwner943:Fingerprint(name="<init>",filters=listOf(literal(0x7f0b093eL)))
 private object ArtworkOwner:Fingerprint(name="<init>",filters=listOf(literal(0x7f0b0943L)))
 private object BackgroundOwner:Fingerprint(name="<init>",filters=listOf(literal(0x7f0b0939L)))
 private object ShaderPanelController:Fingerprint(strings=listOf("EngagementPanelController: cannot show EngagementPanel before EngagementPanelController.init() has been called.","[EngagementPanel] Cannot show EngagementPanel before EngagementPanelController.init() has been called."))
@@ -41,21 +43,25 @@ val shadersPatch=bytecodePatch(name="Shaders",description="Animated covers and a
     category("Shaders")
     dependsOn(personalRuntimePatch,shaderAssets)
     compatibleWith(Compatibility(packageName="com.google.android.apps.youtube.music",name="YouTube Music",apkFileType=ApkFileType.APK_REQUIRED,
-        targets=listOf(AppTarget(version="9.42.52",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94252240),minSdk=26,isExperimental=true))))
+        targets=listOf(AppTarget(version="9.42.52",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94252240),minSdk=26,isExperimental=true),AppTarget(version="9.43.51",versionCodes=mapOf(SupportedAbi.ARM64_V8A to 94351240),minSdk=26,isExperimental=true))))
     execute {
+        val shader=mutableClassDefBy(SHADERS);val originalId=shader.methods.single {it.name=="thumbnailId"};shader.methods.remove(originalId)
+        val resourceId=if(packageMetadata.versionName=="9.43.51")0x7f0b0948 else 0x7f0b0943
+        val idMethod=MutableMethod(ImmutableMethod(SHADERS,"thumbnailId",emptyList(),"I",AccessFlags.PRIVATE.value or AccessFlags.STATIC.value,null,null,MutableMethodImplementation(1)))
+        idMethod.addInstructions(0,"const v0, $resourceId\nreturn v0");shader.methods.add(idMethod)
         for((fingerprint,name,type) in listOf(Triple(ShaderMetadata,"onMetadata","Landroid/media/MediaMetadata;"),Triple(ShaderPlayback,"onPlayback","Landroid/media/session/PlaybackState;"))){
             fingerprint.clearMatch();val method=fingerprint.method;val index=fingerprint.instructionMatches.last().index
             val call=method.getInstruction<FiveRegisterInstruction>(index)
             method.addInstruction(index,"invoke-static { v${call.registerD} }, $SHADERS->$name($type)V")
         }
-        ArtworkOwner.clearMatch();val owner=ArtworkOwner.classDef
+        val artworkOwner=if(packageMetadata.versionName=="9.43.51")ArtworkOwner943 else ArtworkOwner;artworkOwner.clearMatch();val owner=artworkOwner.classDef
         val artwork=owner.methods.singleOrNull {m->m.parameterTypes==listOf("Landroid/graphics/Bitmap;")&&m.returnType=="V"&&m.shaderCalls().any {it.name=="setImageBitmap"&&it.parameterTypes==listOf("Landroid/graphics/Bitmap;")}}
             ?:throw PatchException("Native player artwork callback is missing or ambiguous")
         // Observe every return, including clearing artwork, without depending on an obfuscated name.
         val exits=artwork.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_VOID}.map {it.index}
         for(index in exits.reversed()){artwork.replaceInstruction(index,"invoke-static/range { p0 .. p1 }, $SHADERS->onArtwork(Landroid/view/View;Landroid/graphics/Bitmap;)V");artwork.addInstruction(index+1,"return-void")}
-        BackgroundOwner.clearMatch();val background=BackgroundOwner.method
-        val literal=background.implementation!!.instructions.indexOfFirst {(it as? WideLiteralInstruction)?.wideLiteral==0x7f0b0939L}
+        val backgroundOwner=if(packageMetadata.versionName=="9.43.51")BackgroundOwner943 else BackgroundOwner;backgroundOwner.clearMatch();val background=backgroundOwner.method
+        val literal=background.implementation!!.instructions.indexOfFirst {(it as? WideLiteralInstruction)?.wideLiteral==(if(packageMetadata.versionName=="9.43.51")0x7f0b093eL else 0x7f0b0939L)}
         val result=(literal+1 until minOf(literal+6,background.implementation!!.instructions.count())).singleOrNull {background.getInstruction<Instruction>(it).opcode==Opcode.MOVE_RESULT_OBJECT}
             ?:throw PatchException("Native player background view contract missing")
         val register=background.getInstruction<OneRegisterInstruction>(result).registerA

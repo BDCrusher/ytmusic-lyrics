@@ -143,6 +143,7 @@ public final class LyricsManager {
 
     @NonNull
     private String currentVideoId = "";
+    private final app.bdcrusher.ytmusic.lyrics.RecordingBinding recordingBinding=new app.bdcrusher.ytmusic.lyrics.RecordingBinding();
 
     /** Metadata of the current track, kept so it can be read again as the song of an album. */
     @Nullable
@@ -314,7 +315,7 @@ public final class LyricsManager {
         return currentTrack;
     }
 
-    public String getCommittedVideoId() { return currentVideoId; }
+    public String getCommittedVideoId() { TrackInfo t=currentTrack;return t!=null&&recordingBinding.matches(currentVideoId,t.title(),t.artist())?currentVideoId:""; }
 
     @Nullable
     public String getCurrentRawTitle() {
@@ -473,6 +474,14 @@ public final class LyricsManager {
                 && !isLocalUri(mediaUri) && durationSeconds > 0) {
             SkipSegments.prefetch(videoId);
         }
+        String metadataRecording=metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);
+        if((metadataRecording==null||!metadataRecording.matches("[A-Za-z0-9_-]{11}"))&&mediaUri!=null)try{
+            String candidate=mediaUri.isHierarchical()?mediaUri.getQueryParameter("v"):null;
+            if(candidate!=null&&candidate.matches("[A-Za-z0-9_-]{11}"))metadataRecording=candidate;
+        }catch(Exception ignored){}
+        if(!recordingBinding.observe(videoId,metadataRecording,track.title(),track.artist())){
+            app.bdcrusher.ytmusic.lyrics.LyricsDiagnostics.record("Track-binding","Waiting for metadata belonging to the current recording");dropStaleLyrics();return;
+        }
         TrackInfo existingTrack = currentTrack;
         if (track.equals(existingTrack)) {
             if (pendingTrack != null && pendingTrack.track().equals(track)) {
@@ -520,6 +529,7 @@ public final class LyricsManager {
         if (videoId.isEmpty() || videoId.equals(loadedForVideoId)) {
             return;
         }
+        if(!recordingBinding.matches(videoId,currentTrack.title(),currentTrack.artist()))return;
         currentVideoId = videoId;
         load(currentTrack, true);
     }
@@ -558,6 +568,7 @@ public final class LyricsManager {
         if (track == null) {
             return;
         }
+        if(!recordingBinding.matches(target,track.title(),track.artist()))return;
         commitTrackChange(track, rawTitle, rawArtist, mediaUri, target, true);
     }
 

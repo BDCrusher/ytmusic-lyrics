@@ -44,6 +44,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private volatile int generation;
     private String identity="";
     private String lastSettings="",lastInsets="";
+    private final LyricsFrameRate frameRate=new LyricsFrameRate();
     private Boolean debug;private int rendererRecoveries;
     private int insetLeft,insetRight,insetBottom;
     private TrackInfo track;
@@ -68,14 +69,15 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
                 JSONObject sample=new JSONObject().put("generation",generation).put("sampledAt",System.currentTimeMillis())
                     .put("position",clock[0]-Settings.LYRICS_OFFSET_MS.get()-manager.getTemporaryOffsetMs()).put("playing",clock[1]!=0)
                     .put("rate",Float.intBitsToFloat((int)clock[2])).put("revision",clock[3]).put("visible",isShown()&&getWindowVisibility()==View.VISIBLE&&NativeLyricsHost.isOpen());
+                frameRate.update(web,clock[1]!=0&&sample.optBoolean("visible")&&!LyricsConfig.preferences(getContext()).getBoolean("reducedMotion",false),app.morphe.extension.shared.settings.SharedYouTubeSettings.APP_REFRESH_RATE.get());
                 call("state",sample.toString());
             }
         }catch(Exception ex){Logger.printException(()->"BDCrusher lyric clock",ex);}
         handler.postDelayed(this,isShown()&&getWindowVisibility()==View.VISIBLE?250:1000);
     }};
     public BetterLyricsPanelView(Context context){super(context);setVisibility(View.INVISIBLE);}
-    @Override protected void onWindowVisibilityChanged(int visibility){super.onWindowVisibilityChanged(visibility);call("visible",String.valueOf(visibility==View.VISIBLE&&isShown()));}
-    @Override protected void onVisibilityChanged(View changed,int visibility){super.onVisibilityChanged(changed,visibility);call("visible",String.valueOf(isShown()&&getWindowVisibility()==View.VISIBLE));}
+    @Override protected void onWindowVisibilityChanged(int visibility){super.onWindowVisibilityChanged(visibility);if(visibility!=View.VISIBLE&&web!=null)frameRate.release(web);call("visible",String.valueOf(visibility==View.VISIBLE&&isShown()));}
+    @Override protected void onVisibilityChanged(View changed,int visibility){super.onVisibilityChanged(changed,visibility);if(visibility!=View.VISIBLE&&web!=null)frameRate.release(web);call("visible",String.valueOf(isShown()&&getWindowVisibility()==View.VISIBLE));}
     @Override protected void onAttachedToWindow(){
         super.onAttachedToWindow();attached=true;iconsLoading=false;createWebView();getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
         enrichmentNetwork=new LyricsNetwork();enrichmentExecutor=java.util.concurrent.Executors.newSingleThreadExecutor();
@@ -85,11 +87,11 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     @Override protected void onDetachedFromWindow(){
         if(getViewTreeObserver().isAlive())getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener);
         restoreNativeContent();
-        attached=false;handler.removeCallbacksAndMessages(null);
+        attached=false;if(web!=null)frameRate.release(web);handler.removeCallbacksAndMessages(null);
         LyricsConfig.preferences(getContext()).unregisterOnSharedPreferenceChangeListener(listener);
         LyricsManager.getInstance().removeListener(this);if(catalogSink!=null){LyricsRepository.unsubscribe(catalogSink);catalogSink=null;}
         if(enrichmentNetwork!=null)enrichmentNetwork.close();if(enrichmentExecutor!=null)enrichmentExecutor.shutdownNow();
-        if(web!=null){web.removeJavascriptInterface("BDNative");web.stopLoading();removeView(web);web.destroy();web=null;}
+        if(web!=null){frameRate.release(web);web.removeJavascriptInterface("BDNative");web.stopLoading();removeView(web);web.destroy();web=null;}
         ready=false;identity="";lastSettings="";lastInsets="";pending.clear();super.onDetachedFromWindow();
     }
     private void createWebView(){
@@ -119,7 +121,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
                     return new WebResourceResponse("text/plain","UTF-8",403,"Blocked",java.util.Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));
                 }
                 @Override public boolean onRenderProcessGone(WebView view,RenderProcessGoneDetail detail){
-                    LyricsDiagnostics.record("Renderer","WebView render process exited; crashed="+detail.didCrash());ready=false;hasDisplay=false;restoreNativeContent();setVisibility(View.INVISIBLE);removeView(view);view.destroy();web=null;identity="";if(++rendererRecoveries<=2)handler.postDelayed(()->{if(attached&&NativeLyricsHost.isOpen()&&web==null)createWebView();},500);return true;
+                    LyricsDiagnostics.record("Renderer","WebView render process exited; crashed="+detail.didCrash());ready=false;hasDisplay=false;restoreNativeContent();setVisibility(View.INVISIBLE);frameRate.release(view);removeView(view);view.destroy();web=null;identity="";if(++rendererRecoveries<=2)handler.postDelayed(()->{if(attached&&NativeLyricsHost.isOpen()&&web==null)createWebView();},500);return true;
                 }
             });
             addView(web,new FrameLayout.LayoutParams(-1,-1));web.loadUrl(ROOT+"index.html");
@@ -250,7 +252,6 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             });
         }
         @JavascriptInterface public void configure(){handler.post(()->LyricsConfig.show(getContext()));}
-        @JavascriptInterface public void diagnostics(){handler.post(()->LyricsDiagnostics.show(getContext()));}
         @JavascriptInterface public void connect(){handler.post(()->ServiceConnection.show(getContext()));}
         @JavascriptInterface public void toggle(String kind){handler.post(()->{String key="translate".equals(kind)?"translation":"romanize".equals(kind)?"romanization":null;if(key!=null){SharedPreferences p=LyricsConfig.preferences(getContext());p.edit().putBoolean(key,!p.getBoolean(key,false)).apply();}});}
         @JavascriptInterface public void enrich(int id,String source,String body){

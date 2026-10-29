@@ -23,6 +23,7 @@ public final class RendererPlayback {
         long next=state.getPosition()+(nextPlaying?(long)((now-stamp)*speed):0);
         long predicted=read(now);
         if(!initialized||!id.equals(video)||nextPlaying!=playing||speed!=rate||Math.abs(next-predicted)>750||!nextPlaying&&Math.abs(next-predicted)>30)revision++;
+        if(initialized&&(!id.equals(video)||Math.abs(next-predicted)>750))LyricsDiagnostics.record("Clock-correction","recordingChanged="+!id.equals(video)+" driftMs="+(next-predicted)+" revision="+revision);
         video=id;position=next;at=now;lastSample=stamp;playing=nextPlaying;rate=speed;initialized=true;
     }
     private static long read(long now){return position+(playing?(long)(Math.max(0,now-at)*rate):0);}
@@ -31,6 +32,6 @@ public final class RendererPlayback {
         return new long[]{read(SystemClock.elapsedRealtime()),playing?1:0,Float.floatToIntBits(rate),revision};
     }
     static synchronized void seek(String id,long target){
-        if(initialized&&video.equals(id)){position=target;at=SystemClock.elapsedRealtime();lastSample=at;revision++;}
+        if(initialized&&video.equals(id)){LyricsDiagnostics.record("Seek","positionMs="+target+" revision="+(revision+1));position=target;at=SystemClock.elapsedRealtime();lastSample=at;revision++;}
     }
 }
