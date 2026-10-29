@@ -9,14 +9,15 @@ import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.FrameLayout;
-import java.io.File;
+import app.bdcrusher.ytmusic.common.FeatureDiagnostics;
 
 /** One native, silent looping decoder. State/layout updates never reload the same file. */
 final class AnimatedCoverSurface extends FrameLayout implements TextureView.SurfaceTextureListener {
     private final TextureView texture;
     private MediaPlayer player;
     private Surface output;
-    private File file;
+    private String file;
+    private long sampledAt;
     private String loadedPath = "";
     private boolean visible, playing, reduced, prepared, rendered, closed;
     private int videoWidth, videoHeight;
@@ -33,13 +34,13 @@ final class AnimatedCoverSurface extends FrameLayout implements TextureView.Surf
         addView(texture, new LayoutParams(-1, -1));
     }
 
-    void update(File next, boolean shown, boolean active, boolean reduceMotion) {
+    void update(String next, boolean shown, boolean active, boolean reduceMotion) {
         if (closed) return;
         file = next;
         visible = shown;
         playing = active;
         reduced = reduceMotion;
-        String path = next == null ? "" : next.getAbsolutePath();
+        String path = next == null ? "" : next;
         if (!path.equals(loadedPath)) releasePlayer();
         if (!visible) {
             pause();
@@ -53,7 +54,7 @@ final class AnimatedCoverSurface extends FrameLayout implements TextureView.Surf
         if (closed || player != null || file == null || !visible || !texture.isAvailable()) return;
         MediaPlayer next = new MediaPlayer();
         player = next;
-        loadedPath = file.getAbsolutePath();
+        loadedPath = file;
         try {
             output = new Surface(texture.getSurfaceTexture());
             next.setSurface(output);
@@ -65,7 +66,7 @@ final class AnimatedCoverSurface extends FrameLayout implements TextureView.Surf
             });
             next.setOnPreparedListener(p -> {
                 if (p != player || closed) return;
-                prepared = true;
+                prepared = true;FeatureDiagnostics.event("Cover-decoder","Stream prepared; one muted decoder");
                 p.setVolume(0, 0);
                 p.setLooping(true);
                 syncPlayback();
@@ -77,15 +78,16 @@ final class AnimatedCoverSurface extends FrameLayout implements TextureView.Surf
             next.setOnErrorListener((p, what, extra) -> {
                 if (p == player) {
                     releasePlayer();
-                    ShaderRuntime.mediaFailed();
+                    FeatureDiagnostics.record("Cover-decoder","Native error what="+what+" extra="+extra+"; still artwork retained");ShaderRuntime.mediaFailed();
                 }
                 return true; // Native still artwork stays visible; no platform error dialog.
             });
-            next.setDataSource(loadedPath);
+            if(!ArtworkRepository.validMedia(loadedPath))throw new java.io.IOException("Unsupported artwork URL");
+            next.setDataSource(getContext(),android.net.Uri.parse(loadedPath),java.util.Map.of("Cache-Control","no-store"));
             next.prepareAsync();
         } catch (Exception unavailable) {
             releasePlayer();
-            ShaderRuntime.mediaFailed();
+            FeatureDiagnostics.record("Cover-decoder","Native playback failed; still artwork retained");ShaderRuntime.mediaFailed();
         }
     }
 
@@ -101,11 +103,15 @@ final class AnimatedCoverSurface extends FrameLayout implements TextureView.Surf
 
     private void firstFrame() {
         if (closed || !prepared || rendered) return;
-        rendered = true;
+        rendered = true;FeatureDiagnostics.event("Cover-decoder","First decoded animation frame visible");
         texture.setAlpha(1);
+        sampleFrame(true);
         syncPlayback();
     }
 
+    private void sampleFrame(boolean first){
+        long now=android.os.SystemClock.elapsedRealtime();if(!visible||!rendered||!ShaderRuntime.wantsAnimatedFrame()||!first&&(reduced||!playing||now-sampledAt<250))return;sampledAt=now;try{long began=android.os.SystemClock.elapsedRealtime();android.graphics.Bitmap bitmap=texture.getBitmap(208,117);long cost=android.os.SystemClock.elapsedRealtime()-began;if(cost>8)FeatureDiagnostics.event("Cover-readback","small-frame readbackMs="+cost);if(bitmap!=null)ShaderRuntime.animatedFrame(bitmap);}catch(Exception e){FeatureDiagnostics.event("Cover-frame","Frame sampling unavailable");}
+    }
     private void pause() {
         if (prepared && player != null) try {
             if (player.isPlaying()) player.pause();
@@ -154,5 +160,5 @@ final class AnimatedCoverSurface extends FrameLayout implements TextureView.Surf
     @Override public void onSurfaceTextureAvailable(SurfaceTexture value, int w, int h) { prepare(); }
     @Override public void onSurfaceTextureSizeChanged(SurfaceTexture value, int w, int h) { fit(); }
     @Override public boolean onSurfaceTextureDestroyed(SurfaceTexture value) { releasePlayer(); return true; }
-    @Override public void onSurfaceTextureUpdated(SurfaceTexture value) { if (!rendered) firstFrame(); }
+    @Override public void onSurfaceTextureUpdated(SurfaceTexture value) { if (!rendered) firstFrame();else sampleFrame(false); }
 }

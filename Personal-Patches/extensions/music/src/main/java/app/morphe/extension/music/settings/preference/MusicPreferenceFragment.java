@@ -39,7 +39,6 @@ public class MusicPreferenceFragment extends ToolbarPreferenceFragment {
 
         try {
             preferenceScreen = getPreferenceScreen();
-            app.bdcrusher.ytmusic.lyrics.LyricsSettingsPage.install(this);
             sortPreferenceGroups(preferenceScreen);
             setPreferenceScreenToolbar(preferenceScreen);
 

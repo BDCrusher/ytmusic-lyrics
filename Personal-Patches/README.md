@@ -1,3 +1,31 @@
+# Verified candidate - 0.4.0-beta.1
+
+Full Collection only with optional Shaders and Playlist downloads. The exact MPP SHA256 is `28a30d73090e6e6fbbc4cfcad40bf1c1f4410a219400e95c88e97b7b09ec0456`. Build/JVM/lint, nine catalog/application/invalid-selection cases, seven compiled feature audits, four native Lyrics audits, 226 source-backed checks and current browser fixtures pass. Phone acceptance remains unverified. See Personal-Patches/dist/0.4.0-beta.1/verification.json, COMPATIBILITY.md and Research/IMPLEMENTATION-0.4.0-BETA.1-2026-10-28.md. Publication is pending until the new Toolkit receipt confirms it. All work stays in YT-Music; no global tools are copied or device/MuMu/sign/install operations performed.
+
+## Earlier records
+
+# Candidate - 0.4.0-beta.1 (Full Collection only)
+
+The user authorized implementation of the October 28 phone-feedback document and explicitly chose Full Collection only. Add-on selection is retired in the new catalog; Shaders and Playlist downloads remain optional. Recents dismissal is the swipe-from-open-apps action, not Home/Back. Current work adds UI/navigation fixes, metadata-only artwork streaming/records, Shaders readiness/poster fallback and expanded opt-in diagnostics under Morphe Debugging. Read Research/IMPLEMENTATION-0.4.0-BETA.1-2026-10-28.md. Final exact-byte matrix, audits and publication are pending; do not claim phone acceptance. All work stays in YT-Music. No MuMu/device/sign/install operations; no shared/global edits or copied Toolkit tools.
+
+## Earlier records
+
+# Published - 0.3.0-beta.2
+
+[0.3.0-beta.2](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.3.0-beta.2) is published. Toolkit verified all 11 public assets, 7493 exact source files and the dev feed. Source `a4375a1229aea422a5a9eb62ed8dca3c12522906`; feed `66456c4465c7abff2f404c928e9a641189cc9724`. MPP SHA256 `0e989f6f66d2c0995361c4122bb4a7e347501e041483552c7a672dd65807f89c`. Exact receipt: `Verification/publication/v0.3.0-beta.2/publication-result.json`. Shared tools ran in place; private history was not pushed.
+
+Fixes: one native silent looping cover decoder, complete-frame fitting and atomic fragmented-MP4 timeline finalization, including local repair of existing cache entries. Backgrounds use still artwork/first-frame fallback with actual Kawarp, no competing HTML video decoders and a 960-pixel cap. Native settings root is opaque; the verified Lyrics body extends behind transparent navigation with one safe inset. Collapsed opener is at the bottom; expanded collapse stays above controls. The compact status popup stays above the dock. Braccato remains the only text-motion engine.
+
+Build/JVM/lint, 23 catalog/application/conflict cases, 16 compiled feature audits, 12 native Lyrics audits and 220 actual-source checks pass (86 fresh, 134 inherited after exact source hashes match). Current browser 16-format/reference-motion/dock/Kawarp/high-DPI/fallback checks pass. Ordinary artwork verification/lookup succeeded for MAMMAMIA. Its reference-normalized service frames play and loop on desktop. Production Android muxing/hardware playback, recording-free smoothness and actual Samsung navigation remain unverified. Earlier raw fragmented-file loop failures are retained. No universal zero-stutter claim; prior combined-source challenge timeout remains a limitation.
+
+Refresh the existing Morphe source with Pre-release patches and Experimental app versions, then repatch original 9.42.52 / 94252240 arm64-v8a. Four categories and edition rules remain: Full alone OR every Full patch OFF plus Lyrics-only with official 1.48.0 and official Third-party lyrics OFF. Optional Shaders/downloads allow official lyrics without personal lyrics; Download playlist requires Downloads. Settings: Morphe > Lyrics / Shaders / Playlist downloads. Existing private preferences/credentials/lyrics remain.
+
+Read `Research/PLAYBACK-UI-0.3.0-BETA.2-2026-10-28.md`, `Personal-Patches/dist/0.3.0-beta.2/verification.json` and COMPATIBILITY.md. Retained generated compatibility scratch: `Verification/scratch/revision33-final-*` (23 cases), alongside prior revision32 scratch. Reports are small; unsigned inspection APKs/decoded scratch are regenerable from the retained exact inputs. No cleanup was authorized. Never rerun completed staging/publication generators, overwrite releases or push private source history.
+
+No device, MuMu, signing, installation/uninstallation or real playlist download operations occurred. Only the isolated task browser and loopback fixture server were opened; both are closed. Native graphics/panel/video transitions, Samsung three-button/gesture/keyboard/dialog/orientation behavior and real playlist/offline playback remain phone acceptance checks.
+
+## Earlier records
+
 # Verified candidate - 0.3.0-beta.2
 
 Native cover playback/timeline, opaque settings, Lyrics viewport/navigation insets, bottom opener and compact status popup are implemented. Build/JVM/lint, 23 compatibility cases, 16 feature audits, 12 native Lyrics audits and 220 source-backed checks pass (86 fresh, 134 inherited with exact hashes). Current browser provider/reference-motion/dock/Kawarp/high-DPI/fallback checks pass. The MAMMAMIA reference-normalized desktop clip is supplementary; production Android muxing/hardware playback and recording-free phone acceptance remain unverified. Read Research/PLAYBACK-UI-0.3.0-BETA.2-2026-10-28.md and staged verification.json. Publication is complete only when Verification/publication/v0.3.0-beta.2/publication-result.json confirms it. No MuMu/device/sign/install operations; Toolkit runs in place and private history is never pushed.

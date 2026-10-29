@@ -8916,6 +8916,51 @@
     }
   };
 
+  // web/src/render-diagnostics.js
+  var RenderDiagnostics = class {
+    constructor(log) {
+      this.log = log;
+      this.enabled = false;
+      this.last = 0;
+      this.index = -1;
+      this.lastSlow = 0;
+      this.schedule = [];
+    }
+    enable(value) {
+      if (this.enabled === value) return;
+      this.enabled = value;
+      this.last = 0;
+      this.log("Capture", value ? "Renderer timing enabled" : "Renderer timing disabled");
+    }
+    lines(lines) {
+      this.schedule = lines.map((line, index) => ({ time: line.time, index })).filter((x) => Number.isFinite(x.time)).sort((a, b) => a.time - b.time);
+      this.index = -1;
+    }
+    sample(now, position, cpu, playing) {
+      if (!this.enabled || !playing) {
+        this.last = 0;
+        return;
+      }
+      const gap = this.last ? now - this.last : 0;
+      this.last = now;
+      let lo = 0, hi = this.schedule.length;
+      while (lo < hi) {
+        const mid = lo + hi >>> 1;
+        if (this.schedule[mid].time <= position) lo = mid + 1;
+        else hi = mid;
+      }
+      const index = lo ? this.schedule[lo - 1].index : -1;
+      if (index !== this.index) {
+        this.log("Line-transition", `line=${index} playbackMs=${Math.round(position * 1e3)} callbackGapMs=${gap.toFixed(1)} tickCpuMs=${cpu.toFixed(2)}`);
+        this.index = index;
+      }
+      if ((gap > 32 || cpu > 12) && now - this.lastSlow >= 250) {
+        this.lastSlow = now;
+        this.log("Renderer-stall", `line=${index} callbackGapMs=${gap.toFixed(1)} tickCpuMs=${cpu.toFixed(2)}`);
+      }
+    }
+  };
+
   // web/src/main.js
   var PRIORITY = [
     "bLyrics-richsynced",
@@ -8959,6 +9004,7 @@
   var currentResult;
   var clock = new PlaybackClock();
   var frameBudget = new FrameBudget();
+  var diagnostics = new RenderDiagnostics((source, message) => native?.diagnostic(generation, source, message));
   var sourceHealth = { pending: 1, failed: false, connectionNeeded: false };
   var parsing = 0;
   var lookupFinished = false;
@@ -9013,6 +9059,7 @@
   svgInto($("next"), arrow(1));
   for (const [id, path] of [["earlier", "M5 12h14"], ["later", "M5 12h14M12 5v14"]]) svgInto($(id), `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="${path}"/></svg>`);
   document.body.appendChild($("source-menu"));
+  $("dock").prepend($("resume"));
   var menuCloseTimer;
   var menuEpoch = 0;
   function closeSources() {
@@ -9081,7 +9128,9 @@
     if (menu.classList.contains("open")) positionSources();
   }
   function setCollapsed(value, persist = false) {
-    collapsed = value === true;
+    value = value === true;
+    if (collapsed === value && dockSignature) return;
+    collapsed = value;
     $("dock").classList.toggle("collapsed", collapsed);
     $("collapse").setAttribute("aria-expanded", String(!collapsed));
     $("collapse").setAttribute("aria-label", collapsed ? "Expand lyrics controls" : "Collapse lyrics controls");
@@ -9097,7 +9146,7 @@
     if (height === lastDockClearance) return;
     lastDockClearance = height;
     document.documentElement.style.setProperty("--dock-clearance", `${height}px`);
-    renderer.relayout();
+    renderer.relayout(false);
   }
   var dockResize = new ResizeObserver(() => {
     if ($("source-menu").classList.contains("open")) positionSources();
@@ -9212,6 +9261,7 @@
     currentResult = result;
     updateDock();
     renderer.setLyrics(result.lyrics, { language: result.language, songwriters: result.songwriters });
+    diagnostics.lines(renderer.lines);
     decorate();
     $("status").textContent = result.source;
     $("status").title = key;
@@ -9264,6 +9314,7 @@
     const timing = frameBudget.sample(now, clock.playing);
     if (timing) native?.diagnostic(generation, "Frame-timing", timing);
     const position = clock.read(now);
+    const before = diagnostics.enabled ? performance.now() : 0;
     renderer.tick(position / 1e3, {
       eventCreationTime: Date.now(),
       isPlaying: clock.playing,
@@ -9271,12 +9322,16 @@
       passiveScrollEnabled: settings.passive,
       smoothScroll: !settings.reducedMotion
     });
+    diagnostics.sample(now, position / 1e3, diagnostics.enabled ? performance.now() - before : 0, clock.playing);
     raf = requestAnimationFrame(renderFrame);
   }
   function startClock() {
     if (!raf && active && !document.hidden) raf = requestAnimationFrame(renderFrame);
   }
   window.BDC = {
+    debug(value) {
+      diagnostics.enable(value === true);
+    },
     track(track) {
       reportedMismatches.clear();
       autoPreferred = "";
@@ -9478,10 +9533,6 @@
     $("source-health").setAttribute("aria-expanded", "false");
   }
   function positionStatus() {
-    const box = $("connection"), dock = $("dock").getBoundingClientRect(), anchor = $("source-health").getBoundingClientRect();
-    box.style.maxHeight = `${Math.max(48, Math.min(116, dock.top - 16))}px`;
-    box.style.left = `${Math.max(12, Math.min(anchor.left + anchor.width / 2 - box.offsetWidth / 2, innerWidth - box.offsetWidth - 12))}px`;
-    box.style.bottom = `${innerHeight - dock.top + 8}px`;
   }
   $("source-health").onclick = () => {
     const open = $("connection").hidden;
@@ -9489,6 +9540,7 @@
     if (!open) return;
     closeSources();
     $("connection").hidden = false;
+    if (!settings.reducedMotion) $("connection").animate([{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }], { duration: 160 });
     $("source-health").setAttribute("aria-expanded", "true");
     positionStatus();
     statusCloseTimer = setTimeout(() => {
@@ -9539,11 +9591,6 @@
   $("copy").onclick = () => native?.copy(generation, (currentResult?.lyrics || []).map((line) => line.words).join("\n").slice(0, 1e5));
   $("refresh").addEventListener("click", () => native?.refresh());
   $("connect").addEventListener("click", () => native?.connect());
-  $("configure").addEventListener("click", () => {
-    closeStatus();
-    if (native?.diagnostics) native.diagnostics();
-    else native?.configure();
-  });
   $("resume").addEventListener("click", resumeFollow);
   for (const kind of ["translate", "romanize"]) $(kind).addEventListener("click", () => native?.toggle(kind));
   $("earlier").addEventListener("click", () => native?.offset(-100));

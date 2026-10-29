@@ -24,6 +24,7 @@ final class ShaderSurface extends WebView {
     static final java.util.concurrent.ExecutorService IMAGES=java.util.concurrent.Executors.newSingleThreadExecutor();
     private JSONObject state,settings;
     private String lastState="",lastSettings="";
+    private boolean frameInput;
     ShaderSurface(Context c){
         super(c);setBackgroundColor(Color.TRANSPARENT);setFocusable(false);setClickable(false);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
         getSettings().setJavaScriptEnabled(true);getSettings().setAllowFileAccess(false);getSettings().setAllowContentAccess(false);getSettings().setMediaPlaybackRequiresUserGesture(false);
@@ -53,9 +54,9 @@ final class ShaderSurface extends WebView {
     @Override @SuppressLint("ClickableViewAccessibility") public boolean onTouchEvent(MotionEvent event){return false;} // Deliberately non-interactive; native gestures pass through.
     void clearImage(){imageRequest++;image=null;lastBitmap=null;imageRevision++;}
     String imageUrl(){return image==null?"":ROOT+"art.jpg?g="+ShaderRuntime.generation()+"&r="+imageRevision;}
-    void image(Bitmap bitmap,int expected){if(bitmap==null||bitmap.isRecycled())return;int revision=bitmap.getGenerationId();if(bitmap==lastBitmap&&revision==lastBitmapRevision&&expected==lastBitmapTrack)return;lastBitmap=bitmap;lastBitmapRevision=revision;lastBitmapTrack=expected;int request=++imageRequest;IMAGES.execute(()->{try{if(closed||request!=imageRequest||bitmap==null||bitmap.isRecycled())return;int width=bitmap.getWidth(),height=bitmap.getHeight();float scale=Math.min(1,512f/Math.max(width,height));Bitmap small=scale<1?Bitmap.createScaledBitmap(bitmap,Math.max(1,Math.round(width*scale)),Math.max(1,Math.round(height*scale)),true):bitmap;ByteArrayOutputStream output=new ByteArrayOutputStream();small.compress(Bitmap.CompressFormat.JPEG,85,output);byte[] data=output.toByteArray();if(small!=bitmap)small.recycle();post(()->{if(closed||request!=imageRequest||expected!=ShaderRuntime.generation())return;image=data;imageRevision++;ShaderRuntime.refresh();});}catch(Exception ignored){}});}
+    void image(Bitmap bitmap,int expected){frameInput=bitmap!=null&&bitmap.getWidth()==208&&bitmap.getHeight()==117;if(bitmap==null||bitmap.isRecycled())return;int revision=bitmap.getGenerationId();if(bitmap==lastBitmap&&revision==lastBitmapRevision&&expected==lastBitmapTrack)return;lastBitmap=bitmap;lastBitmapRevision=revision;lastBitmapTrack=expected;int request=++imageRequest;IMAGES.execute(()->{try{if(closed||request!=imageRequest||bitmap==null||bitmap.isRecycled())return;int width=bitmap.getWidth(),height=bitmap.getHeight();float scale=Math.min(1,512f/Math.max(width,height));Bitmap small=scale<1?Bitmap.createScaledBitmap(bitmap,Math.max(1,Math.round(width*scale)),Math.max(1,Math.round(height*scale)),true):bitmap;ByteArrayOutputStream output=new ByteArrayOutputStream();small.compress(Bitmap.CompressFormat.JPEG,85,output);byte[] data=output.toByteArray();if(small!=bitmap)small.recycle();post(()->{if(closed||request!=imageRequest||expected!=ShaderRuntime.generation())return;image=data;imageRevision++;ShaderRuntime.refresh();});}catch(Exception ignored){}});}
     void update(JSONObject value,JSONObject configuration,File file){
-        if(closed)return;state=value;settings=configuration;media=file;
+        if(closed)return;state=value;try{state.put("frame",frameInput);}catch(Exception ignored){}settings=configuration;media=file;
         if(!ready)return;String next=value.toString(),options=configuration.toString();
         if(!options.equals(lastSettings)){lastSettings=options;evaluateJavascript("BDS.settings("+options+")",null);}
         if(!next.equals(lastState)){lastState=next;evaluateJavascript("BDS.state("+next+")",null);}
@@ -65,7 +66,7 @@ final class ShaderSurface extends WebView {
     private final class Bridge {
         @JavascriptInterface public void ready(){post(()->{if(closed)return;ready=true;lastState="";lastSettings="";if(state!=null)update(state,settings,media);ArtworkToken.ensure(getContext());});}
         @JavascriptInterface public void proof(int id,String solution){ArtworkToken.proof(getContext(),id,solution);}
-        @JavascriptInterface public void failure(String message){if(message!=null&&message.length()<=160)Logger.printDebug(()->"Personal shaders: "+message);}
+        @JavascriptInterface public void failure(String message){if(message!=null&&message.length()<=160)app.bdcrusher.ytmusic.common.FeatureDiagnostics.record("Shaders",message);}
         @JavascriptInterface public void mediaReady(int expected){post(()->{if(!closed&&expected==ShaderRuntime.generation())ShaderRuntime.refresh();});}
         @JavascriptInterface public void mediaError(int expected){post(()->{if(!closed&&expected==ShaderRuntime.generation())ShaderRuntime.mediaFailed();});}
     }

@@ -6,6 +6,7 @@ import { stringSimilarity } from './lyric-parse-utils.ts';
 import { catalog, controls } from './catalog.js';
 import { PlaybackClock } from './playback-clock.js';
 import { FrameBudget } from './frame-budget.js';
+import { RenderDiagnostics } from './render-diagnostics.js';
 
 export const PRIORITY = ['bLyrics-richsynced','unison-richsynced','binimum-richsynced',
   'unison-wordsynced','portato-richsynced','musixmatch-richsync','bLyrics-synced',
@@ -19,6 +20,7 @@ let settings = {fontSize:28, letterWave:true, wordSync:true, background:true,
 let generation = -1, params, selected = '', pinned = '', currentResult;
 const clock = new PlaybackClock();
 const frameBudget = new FrameBudget();
+const diagnostics=new RenderDiagnostics((source,message)=>native?.diagnostic(generation,source,message));
 let sourceHealth={pending:1,failed:false,connectionNeeded:false},parsing=0,lookupFinished=false,emptyReported=false,lastHealthLabel='';
 const resultSignatures=new WeakMap();
 let seenPayloads=new Set(),seenPayloadBytes=0;
@@ -50,6 +52,7 @@ svgInto($('previous'),arrow(-1));svgInto($('next'),arrow(1));
 for(const [id,path] of [['earlier','M5 12h14'],['later','M5 12h14M12 5v14']])svgInto($(id),`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="${path}"/></svg>`);
 // Like the extension, the flyout lives in body: a blurred pill is a backdrop root.
 document.body.appendChild($('source-menu'));
+$('dock').prepend($('resume'));
 let menuCloseTimer,menuEpoch=0;
 function closeSources(){const menu=$('source-menu');menuEpoch++;clearTimeout(menuCloseTimer);menu.classList.remove('open');menu.inert=true;$('source-label').setAttribute('aria-expanded','false');menuCloseTimer=setTimeout(()=>{menu.hidden=true;},settings.reducedMotion?0:160);}
 function positionSources(){const menu=$('source-menu'),rect=$('source-label').getBoundingClientRect();menu.style.maxHeight=`${Math.max(48,Math.min(240,rect.top-16))}px`;menu.style.left=`${Math.max(8,Math.min(rect.left-4,innerWidth-menu.offsetWidth-8))}px`;menu.style.bottom=`${innerHeight-rect.top+8}px`;}
@@ -69,13 +72,13 @@ function updateDock(){
     svgInto(image,icon(key));image.style.color=catalog.colors[p.type];label.textContent=p.name;button.append(image,label);button.setAttribute('role','menuitemradio');button.setAttribute('aria-checked',String(key===selected));button.setAttribute('aria-label',`${p.name}, ${p.type}`);button.classList.toggle('selected',key===selected);button.onclick=()=>selectSource(key);menu.append(button);}
   if(menu.classList.contains('open'))positionSources();
 }
-function setCollapsed(value,persist=false){collapsed=value===true;$('dock').classList.toggle('collapsed',collapsed);$('collapse').setAttribute('aria-expanded',String(!collapsed));$('collapse').setAttribute('aria-label',collapsed?'Expand lyrics controls':'Collapse lyrics controls');$('dock-content').inert=collapsed;closeSources();if(persist)native?.dock(collapsed);}
+function setCollapsed(value,persist=false){value=value===true;if(collapsed===value&&dockSignature)return;collapsed=value;$('dock').classList.toggle('collapsed',collapsed);$('collapse').setAttribute('aria-expanded',String(!collapsed));$('collapse').setAttribute('aria-label',collapsed?'Expand lyrics controls':'Collapse lyrics controls');$('dock-content').inert=collapsed;closeSources();if(persist)native?.dock(collapsed);}
 let dockLayoutTimer,lastDockClearance=-1;
 function settleDockLayout(){
   clearTimeout(dockLayoutTimer);
   const height=Math.round(innerHeight-$('dock').getBoundingClientRect().top+12);
   if(height===lastDockClearance)return;
-  lastDockClearance=height;document.documentElement.style.setProperty('--dock-clearance',`${height}px`);renderer.relayout();
+  lastDockClearance=height;document.documentElement.style.setProperty('--dock-clearance',`${height}px`);renderer.relayout(false);
 }
 const dockResize=new ResizeObserver(()=>{
   if($('source-menu').classList.contains('open'))positionSources();
@@ -170,6 +173,7 @@ function choose(force=false) {
   updateDock();
   renderer.setLyrics(result.lyrics,{language:result.language,songwriters:result.songwriters});
   
+  diagnostics.lines(renderer.lines);
   decorate();
   $('status').textContent=result.source;
   $('status').title=key;
@@ -226,14 +230,16 @@ function renderFrame(now) {
   // Android delivers asynchronous snapshots, not a synchronous HTML media element.
   // Extrapolate once at the supplied rate on a monotonic clock; hand Braccato "now".
   const position=clock.read(now);
+  const before=diagnostics.enabled?performance.now():0;
   renderer.tick(position/1000,{eventCreationTime:Date.now(),isPlaying:clock.playing,
     playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!settings.reducedMotion});
-  
+  diagnostics.sample(now,position/1000,diagnostics.enabled?performance.now()-before:0,clock.playing);
   raf=requestAnimationFrame(renderFrame);
 }
 function startClock(){if(!raf&&active&&!document.hidden)raf=requestAnimationFrame(renderFrame);}
 
 window.BDC = {
+  debug(value){diagnostics.enable(value===true);},
   track(track) {
     
     reportedMismatches.clear();autoPreferred='';seenPayloads=new Set();seenPayloadBytes=0;clock.reset();frameBudget.reset(performance.now());sourceHealth={pending:1,failed:false,connectionNeeded:false};parsing=0;lookupFinished=false;emptyReported=false;$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');
@@ -347,13 +353,8 @@ window.BDC = {
 };
 let statusCloseTimer;
 function closeStatus(){clearTimeout(statusCloseTimer);$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');}
-function positionStatus(){
- const box=$('connection'),dock=$('dock').getBoundingClientRect(),anchor=$('source-health').getBoundingClientRect();
- box.style.maxHeight=`${Math.max(48,Math.min(116,dock.top-16))}px`;
- box.style.left=`${Math.max(12,Math.min(anchor.left+anchor.width/2-box.offsetWidth/2,innerWidth-box.offsetWidth-12))}px`;
- box.style.bottom=`${innerHeight-dock.top+8}px`;
-}
-$('source-health').onclick=()=>{const open=$('connection').hidden;closeStatus();if(!open)return;closeSources();$('connection').hidden=false;$('source-health').setAttribute('aria-expanded','true');positionStatus();statusCloseTimer=setTimeout(()=>{if(!$('connection').contains(document.activeElement))closeStatus();},6000);};
+function positionStatus(){} // Status expands inside the dock; no overlay across lyrics or controls.
+$('source-health').onclick=()=>{const open=$('connection').hidden;closeStatus();if(!open)return;closeSources();$('connection').hidden=false;if(!settings.reducedMotion)$('connection').animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:160});$('source-health').setAttribute('aria-expanded','true');positionStatus();statusCloseTimer=setTimeout(()=>{if(!$('connection').contains(document.activeElement))closeStatus();},6000);};
 $('sources').addEventListener('change',()=>{pinned=$('sources').value;native?.pin(generation,pinned);choose(true);});
 $('source-label').onclick=()=>{$('source-label').getAttribute('aria-expanded')==='true'?closeSources():openSources();};
 document.addEventListener('click',event=>{if(!$('connection').contains(event.target)&&!$('source-health').contains(event.target)){$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');}if(!$('source-menu').contains(event.target)&&!$('source-label').contains(event.target))closeSources();});
@@ -372,7 +373,6 @@ $('collapse').onclick=()=>setCollapsed(!collapsed,true);
 $('copy').onclick=()=>native?.copy(generation,(currentResult?.lyrics||[]).map(line=>line.words).join('\n').slice(0,100000));
 $('refresh').addEventListener('click',()=>native?.refresh());
 $('connect').addEventListener('click',()=>native?.connect());
-$('configure').addEventListener('click',()=>{closeStatus();if(native?.diagnostics)native.diagnostics();else native?.configure();});
 $('resume').addEventListener('click',resumeFollow);
 for(const kind of ['translate','romanize'])$(kind).addEventListener('click',()=>native?.toggle(kind));
 $('earlier').addEventListener('click',()=>native?.offset(-100));

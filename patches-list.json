@@ -1,19 +1,14 @@
 {
-  "bundleSha256": "0e989f6f66d2c0995361c4122bb4a7e347501e041483552c7a672dd65807f89c",
+  "bundleSha256": "28a30d73090e6e6fbbc4cfcad40bf1c1f4410a219400e95c88e97b7b09ec0456",
   "patches": [
     {
-      "name": "Third-party lyrics — Better Lyrics add-on",
-      "category": "Lyrics-only Add-on",
+      "name": "Download playlist",
+      "category": "Playlist downloads",
       "default": false
     },
     {
       "name": "Shaders",
       "category": "Shaders",
-      "default": false
-    },
-    {
-      "name": "Download playlist",
-      "category": "Playlist downloads",
       "default": false
     },
     {

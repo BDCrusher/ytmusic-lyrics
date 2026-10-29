@@ -1,3 +1,19 @@
+# YT-Music personal patches 0.4.0-beta.1
+
+Full Collection only, with optional Shaders and Playlist downloads. The Lyrics-only Add-on is retired from this delivery; use this source by itself and review saved selections. Exact experimental target remains original 9.42.52 / 94252240 arm64-v8a.
+
+Correct native Lyrics inset ownership and settled panel geometry, animate the resume-follow button with its controls, and put compact source status inside the translucent dock without a Details card. Braccato remains the text-motion engine. Shaders waits for valid artwork, preserves native fallbacks and uses one silent cover decoder. Animated-art files are no longer a retained library: keep lookup/availability records and stream the service URL. Recognized legacy media files migrate out on Shaders initialization. Permanent saved lyrics and private preferences remain.
+
+Extend Morphe Debugging with opt-in 60-second capture, Native/Fallback entry context, source outcomes, line/callback timing, actual Android Window FrameMetrics and shader/media failures. Reports are bounded, redacted and private; one atomic last report survives ordinary restarts. No lyric text, credentials or automatic uploads. Add own-session pause/stop when swiping the Music task from Recents; Home/Back continue normal background behavior.
+
+Build/JVM/lint, nine catalog/application/invalid-selection cases, seven compiled feature audits, four native Lyrics audits and 226 actual-source checks pass (92 fresh, 134 inherited after exact source hashes match). Browser checks cover all 16 formats, pinned reference motion/follow/seek, moving controls/status, Kawarp pacing/readiness/high DPI and graphics failure. Ordinary artwork verification and metadata lookup succeeded for MAMMAMIA without downloading media in the final live test.
+
+Actual phone smoothness, Samsung navigation, native panel/video/graphics behavior, streamed-cover looping, Recents audio-stop timing and real playlist downloading remain unverified. A raw fragmented-MP4 browser end-position assertion failed; that is not an Android streaming verdict. Prior combined-lyrics-service verification timeout remains a limitation. No zero-stutter claim. No device, MuMu, signing, installation or real playlist download operations occurred.
+
+Refresh with Pre-release patches and Experimental app versions enabled, then repatch the original APK. Settings: Morphe > Lyrics / Shaders / Playlist downloads. Capture debugging under Morphe > Miscellaneous > Debugging (or the personal Debugging page if the native debugging patch was not selected), reproduce without screen recording, then copy Lyrics and Shaders report.
+
+## Prior releases
+
 # YT-Music personal patches 0.3.0-beta.2
 
 Fix animated-cover playback, overlaid settings text and Lyrics footer layout. Covers now use one native silent looping decoder with complete-frame fitting. Fragmented artwork files get a complete timeline/index without re-encoding; existing cached files are repaired locally. Backgrounds use Kawarp over still artwork or the cover's first frame, with a 960-pixel cap and no competing HTML video decoders.

@@ -15,7 +15,8 @@
 <div id="source-menu" role="menu" aria-label="Available lyric sources" hidden></div><select id="sources" aria-label="Lyrics source" hidden></select>
 <div class="toolbar"><button id="copy" aria-label="Copy lyrics">Copy</button><button id="translate" aria-label="Translate lyrics" aria-pressed="false">Translate</button><button id="romanize" aria-label="Romanize lyrics" aria-pressed="false">Romanize</button><button id="refresh" aria-label="Refresh lyrics">↻</button></div>
 <div class="sync"><span id="offset">0 ms</span><button id="source-health" data-state="orange" aria-label="Sources loading" aria-expanded="false" aria-controls="connection"><span aria-hidden="true"></span></button><span id="status" role="status"></span></div>
+<section id="connection" role="status" aria-label="Source status" hidden><p id="source-summary"></p><span id="notice" hidden></span><button id="connect">Reconnect sources</button></section>
 </div></div>
 </section>
-<section id="connection" role="dialog" aria-label="Lyric source status" hidden><p id="source-summary"></p><span id="notice" role="status"></span><div class="status-actions"><button id="connect">Connect</button><button id="configure">Details</button></div></section>
+
 <script src="renderer.js" defer></script></body></html>

@@ -160,5 +160,20 @@
     "containerFinalizer": "Android MediaExtractor/MediaMuxer; no re-encoding",
     "background": "Kawarp still-art mesh, no additional HTML video decoder",
     "deviceAcceptance": false
+  },
+  "fullCollectionRevision": {
+    "version": "0.4.0-beta.1",
+    "edition": "Full Collection only; retired add-on preserved in history",
+    "report": "Research/IMPLEMENTATION-0.4.0-BETA.1-2026-10-28.md",
+    "artworkCache": "lookup/availability metadata only; native HTTPS stream, no retained MP4 library",
+    "nativeVideoSampling": false,
+    "animatedArtworkSampling": {
+      "width": 208,
+      "height": 117,
+      "maxFps": 4,
+      "smoothingMs": 250
+    },
+    "diagnostics": "Opt-in line/tick/window metrics; 60-second captures, bounded private report and Morphe log export",
+    "phoneVerified": false
   }
 }

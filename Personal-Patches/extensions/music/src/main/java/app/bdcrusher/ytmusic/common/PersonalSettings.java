@@ -10,6 +10,7 @@ public final class PersonalSettings {
         app.bdcrusher.ytmusic.lyrics.LyricsSettingsPage.install(fragment);
         app.bdcrusher.ytmusic.shaders.ShaderSettingsPage.install(fragment);
         app.bdcrusher.ytmusic.playlists.PlaylistSettingsPage.install(fragment);
+        DiagnosticsPage.install(fragment);
     }
     /** An opaque native list prevents the underlying YouTube settings page bleeding through. */
     public static void bindRoot(View view){

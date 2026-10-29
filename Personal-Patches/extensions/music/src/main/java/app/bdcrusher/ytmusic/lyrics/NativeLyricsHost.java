@@ -14,6 +14,7 @@ import app.morphe.extension.shared.ResourceUtils;
 public final class NativeLyricsHost {
     static final String ID="music_watch_lyrics_panel";
     private static final java.util.ArrayList<WeakReference<Object>> controllers=new java.util.ArrayList<>();
+    private static final java.util.WeakHashMap<Object,Boolean> nativeRoutes=new java.util.WeakHashMap<>();
     private static final java.util.WeakHashMap<Object,String> prepared=new java.util.WeakHashMap<>();
     private static final Handler main=new Handler(Looper.getMainLooper());
     private static WeakReference<Object> controller=new WeakReference<>(null),panel=new WeakReference<>(null);
@@ -21,6 +22,7 @@ public final class NativeLyricsHost {
     private static int epoch;
     private static int queuedEpoch=-1;
     private static byte[] nativeLyricsPresentation;
+    private static String presentationRecording="";
     private static final ThreadLocal<Boolean> installing=ThreadLocal.withInitial(()->false);
     private static boolean lyrics;
     private NativeLyricsHost(){}
@@ -37,7 +39,7 @@ public final class NativeLyricsHost {
         try{
             String id=new String(new ProtoWire(new ProtoWire(bytes).child(18)).child(3),java.nio.charset.StandardCharsets.UTF_8);
             if(!ID.equals(id))return;
-            nativeLyricsPresentation=NativePanelWire.presentation(bytes);prepared.remove(owner);
+            nativeLyricsPresentation=NativePanelWire.presentation(bytes);presentationRecording=app.morphe.extension.music.shared.VideoInformation.getVideoId();prepared.remove(owner);
             captureController(owner);
         }catch(IllegalArgumentException unrelated){/* Other native panel types are unchanged. */}
     }
@@ -51,11 +53,11 @@ public final class NativeLyricsHost {
             if(original==null&&nativeDefinition(owner,"music-related-panel")==null)continue;
             if(original!=null&&videoId.equals(prepared.get(owner))){ready=true;continue;}
             boolean supplied=original!=null&&!prepared.containsKey(owner);
-            if(supplied&&original.length<=1_000_000)nativeLyricsPresentation=NativePanelWire.presentation(original);
-            byte[] definition=supplied?original:nativeLyricsPresentation!=null
+            if(supplied&&original.length<=1_000_000){nativeLyricsPresentation=NativePanelWire.presentation(original);presentationRecording=videoId;}
+            byte[] definition=supplied?original:nativeLyricsPresentation!=null&&videoId.equals(presentationRecording)
                 ?nativeLyricsPresentation:NativePanelWire.lyricsProfile(ResourceUtils.getString("lyrics_tab_title"));
             installing.set(true);try{registerNative(owner,definition);}finally{installing.set(false);}
-            prepared.put(owner,videoId);ready=true;
+            prepared.put(owner,videoId);ready=true;nativeRoutes.put(owner,supplied);
             LyricsDiagnostics.record("Lyrics panel",supplied?"Preserved supplied native Lyrics presentation":"Prepared native Lyrics factory presentation");
         }catch(Exception ex){LyricsDiagnostics.record("Lyrics panel","Native Music setup failed: "+ex.getClass().getSimpleName());}
         }
@@ -67,7 +69,7 @@ public final class NativeLyricsHost {
         if(owner!=controller.get()&&isOpen()){
             try{if(value==null||!ID.equals(panelId(value)))return;}catch(Exception ignored){return;}
         }
-        controller=new WeakReference<>(owner);onNativePanelChanged(value);
+        controller=new WeakReference<>(owner);if(value!=null)app.bdcrusher.ytmusic.common.FeatureDiagnostics.entry(Boolean.TRUE.equals(nativeRoutes.get(owner))?"Native":"Fallback");onNativePanelChanged(value);
     }
     public static void onNativePanelChanged(Object value){
         epoch++;panel=new WeakReference<>(value);lyrics=false;

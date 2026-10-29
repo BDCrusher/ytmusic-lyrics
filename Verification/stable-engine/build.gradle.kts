@@ -63,3 +63,4 @@ tasks.register<JavaExec>("inspectActionReplay") { dependsOn("classes");classpath
 tasks.register<JavaExec>("inspectLyricsPresentation") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectLyricsPresentationKt");workingDir=rootDir }
 tasks.register<JavaExec>("inspectLyricsBackground") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectLyricsBackgroundKt");workingDir=rootDir }
 tasks.register<JavaExec>("inspectShaderVideo") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectShaderVideoKt");workingDir=rootDir;maxHeapSize="4g" }
+tasks.register<JavaExec>("inspectLifecycle") { dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectLifecycleKt");workingDir=rootDir;maxHeapSize="4g" }

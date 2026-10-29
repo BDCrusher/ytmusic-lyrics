@@ -59,6 +59,17 @@ val personalRuntimePatch=bytecodePatch {
         val index=create.implementation!!.instructions.indexOfFirst {it.opcode in setOf(Opcode.INVOKE_SUPER,Opcode.INVOKE_SUPER_RANGE)&&((it as? ReferenceInstruction)?.reference as? MethodReference)?.name=="onCreate"}
         if(index<0)throw PatchException("Native Music Activity superclass initialization missing")
         create.addInstruction(index+1,"invoke-static/range { p0 .. p0 }, Lapp/bdcrusher/ytmusic/common/PersonalRuntime;->attach(Landroid/app/Activity;)V")
+        val service=mutableClassDefBy("Lcom/google/android/libraries/youtube/player/background/service/BackgroundPlayerService;")
+        val removed=service.methods.singleOrNull {it.name=="onTaskRemoved"&&it.parameterTypes==listOf("Landroid/content/Intent;")}?:throw PatchException("Exact Music task-dismissal lifecycle missing")
+        removed.addInstruction(0,"invoke-static { p0, p1 }, Lapp/bdcrusher/ytmusic/common/TaskDismissal;->removed(Landroid/content/Context;Landroid/content/Intent;)V")
+        val browser=mutableClassDefBy("Lcom/google/android/apps/youtube/music/mediabrowser/MusicBrowserService;")
+        val task=browser.methods.singleOrNull {it.name=="onTaskRemoved"&&it.parameterTypes==listOf("Landroid/content/Intent;")}
+        if(task!=null)task.addInstruction(0,"invoke-static { p0, p1 }, Lapp/bdcrusher/ytmusic/common/TaskDismissal;->removed(Landroid/content/Context;Landroid/content/Intent;)V")
+        else{val method=MutableMethod(ImmutableMethod(browser.type,"onTaskRemoved",listOf(ImmutableMethodParameter("Landroid/content/Intent;",null,null)),"V",AccessFlags.PUBLIC.value,null,null,MutableMethodImplementation(2)));method.addInstructions(0,"invoke-static { p0, p1 }, Lapp/bdcrusher/ytmusic/common/TaskDismissal;->removed(Landroid/content/Context;Landroid/content/Intent;)V\ninvoke-super { p0, p1 }, ${browser.superclass}->onTaskRemoved(Landroid/content/Intent;)V\nreturn-void");browser.methods.add(method)}
+        val token=mutableClassDefBy("Landroid/support/v4/media/session/MediaSessionCompat\$Token;")
+        val initToken=token.methods.singleOrNull {m->m.name=="<init>"&&m.parameterTypes.firstOrNull()=="Ljava/lang/Object;"&&m.implementation?.instructions?.any {i->i.opcode==Opcode.IPUT_OBJECT&&((i as? ReferenceInstruction)?.reference as? com.android.tools.smali.dexlib2.iface.reference.FieldReference)?.type=="Ljava/lang/Object;"}==true}?:throw PatchException("Exact native media-session token construction missing")
+        for(i in initToken.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_VOID}.map {it.index}.reversed())initToken.addInstruction(i,"invoke-static { p1 }, Lapp/bdcrusher/ytmusic/common/TaskDismissal;->session(Ljava/lang/Object;)V")
+
     }
     finalize {
         normalizePersonalLyricsAccessors()

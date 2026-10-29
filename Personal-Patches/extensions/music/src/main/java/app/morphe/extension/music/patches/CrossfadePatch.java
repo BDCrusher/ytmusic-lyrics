@@ -1846,6 +1846,13 @@ public class CrossfadePatch {
      * Injection point. Playback goes on in the foreground service, so neither the monitor
      * nor a running crossfade is stopped here (#1311, #1442).
      */
+    public static void onTaskRemoved() {
+        if(!CROSSFADE_ENABLED)return;
+        dismissWindowUntilMs=SystemClock.uptimeMillis()+DISMISS_WINDOW_MS;
+        stopAutoAdvanceMonitor();
+        resetCrossfade(true);
+    }
+
     public static void onActivityStop() {
         activityRunning = false;
         logInfo(() -> "onActivityStop");

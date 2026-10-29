@@ -2,10 +2,10 @@ param([Parameter(ValueFromRemainingArguments=$true)][string[]]$Options)
 $ErrorActionPreference='Stop'
 $scope=$PSScriptRoot
 $env:JAVA_HOME='C:\Program Files\Java\jdk-25.0.5.0.2'
-$env:ANDROID_HOME=(Join-Path $env:LOCALAPPDATA 'Android\Sdk')
+$env:ANDROID_HOME='USER_HOME\AppData\Local\Android\Sdk'
 $env:ANDROID_SDK_ROOT=$env:ANDROID_HOME
 $env:GRADLE_USER_HOME="$scope\BuildCache\Gradle Cache"
-$env:GRADLE_RO_DEP_CACHE=(Join-Path $env:USERPROFILE '.gradle\caches')
+$env:GRADLE_RO_DEP_CACHE='USER_HOME\.gradle\caches'
 $env:TMP="$scope\BuildCache\Temp";$env:TEMP=$env:TMP
 $env:JAVA_TOOL_OPTIONS='-XX:-UsePerfData'
 $env:ANDROID_USER_HOME="$scope\BuildCache\Android"
@@ -17,3 +17,4 @@ try {
     $result=$LASTEXITCODE
 } finally { Pop-Location }
 exit $result
+

@@ -33,13 +33,15 @@ fun main(args: Array<String>) {
     val bundleHash=digest(bundle)
     require(hash == "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56") { "Unexpected original APK: $hash" }
     val featureMode=args[3].contains("features")||args[3].contains("shaders")||args[3].contains("playlists")
-    val noPersonal=args[3].startsWith("standalone-")
+    val noPersonal=args[3].startsWith("standalone-")||args[3].startsWith("without-lyrics")
     val officialFirst=args.size==5&&args[3].contains("official-first")
     val firstOfficial=if(officialFirst)loadPatchesFromJar(setOf(File(args[4])))else emptySet()
     val patches=loadPatchesFromJar(setOf(bundle))
     val isAddon=args.size==5
     val allLyrics=patches.filter { it.name?.startsWith("Third-party lyrics")==true && it.compatibility?.any { c->c.packageName=="com.google.android.apps.youtube.music" }==true }
     val combined=allLyrics.size==2
+    val fullOnly=allLyrics.size==1&&allLyrics.single().category=="Full Collection"
+    if(fullOnly)require(patches.filter {it.name!=null&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true}.all {it.category in setOf("Full Collection","Shaders","Playlist downloads")}){"Retired add-on category remains"}
     val addonMode=isAddon||args[3] in setOf("missing-official","editions-both","editions-reverse","addon-full-other")
     val lyrics=if(combined)allLyrics.filter { (it.category=="Lyrics-only Add-on")==addonMode }else allLyrics
     require(lyrics.size==1) { "Expected one personal lyrics entry" }
@@ -54,8 +56,8 @@ fun main(args: Array<String>) {
     val officialSelected=official.filter { p->(!args[3].contains("missing-downloads")||p.name!="Downloads")&&p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(p.name!="Third-party lyrics"||args[3]=="conflict"||noPersonal)}
     val selected=if(featureMode){
         val features=patches.filter {it.name=="Shaders"&& !args[3].contains("playlists-only")||it.name=="Download playlist"&&!args[3].contains("shaders-only")}
-        val full=patches.filter {p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true}
-        val base=if(noPersonal)officialSelected else if(isAddon)officialSelected+lyrics else full
+        val full=patches.filter {p->p.default&&p.compatibility?.any {it.packageName=="com.google.android.apps.youtube.music"}==true&&(!args[3].contains("missing-downloads")||p.name!="Downloads")}
+        val base=if(noPersonal&&fullOnly)full.filter {it.name!="Third-party lyrics"}else if(noPersonal)officialSelected else if(isAddon)officialSelected+lyrics else full
         if(officialFirst)(base+features).toSet()else(features+base).toSet()
     }else when(args[3]){
         "lyrics","missing-official"->lyrics.toSet()
@@ -68,7 +70,7 @@ fun main(args: Array<String>) {
     }
     val sdk=File(System.getenv("ANDROID_HOME") ?: error("ANDROID_HOME is required"))
     workspace.mkdirs()
-    if(combined){
+    if(combined||fullOnly){
         val music=patches.filter {it.name!=null&&it.compatibility?.any {c->c.packageName=="com.google.android.apps.youtube.music"}==true}
         workspace.resolve("categories.json").writeText("""{"bundleSha256":${quote(bundleHash)},"patches":[${music.joinToString(",") {p->"""{"name":${quote(p.name!!)},"category":${quote(p.category?:"")},"default":${p.default}}"""}}]}""")
     }

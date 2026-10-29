@@ -5,7 +5,7 @@ group = "app.bdcrusher.ytmusic"
 patches {
     about {
         name = "BDCrusher YT-Music Lyrics"
-        description = "Choose Full Collection or Lyrics-only Add-on. Optional Shaders and Playlist downloads work with either edition or compatible official Morphe patches."
+        description = "Personal Full Collection with optional Shaders and Playlist downloads. Expanded Lyrics and Shaders diagnostics."
         source = "https://github.com/BDCrusher/ytmusic-lyrics"
         contact = "na"
         website = "https://github.com/BDCrusher/ytmusic-lyrics"
@@ -20,10 +20,7 @@ java {
 }
 kotlin {
     compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
-    sourceSets.named("main") {
-        // One copy of shared hooks comes from :patches, never from :lyrics-addon.
-        kotlin.srcDir(rootProject.file("lyrics-addon/src/main/kotlin"))
-    }
+
 }
 // D8 accepts .jar classpath archives; Morphe's plugin names its JVM archive .mpp.
 // Keep that plugin and the separate Full output unchanged, and provide a local alias.

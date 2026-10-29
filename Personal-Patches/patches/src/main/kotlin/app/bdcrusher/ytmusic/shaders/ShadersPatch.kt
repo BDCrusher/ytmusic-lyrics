@@ -1,5 +1,5 @@
 /* Copyright 2026 BDCrusher. GPL-3.0. Native contracts inspected in original 9.42.52. */
-package app.bdcrusher.ytmusic.addon
+package app.bdcrusher.ytmusic.shaders
 import app.bdcrusher.ytmusic.nativeentry.personalRuntimePatch
 import app.morphe.patcher.*
 import app.morphe.patcher.patch.*
@@ -76,10 +76,10 @@ val shadersPatch=bytecodePatch(name="Shaders",description="Animated covers and a
         setter.addInstruction(assignment+1,"invoke-static { p1 }, $SHADERS->onNativePanel(Ljava/lang/Object;)V")
     }
     finalize {
-        val info=classDefByOrNull("Lapp/morphe/extension/music/shared/VideoInformation;")?:throw PatchException("Select compatible official Music defaults or the Full collection for Shaders")
+        val info=classDefByOrNull("Lapp/morphe/extension/music/shared/VideoInformation;")?:throw PatchException("Select Full Collection settings/defaults for Shaders")
         if(info.methods.none {it.name=="addVideoIdListener"})throw PatchException("Unsupported Morphe track identity contract for Shaders")
         var identityHook=false
         classDefForEach { c->if(c.type!=info.type&&c.methods.any {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass==info.type&&it.name=="setVideoId"}==true}==true})identityHook=true }
-        if(!identityHook)throw PatchException("Shaders requires native video identity hooks. Select compatible official Music defaults or the Full collection.")
+        if(!identityHook)throw PatchException("Shaders requires native video identity hooks. Select Full Collection settings/defaults.")
     }
 }

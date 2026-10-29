@@ -14,12 +14,15 @@ final class LyricsViewport implements AutoCloseable {
     private final Map<ViewGroup, boolean[]> clipping = new IdentityHashMap<>();
     private int baseMargin, lastMargin, baseHeight, lastHeight;
     private boolean owned;
+    private final android.os.Handler handler=new android.os.Handler(android.os.Looper.getMainLooper());
+    private long geometry=Long.MIN_VALUE,stableAt;private int navigation;
+    private final Runnable settle=()->update(navigation);
 
     LyricsViewport(View root, View decor) { this.root = root; this.decor = decor; }
     boolean contains(View view){for(View child=root;child!=null;child=child.getParent() instanceof View parent?parent:null)if(child==view)return true;return false;}
 
     void update(int navigationBottom) {
-        Rect visible = new Rect();
+        navigation=navigationBottom;Rect visible = new Rect();
         if (navigationBottom <= 0 || !root.isShown() || !root.getGlobalVisibleRect(visible)) {
             close();
             return;
@@ -30,6 +33,9 @@ final class LyricsViewport implements AutoCloseable {
         root.getLocationInWindow(position);
         int gap = decor.getHeight() - (position[1] + root.getHeight());
         if (gap < 0 || gap > navigationBottom + 1 || gap == 0) return;
+        long current=((long)position[1]<<32)|(root.getHeight()&0xffffffffL),now=android.os.SystemClock.elapsedRealtime();
+        if(current!=geometry){geometry=current;stableAt=now;handler.removeCallbacks(settle);handler.postDelayed(settle,90);return;}
+        if(now-stableAt<80)return;
         if (!owned) {
             baseHeight = lastHeight = params.height;
             baseMargin = lastMargin = params instanceof ViewGroup.MarginLayoutParams margin ? margin.bottomMargin : 0;
@@ -56,9 +62,11 @@ final class LyricsViewport implements AutoCloseable {
             if (group == decor) break;
         }
         root.setLayoutParams(params);
+        FeatureDiagnostics.event("Panel-layout","entry="+FeatureDiagnostics.entry()+" extendedBottom="+gap+" navigation="+navigationBottom);
     }
 
     @Override public void close() {
+        handler.removeCallbacks(settle);geometry=Long.MIN_VALUE;
         if (owned) {
             ViewGroup.LayoutParams params = root.getLayoutParams();
             if (params != null) {

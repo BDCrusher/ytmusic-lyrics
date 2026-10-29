@@ -12,6 +12,7 @@ import java.lang.ref.WeakReference;
 import java.util.*;
 import org.json.*;
 import app.bdcrusher.ytmusic.common.PersonalRuntime;
+import app.bdcrusher.ytmusic.common.FeatureDiagnostics;
 import app.morphe.extension.music.shared.VideoInformation;
 import app.morphe.extension.shared.Utils;
 
@@ -21,7 +22,12 @@ public final class ShaderRuntime {
     private static final Map<View,Binding> surfaces=new WeakHashMap<>();
     private static MediaMetadata metadata;
     private static Bitmap artwork;
-    private static File media;
+    private static String media;
+    private static boolean foreground=true;
+    private static int failures;
+    public static void hostVisible(boolean shown){foreground=shown;if(watching)main.post(ShaderRuntime::refresh);}
+    static boolean wantsAnimatedFrame(){return watching&&preferences.getBoolean("background",true)&&preferences.getBoolean("animateBackground",true);}
+    static void animatedFrame(Bitmap frame){if(artwork==null)artwork=frame.copy(Bitmap.Config.ARGB_8888,false);for(Binding b:new ArrayList<>(surfaces.values()))if(b.active&&!b.cover)b.image(frame,generation);ShaderSurface.IMAGES.execute(frame::recycle);}
     private static String identity="",mediaKey="";
     private static int generation;
     private static int panelEpoch;
@@ -38,14 +44,14 @@ public final class ShaderRuntime {
     public static boolean isEffectSurface(View view){return view instanceof ShaderSurface||view instanceof AnimatedCoverSurface;}
     private static boolean enabled(Context c){return PersonalRuntime.installed(c,"shaders");}
     private static final SharedPreferences.OnSharedPreferenceChangeListener changed=(p,k)->main.post(()->{refresh();if("mediaLimit".equals(k))ArtworkRepository.trim(Utils.getContext());if("artworkToken".equals(k)||"enabled".equals(k)){lastLookup=0;retryArtwork();}});
-    private static void init(Context c){if(!watching){watching=true;preferences=ArtworkRepository.preferences(c);preferences.registerOnSharedPreferenceChangeListener(changed);VideoInformation.addVideoIdListener(id->main.post(ShaderRuntime::track));
+    private static void init(Context c){if(!watching){watching=true;preferences=ArtworkRepository.preferences(c);preferences.registerOnSharedPreferenceChangeListener(changed);ArtworkRepository.trim(c);VideoInformation.addVideoIdListener(id->main.post(ShaderRuntime::track));
         try{android.net.ConnectivityManager connectivity=(android.net.ConnectivityManager)c.getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);connectivity.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback(){@Override public void onCapabilitiesChanged(android.net.Network n,android.net.NetworkCapabilities capabilities){if(capabilities.hasTransport(android.net.NetworkCapabilities.TRANSPORT_WIFI)&&capabilities.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_NOT_METERED))main.post(()->{lastLookup=0;retryArtwork();});}});}catch(Exception unavailable){}
     }}
     static boolean active(){return effectsActive;}
     static void retryArtwork(){
         if(currentTrack==null||media!=null||!active()||lastLookup!=0&&SystemClock.elapsedRealtime()-lastLookup<30000)return;
         lastLookup=SystemClock.elapsedRealtime();int expected=generation;
-        ArtworkRepository.lookup(Utils.getContext(),currentTrack,(file,key)->{if(generation!=expected)return;media=file;mediaKey=key;if(artwork==null&&file!=null)firstCoverFrame(file,expected);refresh();});
+        ArtworkRepository.lookup(Utils.getContext(),currentTrack,(file,key)->{if(generation!=expected)return;media=file;mediaKey=key;if(artwork==null&&file!=null)nativePoster();refresh();});
     }
     public static void onMetadata(MediaMetadata value){main.post(()->{metadata=value;track();});}
     public static void onPlayback(PlaybackState value){boolean active=value!=null&&value.getState()==PlaybackState.STATE_PLAYING;main.post(()->{playing=active;refresh();});}
@@ -55,8 +61,8 @@ public final class ShaderRuntime {
         String mediaId=metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);if(mediaId!=null&&mediaId.matches("[A-Za-z0-9_-]{11}")&&!id.equals(mediaId))return;
         String title=metadata.getString(MediaMetadata.METADATA_KEY_TITLE),artist=metadata.getString(MediaMetadata.METADATA_KEY_ARTIST),album=metadata.getString(MediaMetadata.METADATA_KEY_ALBUM);
         if(title==null||artist==null)return;String next=id+"|"+title+"|"+artist+"|"+album;
-        if(next.equals(identity)){refresh();return;}boolean sameRecording=identity.startsWith(id+"|");identity=next;if(!sameRecording){generation++;media=null;mediaKey="";frameFor="";}int expected=generation;
-        Bitmap cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ART);if(cover==null)cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);if(cover!=null||!sameRecording)artwork=cover;
+        if(next.equals(identity)){refresh();return;}boolean sameRecording=identity.startsWith(id+"|");identity=next;if(!sameRecording){generation++;media=null;mediaKey="";frameFor="";failures=0;}int expected=generation;
+        Bitmap cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ART);if(cover==null)cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART);if(cover==null)cover=metadata.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON);if(cover!=null||!sameRecording)artwork=cover;
         for(Binding binding:new ArrayList<>(surfaces.values())){if(!sameRecording)binding.clearImage();if(artwork!=null)binding.image(artwork,expected);}
         currentTrack=new ArtworkRepository.Track(id,title,artist,album==null?"":album,(int)(metadata.getLong(MediaMetadata.METADATA_KEY_DURATION)/1000));lastLookup=0;retryArtwork();refresh();
     }
@@ -72,8 +78,8 @@ public final class ShaderRuntime {
         if(anchor.getParent() instanceof ViewGroup parent&&anchor.isAttachedToWindow()){Binding binding=new Binding(anchor,parent,cover);surfaces.put(anchor,binding);track();binding.update();}
         else anchor.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){v.removeOnAttachStateChangeListener(this);watch(v,cover);}public void onViewDetachedFromWindow(View v){}});
     }
-    static void refresh(){effectsActive=false;for(Binding binding:new ArrayList<>(surfaces.values())){binding.update();effectsActive|=binding.active;}if(effectsActive)retryArtwork();}
-    static void mediaFailed(){ArtworkRepository.invalidate(Utils.getContext(),mediaKey);media=null;lastLookup=SystemClock.elapsedRealtime();refresh();}
+    static void refresh(){nativePoster();effectsActive=false;for(Binding binding:new ArrayList<>(surfaces.values())){binding.update();effectsActive|=binding.active;}if(effectsActive)retryArtwork();}
+    static void mediaFailed(){ArtworkRepository.invalidate(Utils.getContext(),mediaKey);media=null;lastLookup=SystemClock.elapsedRealtime();refresh();int expected=generation;if(++failures<=3)main.postDelayed(()->{if(expected==generation&&active()){lastLookup=0;retryArtwork();}},3000);}
     static boolean requestProof(int id,JSONObject challenge){for(Binding binding:new ArrayList<>(surfaces.values()))if(binding.surface instanceof ShaderSurface background&&background.solve(id,challenge))return true;return false;}
     public static void onNativePanel(Object panel){
         main.post(()->{
@@ -96,15 +102,8 @@ public final class ShaderRuntime {
     private static String nativePanelId(Object value){throw new IllegalStateException("Missing native panel identity hook");}
     private static View nativePanelView(Object value){throw new IllegalStateException("Missing native panel root hook");}
     private static boolean visible(View view){return view!=null&&view.isShown()&&view.getWindowVisibility()==View.VISIBLE&&view.hasWindowFocus()&&view.getAlpha()>0&&view.getGlobalVisibleRect(new android.graphics.Rect());}
-    private static void firstCoverFrame(File file,int expected){
-        String key=expected+"|"+file.getAbsolutePath();if(key.equals(frameFor))return;frameFor=key;
-        ShaderSurface.IMAGES.execute(()->{
-            Bitmap frame=null;android.media.MediaMetadataRetriever retriever=new android.media.MediaMetadataRetriever();
-            try{retriever.setDataSource(file.getAbsolutePath());frame=Build.VERSION.SDK_INT>=27?retriever.getScaledFrameAtTime(0,android.media.MediaMetadataRetriever.OPTION_CLOSEST_SYNC,512,512):retriever.getFrameAtTime(0);}
-            catch(Exception unavailable){}finally{try{retriever.release();}catch(Exception ignored){}}
-            final Bitmap still=frame;if(still!=null)main.post(()->{if(expected!=generation||artwork!=null){still.recycle();return;}artwork=still;for(Binding binding:new ArrayList<>(surfaces.values()))binding.image(still,expected);refresh();});
-        });
-    }
+    private static Bitmap bitmap(View view){if(view instanceof ImageView image&&image.getDrawable() instanceof android.graphics.drawable.BitmapDrawable d)return d.getBitmap();if(view instanceof android.view.ViewGroup group)for(int i=0;i<group.getChildCount();i++){Bitmap found=bitmap(group.getChildAt(i));if(found!=null)return found;}return null;}
+    private static void nativePoster(){if(artwork!=null)return;for(Binding b:new ArrayList<>(surfaces.values()))if(b.cover){Bitmap value=bitmap(b.anchor);if(value!=null){artwork=value;for(Binding target:new ArrayList<>(surfaces.values()))target.image(value,generation);FeatureDiagnostics.event("Artwork-poster","Native thumbnail reused for background");break;}}}
     private static final class Binding implements AutoCloseable {
         final View anchor;final ViewGroup parent;final View surface;final boolean cover;
         boolean closed,active;
@@ -126,7 +125,7 @@ public final class ShaderRuntime {
         void update(){
             if(closed)return;SharedPreferences prefs=ArtworkRepository.preferences(anchor.getContext());boolean master=prefs.getBoolean("enabled",true);
             if(anchor!=parent){if(surface.getLayoutParams()!=anchor.getLayoutParams())surface.setLayoutParams(anchor.getLayoutParams());if(surface.getTranslationX()!=anchor.getTranslationX())surface.setTranslationX(anchor.getTranslationX());if(surface.getTranslationY()!=anchor.getTranslationY())surface.setTranslationY(anchor.getTranslationY());if(surface.getScaleX()!=anchor.getScaleX())surface.setScaleX(anchor.getScaleX());if(surface.getScaleY()!=anchor.getScaleY())surface.setScaleY(anchor.getScaleY());}
-            boolean shown=master&&visible(anchor);View panel=lyricsBody.get();if(panel!=null&&panel!=anchor&&visible(panel))shown=false;
+            boolean shown=master&&foreground&&visible(anchor);View panel=lyricsBody.get();if(panel!=null&&panel!=anchor&&visible(panel)&&(!cover||!wantsAnimatedFrame()))shown=false;
             active=shown&&(cover?prefs.getBoolean("animatedCover",true):prefs.getBoolean("background",true));
             int visibility=active?View.VISIBLE:View.INVISIBLE;if(surface.getVisibility()!=visibility)surface.setVisibility(visibility);
             surface.setAlpha(anchor==parent?1:anchor.getAlpha());
@@ -135,7 +134,7 @@ public final class ShaderRuntime {
             try{
                 ShaderSurface background=(ShaderSurface)surface;
                 JSONObject options=new JSONObject().put("animateBackground",prefs.getBoolean("animateBackground",true)).put("fps",Integer.parseInt(prefs.getString("fps","30"))).put("speed",prefs.getInt("speed",100)/100.0).put("strength",prefs.getInt("strength",100)/100.0).put("saturation",prefs.getInt("saturation",150)/100.0).put("opacity",prefs.getInt("opacity",75)/100.0).put("dimming",prefs.getInt("dimming",30)/100.0).put("transition",prefs.getInt("transition",1000)).put("reducedMotion",reduced);
-                JSONObject state=new JSONObject().put("generation",generation).put("playing",playing).put("visible",active).put("background",true).put("image",background.imageUrl());
+                JSONObject state=new JSONObject().put("frame",false).put("generation",generation).put("playing",playing).put("visible",active).put("background",true).put("image",background.imageUrl());
                 background.update(state,options,null);
             }catch(Exception invalid){surface.setVisibility(View.INVISIBLE);}
         }

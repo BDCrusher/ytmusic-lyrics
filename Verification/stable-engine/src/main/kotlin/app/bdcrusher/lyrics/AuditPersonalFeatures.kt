@@ -53,18 +53,26 @@ fun main(args:Array<String>){
     return (listOfNotNull(c.superclass)+c.interfaces).any {field(ref,it,seen)}
    }
    val owned=types.values.filter {it.type.startsWith("Lapp/bdcrusher/")};val missing=sortedSetOf<String>();var references=0
-   var lifecycle=0;var dialogHooks=0;var oldBars=0;var shaderCallbacks=0;var personalCallbacks=0;var playlistCommands=0;var completions=0;var nativeBrowse=0;var nativeHeader=0
+   var lifecycle=0;var dialogHooks=0;var oldBars=0;var shaderCallbacks=0;var personalCallbacks=0;var playlistCommands=0;var completions=0;var nativeBrowse=0;var nativeHeader=0;var lyricsMetadataHooks=0;var lyricsPlaybackHooks=0
    for(c in types.values)for(m in c.methods)for(i in m.implementation?.instructions?:emptyList()){
     val ref=(i as? ReferenceInstruction)?.reference
     if(ref is MethodReference){
      if(c.type.startsWith("Lapp/bdcrusher/")&&(ref.definingClass.startsWith("Lapp/bdcrusher/")||ref.definingClass.startsWith("Lapp/morphe/"))){references++;if(!method(ref))missing+=ref.toString()}
      if(ref.definingClass=="Lapp/bdcrusher/ytmusic/common/PersonalRuntime;")when(ref.name){"attach"->lifecycle++;"dialog","showBuilder"->dialogHooks++}
      if(ref.definingClass.endsWith("/LyricsSystemBars;"))oldBars++
+     if(!c.type.startsWith("Lapp/bdcrusher/")&&ref.definingClass=="Lapp/morphe/extension/music/patches/lyrics/LyricsPatch;")when(ref.name){"onSetMetadata"->lyricsMetadataHooks++;"onSetPlaybackState"->lyricsPlaybackHooks++}
      if(!c.type.startsWith("Lapp/bdcrusher/")&&ref.definingClass=="Lapp/bdcrusher/ytmusic/shaders/ShaderRuntime;"&&ref.name in setOf("onMetadata","onPlayback","onArtwork","onPlayerBackground","onNativePanel"))shaderCallbacks++
      if(!c.type.startsWith("Lapp/bdcrusher/")&&ref.definingClass=="Lapp/bdcrusher/ytmusic/lyrics/LyricsEntryCoordinator;"&&ref.name=="onPlaybackEvent")personalCallbacks++
      if(ref.definingClass=="Lapp/bdcrusher/ytmusic/playlists/PlaylistRuntime;")when(ref.name){"command"->playlistCommands++;"finished"->completions++;"capture"->nativeBrowse++;"bd_rewriteHeader"->nativeHeader++}
     }else if(ref is FieldReference&&c.type.startsWith("Lapp/bdcrusher/")&&(ref.definingClass.startsWith("Lapp/bdcrusher/")||ref.definingClass.startsWith("Lapp/morphe/"))){references++;if(!field(ref))missing+=ref.toString()}
    }
+   var taskStops=0;var sessionCaptures=0
+   for(c in types.values.filter { !it.type.startsWith("Lapp/bdcrusher/") })for(m in c.methods)for(i in m.implementation?.instructions?:emptyList()){
+    val ref=(i as? ReferenceInstruction)?.reference as? MethodReference?:continue
+    if(ref.definingClass=="Lapp/bdcrusher/ytmusic/common/TaskDismissal;")when(ref.name){"removed"->{require(m.name=="onTaskRemoved"){"Task stop attached outside actual Recents lifecycle"};taskStops++};"session"->{require(m.name=="<init>"){"Unexpected session capture"};sessionCaptures++}}
+   }
+   require(taskStops==2&&sessionCaptures>=1){"Missing exact Recents/session hooks: $taskStops/$sessionCaptures"}
+   require(types.getValue("Lapp/bdcrusher/ytmusic/common/FrameDiagnostics;").methods.any {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.name=="addOnFrameMetricsAvailableListener"}==true}){"Android frame diagnostics missing"}
    require(missing.isEmpty()){ "Unresolved owned/native contracts: "+missing.joinToString(" | ") }
    require(lifecycle==1&&oldBars==0&&dialogHooks>0){"Shared navigation ownership: lifecycle=$lifecycle old=$oldBars dialog=$dialogHooks"}
    val rootSettings=types.getValue("Lapp/morphe/extension/music/settings/preference/MusicPreferenceFragment;").methods.single {it.name=="onViewCreated"}
@@ -73,7 +81,9 @@ fun main(args:Array<String>){
    val shaders=zip.getEntry("assets/bdcrusher-features/shaders.enabled")!=null
    val playlists=zip.getEntry("assets/bdcrusher-features/playlists.enabled")!=null
    val lyrics=zip.getEntry("assets/bdcrusher-lyrics/providers.json")!=null
-   require((personalCallbacks>0)==lyrics){"Unselected personal lyrics activated"}
+   // Full runtime retains dormant coordinator references. Activation is the native metadata/clock entry, not residence of a method body.
+   require((lyricsMetadataHooks>0)==lyrics&&(lyricsPlaybackHooks>0)==lyrics){"Personal lyrics native entry activation does not match selected assets: $lyricsMetadataHooks/$lyricsPlaybackHooks/$lyrics"}
+   require(!lyrics||personalCallbacks>0){"Selected personal lyrics has no coordinator path"}
    require((shaderCallbacks>0)==shaders){"Incorrect Shaders activation"}
    require((playlistCommands==1&&completions>0&&nativeBrowse>0&&nativeHeader==1)==playlists){"Incorrect native playlist integration: $playlistCommands/$completions/$nativeBrowse/$nativeHeader"}
    if(shaders)for(name in listOf("nativePanelId","nativePanelView")){
@@ -85,8 +95,9 @@ fun main(args:Array<String>){
     val refs=cover.methods.flatMap {m->m.implementation?.instructions?.mapNotNull {((it as? ReferenceInstruction)?.reference as? MethodReference)}?.toList()?:emptyList()}
     require(cover.superclass=="Landroid/widget/FrameLayout;"&&refs.none {it.definingClass=="Landroid/webkit/WebView;"}){"Cover must use native decoding, without HTML playback controls"}
     require(refs.count {it.definingClass=="Landroid/media/MediaPlayer;"&&it.name=="prepareAsync"}==1&&refs.any {it.definingClass=="Landroid/media/MediaPlayer;"&&it.name=="setLooping"}){"Cover decoder preparation or looping contract changed"}
-    val finalizer=types.getValue("Lapp/bdcrusher/ytmusic/shaders/ArtworkFile;")
-    require(finalizer.methods.any {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass=="Landroid/media/MediaMuxer;"&&it.name=="writeSampleData"}==true}==true}){"Native artwork timeline finalizer missing"}
+    require(refs.any {it.definingClass=="Landroid/media/MediaPlayer;"&&it.name=="setDataSource"&&it.parameterTypes.size==3}){"Native cover must stream the validated remote source"}
+    require(types.getValue("Lapp/bdcrusher/ytmusic/shaders/ArtworkRepository;").methods.none {it.name=="download"}){"Retained animation-file library remains active"}
+
    }
    if(playlists){
     val resolver=types.values.flatMap {it.methods.toList()}.singleOrNull {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass=="Lapp/bdcrusher/ytmusic/playlists/PlaylistRuntime;"&&it.name=="command"}==true}==true}?:error("Playlist command owner ambiguous")
@@ -95,7 +106,7 @@ fun main(args:Array<String>){
     require(zip.entries().asSequence().any {it.name.endsWith("yt_outline_bdcrusher_download_playlist_vd_theme_24.xml")}){"Missing compiled playlist icon"}
    }
    require(zip.getEntry("assets/bdcrusher-features/NOTICE.txt")!=null)
-   val report="""{"passed":true,"apkSha256":"${featureHash(file)}","ownedClasses":${owned.size},"validatedRuntimeReferences":$references,"unresolvedRuntimeReferences":0,"sharedLifecycleHooks":$lifecycle,"dialogHooks":$dialogHooks,"legacyBarHooks":$oldBars,"shaders":$shaders,"playlistDownloads":$playlists,"personalLyrics":$lyrics,"shaderCallbacks":$shaderCallbacks,"personalCallbacks":$personalCallbacks,"playlistCommandHooks":$playlistCommands,"typedCompletionHooks":$completions,"nativeBrowseCaptures":$nativeBrowse,"nativeHeaderHooks":$nativeHeader,"phoneVerified":false}"""
+   val report="""{"passed":true,"apkSha256":"${featureHash(file)}","ownedClasses":${owned.size},"validatedRuntimeReferences":$references,"unresolvedRuntimeReferences":0,"sharedLifecycleHooks":$lifecycle,"taskDismissalHooks":$taskStops,"sessionCaptureHooks":$sessionCaptures,"dialogHooks":$dialogHooks,"legacyBarHooks":$oldBars,"shaders":$shaders,"playlistDownloads":$playlists,"personalLyrics":$lyrics,"shaderCallbacks":$shaderCallbacks,"personalCallbacks":$personalCallbacks,"lyricsMetadataHooks":$lyricsMetadataHooks,"lyricsPlaybackHooks":$lyricsPlaybackHooks,"playlistCommandHooks":$playlistCommands,"typedCompletionHooks":$completions,"nativeBrowseCaptures":$nativeBrowse,"nativeHeaderHooks":$nativeHeader,"phoneVerified":false}"""
    file.parentFile.resolve("personal-features-audit.json").writeText(report)
    println("PASS: ${file.parentFile.name}; ${owned.size} owned classes, $references runtime references, independent native hooks")
   }

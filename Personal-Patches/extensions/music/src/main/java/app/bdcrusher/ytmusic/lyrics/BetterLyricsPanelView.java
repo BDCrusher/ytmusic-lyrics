@@ -44,6 +44,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private volatile int generation;
     private String identity="";
     private String lastSettings="",lastInsets="";
+    private Boolean debug;private int rendererRecoveries;
     private int insetLeft,insetRight,insetBottom;
     private TrackInfo track;
     private final java.util.Map<View,Integer> covered=new java.util.IdentityHashMap<>();
@@ -61,6 +62,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         try{
             updateTrack();
             if(ready){
+                boolean d=app.bdcrusher.ytmusic.common.FeatureDiagnostics.detailed();if(debug==null||debug!=d){debug=d;call("debug",String.valueOf(d));}
                 LyricsManager manager=LyricsManager.getInstance();
                 long[] clock=RendererPlayback.snapshot(VideoInformation.getVideoId(),manager.getVideoPositionMs(),manager.isPlaybackPlaying(),manager.getPlaybackSpeed());
                 JSONObject sample=new JSONObject().put("generation",generation).put("sampledAt",System.currentTimeMillis())
@@ -117,7 +119,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
                     return new WebResourceResponse("text/plain","UTF-8",403,"Blocked",java.util.Collections.emptyMap(),new ByteArrayInputStream(new byte[0]));
                 }
                 @Override public boolean onRenderProcessGone(WebView view,RenderProcessGoneDetail detail){
-                    ready=false;hasDisplay=false;setVisibility(View.INVISIBLE);removeView(view);view.destroy();web=null;return true;
+                    LyricsDiagnostics.record("Renderer","WebView render process exited; crashed="+detail.didCrash());ready=false;hasDisplay=false;restoreNativeContent();setVisibility(View.INVISIBLE);removeView(view);view.destroy();web=null;identity="";if(++rendererRecoveries<=2)handler.postDelayed(()->{if(attached&&NativeLyricsHost.isOpen()&&web==null)createWebView();},500);return true;
                 }
             });
             addView(web,new FrameLayout.LayoutParams(-1,-1));web.loadUrl(ROOT+"index.html");
@@ -206,6 +208,7 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         else restoreNativeContent();
         int visibility=show?View.VISIBLE:View.INVISIBLE;if(getVisibility()!=visibility)setVisibility(visibility);
     }
+    @Override protected void onSizeChanged(int w,int h,int oldw,int oldh){super.onSizeChanged(w,h,oldw,oldh);if(w!=oldw||h!=oldh)app.bdcrusher.ytmusic.common.FeatureDiagnostics.event("Renderer-layout","size="+w+"x"+h+" previous="+oldw+"x"+oldh);}
     public void setNavigationInsets(int left,int right,int bottom){
         insetLeft=left;insetRight=right;insetBottom=bottom;if(!ready)return;
         float density=getResources().getDisplayMetrics().density;
@@ -224,8 +227,8 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
                 enrichmentExecutor.execute(()->{if(id!=generation)return;try{new LyricsLibrary(getContext()).offer(videoId,new JSONObject().put("kind","cachedResult").put("key",key).put("result",new JSONObject(result)));}catch(JSONException invalid){LyricsDiagnostics.record("Lyrics library","Invalid renderer result rejected");}});
             });
         }
-        @JavascriptInterface public void ready(){handler.post(()->{if(!attached||web==null)return;ready=true;lastSettings="";lastInsets="";sendTrack();applySettings();setNavigationInsets(insetLeft,insetRight,insetBottom);for(JSONObject payload:pending)receive(generation,payload);pending.clear();if(sourceHealth!=null)call("health",generation+","+sourceHealth);});}
-        @JavascriptInterface public void displayed(int id,String source){handler.post(()->{if(id==generation){hasDisplay=true;syncOverlay();}});}
+        @JavascriptInterface public void ready(){handler.post(()->{if(!attached||web==null)return;ready=true;debug=null;lastSettings="";lastInsets="";sendTrack();applySettings();setNavigationInsets(insetLeft,insetRight,insetBottom);for(JSONObject payload:pending)receive(generation,payload);pending.clear();if(sourceHealth!=null)call("health",generation+","+sourceHealth);});}
+        @JavascriptInterface public void displayed(int id,String source){handler.post(()->{if(id==generation){app.bdcrusher.ytmusic.common.FeatureDiagnostics.event("Lyrics-source","generation="+id+" variant="+source);hasDisplay=true;syncOverlay();}});}
         @JavascriptInterface public void noLyrics(int id){handler.post(()->{if(id==generation){hasDisplay=false;restoreNativeContent();setVisibility(View.INVISIBLE);}});}
         @JavascriptInterface public void dock(boolean collapsed){handler.post(()->LyricsConfig.preferences(getContext()).edit().putBoolean("dockCollapsed",collapsed).apply());}
         @JavascriptInterface public void copy(int id,String text){if(text.length()>100000)return;handler.post(()->{if(id!=generation)return;android.content.ClipboardManager cb=(android.content.ClipboardManager)getContext().getSystemService(Context.CLIPBOARD_SERVICE);cb.setPrimaryClip(android.content.ClipData.newPlainText("Lyrics",text));});}

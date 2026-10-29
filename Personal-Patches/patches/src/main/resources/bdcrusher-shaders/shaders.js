@@ -1486,13 +1486,14 @@ ${source}` : source);
   var generation = -1;
   var lastImage = "";
   var lastPaint = 0;
+  var imageEpoch = 0;
   var closed = false;
   var graphicsFailed = false;
   function fail(error) {
     native?.failure(String(error?.message || error).slice(0, 160));
   }
   function create() {
-    if (engine || closed || graphicsFailed || !state.background) return;
+    if (engine || closed || graphicsFailed || !state.background || !state.image) return;
     engine = new dist_default(canvas, { warpIntensity: 1, blurPasses: 8, animationSpeed: 1, transitionDuration: 1e3, saturation: 1.5, dithering: 8e-3 });
     const render = engine.renderLoop;
     if (typeof render !== "function") throw new Error("Pinned Kawarp scheduling contract missing");
@@ -1517,7 +1518,7 @@ ${source}` : source);
   }
   function update() {
     try {
-      canvas.hidden = !state.background;
+      canvas.hidden = !state.background || !state.image;
       canvas.style.opacity = String(Math.max(0, Math.min(1, config.opacity ?? 0.75)));
       canvas.style.filter = `brightness(${1 - (config.dimming ?? 0.3)})`;
       try {
@@ -1526,15 +1527,29 @@ ${source}` : source);
         graphicsFailed = true;
         fail(error);
       }
-      engine?.setOptions({ warpIntensity: config.strength ?? 1, saturation: config.saturation ?? 1.5, transitionDuration: config.transition ?? 1e3, animationSpeed: config.animateBackground ? config.speed ?? 1 : 0, blurPasses: 8, dithering: 8e-3 });
+      engine?.setOptions({ warpIntensity: config.strength ?? 1, saturation: config.saturation ?? 1.5, transitionDuration: state.frame ? 250 : config.transition ?? 1e3, animationSpeed: config.animateBackground ? config.speed ?? 1 : 0, blurPasses: 8, dithering: 8e-3 });
       if (engine && state.image && state.image !== lastImage) {
+        const epoch = ++imageEpoch;
         lastImage = state.image;
-        engine.loadImage(state.image).then(() => {
-          if (!closed) visibility();
-        }).catch((error) => {
-          lastImage = "";
-          fail(error);
-        });
+        if (!state.frame) canvas.style.visibility = "hidden";
+        const img = new Image();
+        img.onload = () => {
+          if (closed || epoch !== imageEpoch) return;
+          try {
+            engine.loadImageElement(img);
+            canvas.style.visibility = "visible";
+            visibility();
+          } catch (e) {
+            fail(e);
+          }
+        };
+        img.onerror = () => {
+          if (epoch === imageEpoch) {
+            lastImage = "";
+            fail(new Error("Artwork image unavailable; native background retained"));
+          }
+        };
+        img.src = state.image;
       }
       visibility();
     } catch (error) {
@@ -1577,6 +1592,8 @@ ${source}` : source);
       if (next.generation !== generation) {
         generation = next.generation;
         lastImage = "";
+        imageEpoch++;
+        canvas.style.visibility = "hidden";
       }
       state = next;
       update();
