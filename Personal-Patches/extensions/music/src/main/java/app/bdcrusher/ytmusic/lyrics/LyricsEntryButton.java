@@ -5,7 +5,6 @@ import android.os.Handler;
 import android.os.Looper;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import app.morphe.extension.music.patches.lyrics.LyricsManager;
 import app.morphe.extension.music.settings.Settings;
 import app.morphe.extension.music.shared.VideoInformation;
 
@@ -16,7 +15,7 @@ public final class LyricsEntryButton {
     private static WeakReference<LyricsEntryButton> active=new WeakReference<>(null);
     private static final class Presentation {
         final WeakReference<Object> owner;
-        String video="";
+        String video="",modelVideo="";
         Object original;
         boolean replaying,currentModel;
         int mode;
@@ -38,7 +37,7 @@ public final class LyricsEntryButton {
     public static void captureIdentity(Object owner,String id){
         if(owner==null||id==null||id.isEmpty())return;
         Presentation p=presentation(owner);
-        if(!id.equals(p.video)){p.video=id;p.original=null;p.mode=0;p.currentModel=false;}
+        if(!id.equals(p.video)){p.video=id;if(!id.equals(p.modelVideo)){p.original=null;p.currentModel=false;}p.mode=0;}
         main.post(()->{LyricsEntryButton entry=active.get();if(entry!=null&&(entry.available||entry.pending||entry.unavailable))entry.refresh();});
     }
     /** Retain the unmodified native model, never a personal view or tap handler. */
@@ -47,7 +46,8 @@ public final class LyricsEntryButton {
         if(p.replaying){p.currentModel=true;return;}
         if(bytes==null||bytes.length>2_000_000){p.currentModel=false;return;}
         String recording=NativeActionModel.recording(bytes);
-        p.currentModel=recording==null||recording.equals(p.video);p.mode=0;
+        p.modelVideo=recording==null?VideoInformation.getVideoId():recording;
+        p.currentModel=p.modelVideo!=null&&p.modelVideo.equals(VideoInformation.getVideoId());p.mode=0;
         if(p.currentModel)p.original=original;
         else LyricsDiagnostics.record("Lyrics action model","Ignored native action row for a different recording");
     }
@@ -85,8 +85,8 @@ public final class LyricsEntryButton {
         }
     }
     private boolean isCurrent(){
-        LyricsManager manager=LyricsManager.getInstance();var track=manager.getCurrentTrack();String id=VideoInformation.getVideoId();
-        return Settings.LYRICS_ENABLED.get()&&track!=null&&id!=null&&id.equals(manager.getCommittedVideoId())&&identity.equals(LyricsRepository.identity(track,id));
+        String id=VideoInformation.getVideoId();
+        return Settings.LYRICS_ENABLED.get()&&id!=null&&LyricsRepository.current(id)&&identity.equals(id);
     }
     void hideButton(){available=false;pending=false;unavailable=false;restoring=true;try{refresh();}finally{restoring=false;}}
     void trackChanged(String key){hideButton();identity=key;String id=VideoInformation.getVideoId();videoId=id==null?"":id;}

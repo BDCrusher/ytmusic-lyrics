@@ -48,6 +48,6 @@ public final class LyricsSliderPreference extends Preference {
                 if(fromUser&&!bar.isPressed())save();
             }
         });
-        LinearLayout.LayoutParams row=new LinearLayout.LayoutParams(-1,dp(48));row.topMargin=dp(4);root.addView(slider,row);return root;
+        LinearLayout.LayoutParams row=new LinearLayout.LayoutParams(-1,dp(48));row.topMargin=dp(4);root.addView(slider,row);app.bdcrusher.ytmusic.common.FeaturePreferences.card(root,false);return root;
     }
 }

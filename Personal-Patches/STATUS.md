@@ -1,3 +1,47 @@
+# Verified source - 0.6.0-beta.1
+
+The October29 feedback implementation is staged at Personal-Patches/dist/0.6.0-beta.1. Exact MPP SHA256 54788eb202030bca9ca8cf2677a928313465a848568e749ea0079ebcf08ff27e. Both original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26; Jam 9.42-only. Full Collection alone, optional Shaders and Download playlist. No add-on delivery.
+
+Recording-scoped discovery/native model replay/panel ownership/generation guards, native shader/root lifecycle and foreground navigation extension, themed preference cards, displayed-playlist routing, read-only chosen YTDLnis folder, native cached pages/static artwork/status rows and background one-best lyric prefetch are implemented. Existing normal Enable debug logging/export retained. External filenames need exact recording IDs. Offline playback uses the existing separate service; native-main-player/Lyrics integration is not established.
+
+Build/JVM/lint, 14 two-target positive APK combinations, 2 missing-Downloads rejections, catalog/Jam guard, 14 compiled feature/reference audits, 8 native Lyrics audits and 360 actual-source checks pass (299 fresh;61 inherited by hashes). Browser 16 variants/reference line motion/follow/seek/dock/status/cadence/Kawarp/fallback and 3 public Java lyric lookups pass. Phone smoothness/Samsung appearance/graphics/media/real downloads remain unverified; no zero-stutter claim. No device/MuMu/sign/install/uninstall or real media-download operations. 6.82GiB retained regenerable revision38 scratch; no cleanup authorized. See Research/FIXES-0.6.0-BETA.1-2026-10-30.md and staged verification.json. Publication complete only when the new Toolkit publication-result.json exists. Never rerun completed staging/publication or push private source history.
+
+## Earlier records
+
+# Active implementation - 0.6.0-beta.1
+
+User authorized the October29 feedback fixes, chosen-folder YTDLnis integration and improved settings. See Verification/revision38/WORK.md. Historical documentation-only notes do not restrict this new implementation request. All writes in YT-Music; no devices/MuMu/sign/install. Candidate not built or delivered yet.
+
+## Earlier records
+
+# Documentation update - 2026-10-29 phone feedback
+
+Documentation only; no source, bundle, settings, build, device or GitHub changes. Read [PHONE-FEEDBACK-2026-10-29.md](../Research/PHONE-FEEDBACK-2026-10-29.md). Open reports: native YouTube lyrics takeover, split/wrong navigation background, inconsistent player/Lyrics shaders and absent extra playlist-download action. New requirements: same native playlist page/identity offline with local-file routing, static covers, lyric prefetch where possible and truthful queued/downloading/downloaded indicators. Current code uses a separate offline snapshot/view/queue; it does not yet provide that seamless original-page behavior. Installed version/selections were not supplied. Latest published release remains0.5.0-beta.1. Do not implement or publish from this note alone.
+
+Follow-up recorded: the existing playlist Download button sends the playing song to an external downloader (user: YTDLPnis). Generic download code has a current-video fallback and constructs a watch URL; exact click route is not proven. Playlist-context routing must use the displayed playlist URL with no current-song fallback. Still documentation only; no code/settings/build/GitHub changes.
+
+Additional phone reports recorded: previous-song lyrics sometimes remain on a new track, and the Lyrics action is unclickable on expected Unison recordings, specifically CottontailVA / Love Me Dead (MYal8NoVQXs). These remain unresolved; prior desktop provider/button checks do not close the phone reports. Documentation only, no implementation or GitHub changes.
+
+## Earlier records
+
+# Published - 0.5.0-beta.1
+
+[0.5.0-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.5.0-beta.1) is published. Toolkit verified 11 public assets, 7542 exact source files and the dev feed. Source `fecdcc1390fa0c8d7639c3bc64b9adbc81be0e4c`; feed `7496611463fbc3fb9fee39e8685ba02031633172`. MPP SHA256 `3c53b25d3015848a68edf13181daea8a6c2db8cc698bcf284998999a134b7d4b`. Receipt: `Verification/publication/v0.5.0-beta.1/publication-result.json`. Existing public history preserved; no shared/global tools copied.
+
+Both exact original arm64 targets: YouTube Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Full Collection only, optional Shaders and Download playlist. Jam queue sharing remains 9.42.52-only; disable an old saved Jam selection on 9.43.51. Use this source alone. Enable Pre-release patches and Experimental app versions, refresh, review saved selections and repatch the original APK.
+
+Use the EXISTING Enable debug logging switch and Export debug logs in Morphe > Miscellaneous > Debugging. No timed capture/separate report. Normal logs add exact app/WebView/entry, source/recording, clock/line and actual platform frame-deadline/cadence evidence, with bounded/redacted entries, throttled component dumps and fewer routine stacks. If native Debugging is absent the fallback page uses the same switch/export. Inspect native song/UI details before sharing.
+
+Fix stale metadata/recording binding and lookup restarts during harmless refinements. Handle the complete verified native Lyrics action state enum, retaining second position while pending/available. Reduce hidden hierarchy work and request a local animation frame rate on Android 35+ while preserving user settings, pause and reduced motion. Keep Braccato as the single text-motion engine. Dedupe artwork network/ledger work; request own-session Recents pause/stop before effects cleanup. Retain only artwork lookup/availability records, no permanent animation-file library.
+
+Build/JVM/lint, fourteen two-target APK combinations, missing-Downloads rejection on both targets and catalog/target validation pass with exact Patcher 2.1.0-dev.4. Fourteen compiled feature/reference audits, eight native Lyrics audits, 286 actual-source checks (192 fresh; 94 inherited after hashes match), browser 16-format/reference motion/UI/cadence/Kawarp/fallback checks pass. Fresh public Java lyric retrieval passed for all three supplied recordings. The cover's direct Better Lyrics401 remains a real access rejection while exact-ID Unison succeeded. Prior combined-service browser challenge timeout remains a limitation.
+
+Phone acceptance remains: recording-free smoothness, Samsung navigation, native panel/graphics/video and streamed-cover behavior, Recents stop timing and real playlist/offline downloads. Desktop old/current fixtures both had no reverse scroll steps; they do not establish a phone speedup. No universal zero-stutter claim. No device, MuMu, signing, installation/uninstallation or real playlist download operations. All edits, scratch and evidence remain in YT-Music.
+
+Read Research/FIXES-0.5.0-BETA.1-2026-10-29.md and Personal-Patches/dist/0.5.0-beta.1/verification.json. Generated compatibility scratch remains under Verification/scratch/revision37-r4-*; see Verification/revision37/retained-scratch.json for size. Reports/originals/source/previous releases are preserved; no cleanup authorized. Never rerun completed staging/publication recipes, overwrite releases or push private development history.
+
+## Earlier records
+
 # Current candidate - 0.5.0-beta.1
 
 Implementing the user-authorized lyrics/logger fixes and BOTH exact original arm64 targets9.42.52/94252240 and9.43.51/94351240. Full Collection only, optional Shaders/downloads. Jam remains9.42.52-only; the user delegated this scope choice. Normal Enable debug logging / Logger export replaces the timed capture. Read Research/FIXES-0.5.0-BETA.1-2026-10-29.md and Verification/revision37/WORK.md. Final two-target matrix/audits and publication are in progress; do not claim delivery until the exact receipts exist. No MuMu/device/sign/install/uninstall/real-download operations. All writes remain in YT-Music. No global tools copied.

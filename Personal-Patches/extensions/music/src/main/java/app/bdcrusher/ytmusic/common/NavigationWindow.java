@@ -28,7 +28,7 @@ final class NavigationWindow implements AutoCloseable {
     NavigationWindow(Window w){window=w;frames=new FrameDiagnostics(w);decor=w.getDecorView();color=w.getNavigationBarColor();divider=Build.VERSION.SDK_INT>=28?w.getNavigationBarDividerColor():0;contrast=Build.VERSION.SDK_INT>=29&&w.isNavigationBarContrastEnforced();flags=decor.getSystemUiVisibility();}
     void start(){decor.getViewTreeObserver().addOnGlobalLayoutListener(layout);decor.getViewTreeObserver().addOnWindowFocusChangeListener(focus);update();}
     void update(){if(!closed&&!queued){queued=true;decor.post(apply);}}
-    void lyricsViewport(View root){if(lyrics!=null&&lyrics.root==root)return;if(lyrics!=null)lyrics.close();lyrics=new LyricsViewport(root,decor);
+    void lyricsViewport(View root){if(lyrics!=null&&lyrics.root==root){lyrics.refreshBackground();update();return;}if(lyrics!=null)lyrics.close();lyrics=new LyricsViewport(root,decor);
         for(var e:new java.util.ArrayList<>(padding.entrySet()))if(lyrics.contains(e.getKey())){View v=e.getKey();int[] p=e.getValue().base;v.setPadding(p[0],p[1],p[2],p[3]);padding.remove(v);if(v instanceof ViewGroup group&&clipping.containsKey(group)){group.setClipToPadding(clipping.remove(group));}}
         update();}
     private void apply(){

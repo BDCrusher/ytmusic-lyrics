@@ -169,7 +169,10 @@ public final class OfflinePlaybackService extends Service {
 
     private void playFile(@Nullable String path, @Nullable String requestedTitle,
                           @Nullable String requestedArtist, @Nullable String artworkPath) {
-        if (path == null || !new File(path).isFile()) return;
+        if(path==null)return;boolean external=path.startsWith("content://");
+        if(external?!app.bdcrusher.ytmusic.playlists.ExternalFiles.owns(this,path):!new File(path).isFile())return;
+        app.bdcrusher.ytmusic.playlists.PlaylistRuntime.Local saved=app.bdcrusher.ytmusic.playlists.PlaylistRuntime.source(path);
+        if(saved!=null){requestedTitle=saved.title();requestedArtist=saved.artist();artworkPath=saved.artwork();}
         this.path = path;
         title = requestedTitle == null ? new File(path).getName() : requestedTitle;
         artist = requestedArtist == null || requestedArtist.isBlank() ? "YouTube Music" : requestedArtist;
@@ -188,7 +191,7 @@ public final class OfflinePlaybackService extends Service {
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build());
-            player.setDataSource(path);
+            if(external)player.setDataSource(this,android.net.Uri.parse(path));else player.setDataSource(path);
             // Skipping quickly leaves the previous player mid prepare. Its callbacks are
             // cleared on release, and each one still checks that it belongs to the current
             // track, so a discarded player can never tear down the one that replaced it.
@@ -225,6 +228,7 @@ public final class OfflinePlaybackService extends Service {
         int target = queueIndex + offset;
         if (target < 0 || target >= queue.size()) return;
         queueIndex = target;
+        if(queue.get(target).startsWith("content://")){playFile(queue.get(target),null,null,null);return;}
         OfflineTrack track = OfflineTrack.load(new File(queue.get(target)));
         playFile(track.audioFile().getAbsolutePath(), track.displayTitle(), track.displayArtist(),
                 track.artworkFile().getAbsolutePath());
@@ -370,6 +374,8 @@ public final class OfflinePlaybackService extends Service {
                     .putString(MediaMetadata.METADATA_KEY_TITLE, title)
                     .putString(MediaMetadata.METADATA_KEY_ARTIST, artist)
                     .putLong(MediaMetadata.METADATA_KEY_DURATION, currentDuration);
+            app.bdcrusher.ytmusic.playlists.PlaylistRuntime.Local saved=app.bdcrusher.ytmusic.playlists.PlaylistRuntime.source(currentPath);
+            if(saved!=null)metadata.putString(MediaMetadata.METADATA_KEY_MEDIA_ID,saved.id()).putString(MediaMetadata.METADATA_KEY_MEDIA_URI,saved.source());
             if (artwork != null) {
                 metadata.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, artwork)
                         .putBitmap(MediaMetadata.METADATA_KEY_ART, artwork)

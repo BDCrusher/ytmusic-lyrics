@@ -219,6 +219,14 @@ public final class DownloadsPatch {
      * Determines if the clicked view is inside a Dialog/BottomSheet by comparing
      * its Window root to the main Activity's Window root.
      */
+    private static boolean playerSender(@Nullable Map<Object,Object> map){
+        Object sender=map==null?null:map.get(ELEMENTS_SENDER_VIEW);
+        for(int depth=0;sender instanceof View view&&depth<16;depth++){
+            try{if(view.getId()!=View.NO_ID&&"player_bottom_ui_container".equals(view.getResources().getResourceEntryName(view.getId())))return true;}catch(Exception ignored){}
+            sender=view.getParent();
+        }return false;
+    }
+
     private static boolean isViewInsideDialog(@Nullable Object viewObj) {
         if (viewObj instanceof View view) {
             View buttonRoot = view.getRootView();
@@ -243,10 +251,11 @@ public final class DownloadsPatch {
             }
             Utils.verifyOnMainThread();
 
+            if(endpoint!=null&&app.bdcrusher.ytmusic.playlists.PlaylistRuntime.endpoint(endpoint.toByteArray()))return true;
             String videoId = endpoint == null ? null : extractVideoIdFromCommand(endpoint);
-            if (videoId == null || videoId.isEmpty()) {
-                videoId = VideoInformation.getVideoId();
-            }
+            // Only a verified player sender may use Now Playing; a playlist must keep its own identity.
+            if ((videoId == null || videoId.isEmpty())&&playerSender(map))videoId=VideoInformation.getVideoId();
+            if(videoId==null)return false;
             if (videoId.isEmpty()) return false;
 
             long now = System.currentTimeMillis();
@@ -394,7 +403,7 @@ public final class DownloadsPatch {
                     startDownload(targetId, flyoutMenuUsesExternalDownloader());
                     return true;
 
-                } else if (inDialog) {
+                } else if (inDialog&&playerSender(map)) {
                     lastFlyoutDownloadTime = now;
                     // The flyout of a queue row carries no id either, so this can only be
                     // the track that is playing.

@@ -93,7 +93,7 @@ let renderer = createLyricsRenderer({document,window,mount:$('lyrics'),host:{
   getScrollElement:()=>$('scroll'),
   isViewVisible:()=>active && !document.hidden,
   setResumeAffordanceVisible:visible=>$('resume').hidden=!visible,
-  seek:seconds=>{if(settings.tapSeek){native?.seek(Math.round(seconds*1000));resumeFollow();}},
+  seek:seconds=>{if(settings.tapSeek){native?.seek(generation,Math.round(seconds*1000));resumeFollow();}},
   log:message=>native?.diagnostic(generation,'Renderer',String(message).slice(0,240)),
 }});
 
@@ -251,6 +251,11 @@ window.BDC = {
     $('empty').textContent='Looking for lyrics…';$('empty').hidden=false;
     $('track').textContent=track.title+' · '+track.artist;
   },
+  metadata(track){
+    if(!params||track.generation!==generation||track.videoId!==params.videoId)return;
+    Object.assign(params,{song:track.title,artist:track.artist,album:track.album,duration:track.duration});
+    $('track').textContent=[track.title,track.artist].filter(Boolean).join(' · ');
+  },
   async source(id,payload) {
     if(id!==generation||!params)return;
     const expected=params,cache=seenPayloads;
@@ -371,12 +376,12 @@ window.addEventListener('resize',()=>{if($('source-menu').classList.contains('op
 for(const [id,direction] of [['previous',-1],['next',1]])$(id).onclick=()=>{if(availableKeys.length>1)selectSource(availableKeys[(Math.max(0,availableKeys.indexOf(selected))+direction+availableKeys.length)%availableKeys.length]);};
 $('collapse').onclick=()=>setCollapsed(!collapsed,true);
 $('copy').onclick=()=>native?.copy(generation,(currentResult?.lyrics||[]).map(line=>line.words).join('\n').slice(0,100000));
-$('refresh').addEventListener('click',()=>native?.refresh());
+$('refresh').addEventListener('click',()=>native?.refresh(generation));
 $('connect').addEventListener('click',()=>native?.connect());
 $('resume').addEventListener('click',resumeFollow);
 for(const kind of ['translate','romanize'])$(kind).addEventListener('click',()=>native?.toggle(kind));
-$('earlier').addEventListener('click',()=>native?.offset(-100));
-$('later').addEventListener('click',()=>native?.offset(100));
+$('earlier').addEventListener('click',()=>native?.offset(generation,-100));
+$('later').addEventListener('click',()=>native?.offset(generation,100));
 // Preserve extension scrolling; explicit gestures bypass only pending event suppression.
 $('scroll').addEventListener('scroll',()=>{if(performance.now()>=resumeScrollUntil)renderer.noteUserScroll();},{passive:true});
 function userScroll(){resumeScrollUntil=0;renderer.noteUserScroll(true);}

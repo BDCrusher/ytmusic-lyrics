@@ -35,7 +35,7 @@ public final class LyricsSettingsPage {
         page.removeAll();page.setOrderingAsAdded(true);
         SharedPreferences p=LyricsConfig.preferences(c);
         if(p.getInt("catalogSchema",0)<2)p.edit().putString("legacyPriority",p.getString("priority","")).putString("priority",join(LyricsConfig.order(c))).putInt("catalogSchema",2).apply();
-        SwitchPreference enabled=new SwitchPreference(c);enabled.setTitle("Third-party lyrics");enabled.setKey("bdcrusher_lyrics_inline_ready");enabled.setPersistent(false);enabled.setChecked(Settings.LYRICS_ENABLED.get());
+        SwitchPreference enabled=app.bdcrusher.ytmusic.common.FeaturePreferences.toggle(c);enabled.setTitle("Third-party lyrics");enabled.setKey("bdcrusher_lyrics_inline_ready");enabled.setPersistent(false);enabled.setChecked(Settings.LYRICS_ENABLED.get());
         enabled.setOnPreferenceChangeListener((pref,v)->{Settings.LYRICS_ENABLED.save((Boolean)v);return true;});page.addPreference(enabled);
         category(c,page,"Rendering");
         toggle(c,page,p,"wordSync","Word and syllable highlighting",true);toggle(c,page,p,"letterWave","Letter wave",true);
@@ -53,31 +53,31 @@ public final class LyricsSettingsPage {
         app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"translation",()->populate(c,page),"translation","romanization","language");
         category(c,page,"Sources");page.addPreference(new LyricsSourceOrderPreference(c));
         category(c,page,"Saved lyrics and storage");
-        ListPreference policy=new ListPreference(c);policy.setTitle("Choose the saved version");policy.setKey("bdcrusher_cache_policy");policy.setPersistent(false);
+        ListPreference policy=app.bdcrusher.ytmusic.common.FeaturePreferences.choice(c);policy.setTitle("Choose the saved version");policy.setKey("bdcrusher_cache_policy");policy.setPersistent(false);
         policy.setEntries(new String[]{"Best timing, then source order","Source order first"});policy.setEntryValues(new String[]{"quality","source"});policy.setValue(p.getString("cachePolicy","quality"));policy.setSummary(policy.getEntry());
         policy.setOnPreferenceChangeListener((pref,value)->{p.edit().putString("cachePolicy",value.toString()).apply();policy.setValue(value.toString());policy.setSummary(policy.getEntry());return true;});page.addPreference(policy);
         page.addPreference(new StoragePreference(c,true));
-        Preference clear=new Preference(c);clear.setTitle("Clear saved lyrics");clear.setSummary("Lyrics remain saved until you clear them; no automatic expiry");
+        Preference clear=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);clear.setTitle("Clear saved lyrics");clear.setSummary("Lyrics remain saved until you clear them; no automatic expiry");
         clear.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Clear saved lyrics?").setMessage("Remove your saved lyric library. Rendering settings, source connections and downloaded music are kept.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->new LyricsLibrary(c).clear(()->populate(c,page))).show();return true;});page.addPreference(clear);
-        Preference connection=new Preference(c);connection.setTitle("Source connection");
+        Preference connection=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);connection.setTitle("Source connection");
         String jwt=p.getString("serviceJwt","");connection.setSummary(jwt.isEmpty()?"Additional providers verify automatically while the app is active. Tap if interaction is needed.":ServiceConnection.expired(jwt)?"Additional-provider verification expired · tap to renew":"Additional providers connected · tap to reconnect");
         connection.setOnPreferenceClickListener(pref->{ServiceConnection.show(c);return true;});page.addPreference(connection);
 
-        Preference license=new Preference(c);license.setTitle("Credits and licenses");license.setOnPreferenceClickListener(pref->{showNotice(c);return true;});page.addPreference(license);
-        Preference reset=new Preference(c);reset.setTitle("Reset rendering settings");reset.setSummary("Restore visual defaults without changing sources, saved lyrics or connections");reset.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Reset rendering settings?").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{SharedPreferences.Editor e=p.edit();for(String key:new String[]{"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive","background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents"})e.remove(key);e.apply();populate(c,page);}).show();return true;});page.addPreference(reset);
+        Preference license=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);license.setTitle("Credits and licenses");license.setOnPreferenceClickListener(pref->{showNotice(c);return true;});page.addPreference(license);
+        Preference reset=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);reset.setTitle("Reset rendering settings");reset.setSummary("Restore visual defaults without changing sources, saved lyrics or connections");reset.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Reset rendering settings?").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{SharedPreferences.Editor e=p.edit();for(String key:new String[]{"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive","background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents"})e.remove(key);e.apply();populate(c,page);}).show();return true;});page.addPreference(reset);
     }
     static String join(org.json.JSONArray a){java.util.List<String> v=new java.util.ArrayList<>();for(int i=0;i<a.length();i++)v.add(a.optString(i));return android.text.TextUtils.join(",",v);}
-    private static void category(Context c,PreferenceScreen page,String title){PreferenceCategory category=new PreferenceCategory(c);category.setTitle(title);page.addPreference(category);}
+    private static void category(Context c,PreferenceScreen page,String title){PreferenceCategory category=app.bdcrusher.ytmusic.common.FeaturePreferences.heading(c);category.setTitle(title);page.addPreference(category);}
     private static void toggle(Context c,PreferenceScreen page,SharedPreferences p,String key,String title,boolean def){
-        SwitchPreference control=new SwitchPreference(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setPersistent(false);control.setChecked(p.getBoolean(key,def));
+        SwitchPreference control=app.bdcrusher.ytmusic.common.FeaturePreferences.toggle(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setPersistent(false);control.setChecked(p.getBoolean(key,def));
         control.setOnPreferenceChangeListener((pref,value)->{p.edit().putBoolean(key,(Boolean)value).apply();return true;});page.addPreference(control);
     }
     private static void text(Context c,PreferenceScreen page,SharedPreferences p,String key,String title,String help,String def){
-        EditTextPreference control=new EditTextPreference(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);control.setText(p.getString(key,def));control.setSummary(help+" · "+p.getString(key,def));
+        EditTextPreference control=app.bdcrusher.ytmusic.common.FeaturePreferences.text(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);control.setText(p.getString(key,def));control.setSummary(help+" · "+p.getString(key,def));
         control.setOnPreferenceChangeListener((pref,value)->{String v=value.toString().trim();p.edit().putString(key,v).apply();control.setSummary(help+" · "+v);return true;});page.addPreference(control);
     }
     private static void alignment(Context c,PreferenceScreen page,SharedPreferences p,String key,String title){
-        ListPreference control=new ListPreference(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);
+        ListPreference control=app.bdcrusher.ytmusic.common.FeaturePreferences.choice(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);
         control.setEntries(new String[]{"Better Lyrics default","Left","Center","Right"});control.setEntryValues(new String[]{"auto","left","center","right"});control.setValue(p.getString(key,"auto"));control.setSummary(control.getEntry());
         control.setOnPreferenceChangeListener((pref,value)->{p.edit().putString(key,value.toString()).apply();control.setValue(value.toString());control.setSummary(control.getEntry());return true;});page.addPreference(control);
     }

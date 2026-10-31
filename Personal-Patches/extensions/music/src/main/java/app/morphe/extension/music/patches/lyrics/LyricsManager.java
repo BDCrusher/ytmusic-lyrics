@@ -315,6 +315,8 @@ public final class LyricsManager {
         return currentTrack;
     }
 
+    public String getLyricsVideoId(){return lyricsVideoId;}
+
     public String getCommittedVideoId() { TrackInfo t=currentTrack;return t!=null&&recordingBinding.matches(currentVideoId,t.title(),t.artist())?currentVideoId:""; }
 
     @Nullable
@@ -331,7 +333,7 @@ public final class LyricsManager {
     /** Whether lyrics for the current track are loaded and ready to show. */
     public boolean hasLyrics() {
         Lyrics current = currentLyrics;
-        return state == State.LOADED && current != null && !current.isEmpty();
+        return state == State.LOADED && current != null && !current.isEmpty() && lyricsVideoId.equals(VideoInformation.getVideoId());
     }
     private void resetPosition() {
         positionMs = 0;
@@ -2139,6 +2141,7 @@ private void reorderQueueByRemembered() {
     }
 
     private void setState(State newState, @Nullable Lyrics lyrics) {
+        if(newState==State.LOADED&&lyrics!=null&&!lyrics.isEmpty())lyricsVideoId=preferenceVideoId==null?currentVideoId:preferenceVideoId;
         if (newState == State.ERROR || newState == State.NOT_FOUND) {
             if (suppressForRequest == requestId.get()) {
                 // The lyric on screen was chosen by the user; a failed lookup keeps it there.

@@ -29,7 +29,7 @@ public final class LyricsSourceOrderPreference extends Preference {
         TextView hint=new TextView(getContext());hint.setText("Source priority\nDrag the handle to reorder. Top is most preferred.");hint.setTextColor(ThemeUtils.getAppForegroundColor());hint.setPadding(0,dp(8),0,dp(12));box.addView(hint);
         rows=new LinearLayout(getContext());rows.setOrientation(LinearLayout.VERTICAL);box.addView(rows);rebuild();
         Button reset=new Button(getContext());reset.setText("Reset Better Lyrics defaults");reset.setOnClickListener(v->{items.clear();JSONArray all=LyricsConfig.catalog(getContext()).optJSONArray("providers");for(int i=0;i<all.length();i++)items.add(all.optJSONObject(i));disabled.clear();save();rebuild();});box.addView(reset);
-        return box;
+        app.bdcrusher.ytmusic.common.FeaturePreferences.card(box,false);return box;
     }
     private Drawable icon(String type){try(var in=getContext().getAssets().open("bdcrusher-lyrics/bd_lyrics_"+type+".xml")){org.xmlpull.v1.XmlPullParser p=Xml.newPullParser();p.setInput(in,"UTF-8");return Drawable.createFromXml(getContext().getResources(),p,getContext().getTheme());}catch(Exception ex){return null;}}
     private void rebuild(){if(rows==null)return;rows.removeAllViews();

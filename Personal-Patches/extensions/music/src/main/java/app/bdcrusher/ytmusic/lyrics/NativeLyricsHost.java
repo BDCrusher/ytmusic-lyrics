@@ -33,6 +33,7 @@ public final class NativeLyricsHost {
         controllers.add(new WeakReference<>(value));
         if(!isOpen())controller=new WeakReference<>(value);
     }
+    public static void recordingChanged(){BetterLyricsPanelView view=renderer.get();if(view!=null)view.recordingChanged();}
     public static boolean isOpen(){return lyrics&&panel.get()!=null;}
     public static void captureDefinition(Object owner,byte[] bytes){
         if(installing.get()||!Settings.LYRICS_ENABLED.get()||bytes==null||bytes.length>1_000_000)return;
@@ -78,7 +79,7 @@ public final class NativeLyricsHost {
         BetterLyricsPanelView old=renderer.get();if(old!=null)old.syncOverlay();
         if(lyrics)attach(epoch,0);
     }
-    public static void onNativeLayout(){if(isOpen())attach(epoch,0);}
+    public static void onNativeLayout(){if(isOpen())attach(epoch,0);app.bdcrusher.ytmusic.shaders.ShaderRuntime.onNativeLayout();}
     private static void attach(int expected,int attempt){
         if(queuedEpoch==expected)return;
         queuedEpoch=expected;

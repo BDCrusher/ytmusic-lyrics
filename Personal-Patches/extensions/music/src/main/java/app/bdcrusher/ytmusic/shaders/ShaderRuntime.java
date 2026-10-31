@@ -20,6 +20,7 @@ import app.morphe.extension.shared.Utils;
 public final class ShaderRuntime {
     private static final Handler main=new Handler(Looper.getMainLooper());
     private static final Map<View,Binding> surfaces=new WeakHashMap<>();
+    private static final Map<View,Boolean> watched=new WeakHashMap<>();
     private static MediaMetadata metadata;
     private static Bitmap artwork;
     private static String media;
@@ -31,6 +32,7 @@ public final class ShaderRuntime {
     private static String identity="",mediaKey="";
     private static int generation;
     private static int panelEpoch;
+    private static Runnable panelRetry;
     private static String frameFor="";
     private static boolean playing,watching;
     private static volatile boolean effectsActive;
@@ -74,17 +76,26 @@ public final class ShaderRuntime {
     }
     public static void onPlayerBackground(View view){if(enabled(view.getContext()))watch(view,false);}
     private static void watch(View anchor,boolean cover){
-        if(surfaces.containsKey(anchor))return;init(anchor.getContext());
+        init(anchor.getContext());
+        if(!watched.containsKey(anchor)){
+            watched.put(anchor,cover);
+            anchor.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){
+                public void onViewAttachedToWindow(View v){watch(v,cover);}
+                public void onViewDetachedFromWindow(View v){Binding old=surfaces.remove(v);if(old!=null)old.close();}
+            });
+        }
+        Binding existing=surfaces.get(anchor);if(existing!=null){existing.update();return;}
         if(anchor.getParent() instanceof ViewGroup parent&&anchor.isAttachedToWindow()){Binding binding=new Binding(anchor,parent,cover);surfaces.put(anchor,binding);track();binding.update();}
-        else anchor.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){v.removeOnAttachStateChangeListener(this);watch(v,cover);}public void onViewDetachedFromWindow(View v){}});
     }
-    static void refresh(){nativePoster();effectsActive=false;for(Binding binding:new ArrayList<>(surfaces.values())){binding.update();effectsActive|=binding.active;}if(effectsActive)retryArtwork();}
+    public static void onNativeLayout(){if(watching)refresh();}
+    static void refresh(){if(!watching)return;Object owner=panelOwner.get();if(owner!=null)attachLyrics(owner,0,panelEpoch);nativePoster();effectsActive=false;for(Binding binding:new ArrayList<>(surfaces.values())){binding.update();effectsActive|=binding.active;}if(effectsActive)retryArtwork();}
     static void mediaFailed(){ArtworkRepository.invalidate(Utils.getContext(),mediaKey);media=null;lastLookup=SystemClock.elapsedRealtime();refresh();int expected=generation;if(++failures<=3)main.postDelayed(()->{if(expected==generation&&active()){lastLookup=0;retryArtwork();}},3000);}
     static boolean requestProof(int id,JSONObject challenge){for(Binding binding:new ArrayList<>(surfaces.values()))if(binding.surface instanceof ShaderSurface background&&background.solve(id,challenge))return true;return false;}
     public static void onNativePanel(Object panel){
         main.post(()->{
-            if(panel==panelOwner.get()){refresh();return;}panelOwner=new WeakReference<>(panel);
+            if(panel==panelOwner.get()){if(panel!=null)attachLyrics(panel,0,panelEpoch);refresh();return;}panelOwner=new WeakReference<>(panel);
             int epoch=++panelEpoch;
+            if(panelRetry!=null){main.removeCallbacks(panelRetry);panelRetry=null;}
             View previous=lyricsBody.get();if(previous!=null){Binding old=surfaces.remove(previous);if(old!=null)old.close();lyricsBody.clear();}
             if(panel==null){refresh();return;}
             try{String id=nativePanelId(panel);if(!"music_watch_lyrics_panel".equals(id)&&!"music_offline_lyrics_panel".equals(id)){refresh();return;}attachLyrics(panel,0,epoch);}
@@ -93,10 +104,16 @@ public final class ShaderRuntime {
     }
     private static void attachLyrics(Object panel,int attempt,int epoch){
         if(epoch!=panelEpoch)return;
-        try{View root=nativePanelView(panel);if(root==null||!enabled(root.getContext()))return;if(!(root instanceof FrameLayout body))return;
-            if(!root.isAttachedToWindow()){if(attempt<30)main.postDelayed(()->attachLyrics(panel,attempt+1,epoch),32);return;}
-            Binding binding=new Binding(root,body,false);surfaces.put(root,binding);lyricsBody=new WeakReference<>(root);PersonalRuntime.lyricsViewport(root);refresh();
+        try{View root=nativePanelView(panel);if(root==null){retryPanel(panel,attempt,epoch);return;}if(!enabled(root.getContext()))return;if(!(root instanceof FrameLayout body))return;
+            if(!root.isAttachedToWindow()){retryPanel(panel,attempt,epoch);return;}
+            if(panelRetry!=null){main.removeCallbacks(panelRetry);panelRetry=null;}
+            if(surfaces.containsKey(root)){lyricsBody=new WeakReference<>(root);return;}View previous=lyricsBody.get();if(previous!=null&&previous!=root){Binding old=surfaces.remove(previous);if(old!=null)old.close();}
+            Binding binding=new Binding(root,body,false);surfaces.put(root,binding);lyricsBody=new WeakReference<>(root);PersonalRuntime.lyricsViewport(root);binding.update();
         }catch(Exception ignored){}
+    }
+    private static void retryPanel(Object panel,int attempt,int epoch){
+        if(attempt>=120||panelRetry!=null)return;
+        panelRetry=()->{panelRetry=null;attachLyrics(panel,attempt+1,epoch);};main.postDelayed(panelRetry,32);
     }
     // Replaced with typed native panel calls by the exact-target Shaders patch.
     private static int thumbnailId(){throw new IllegalStateException("Missing exact native artwork resource hook");}

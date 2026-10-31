@@ -11,13 +11,22 @@ import app.bdcrusher.ytmusic.lyrics.StoragePreference;
 
 @SuppressWarnings("deprecation")
 public final class PlaylistSettingsPage {
+    private static final java.util.List<java.lang.ref.WeakReference<Preference>> folderRows=new java.util.ArrayList<>();
     private PlaylistSettingsPage(){}
+    static void folderChanged(){new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{folderRows.removeIf(ref->ref.get()==null);for(var ref:folderRows){Preference row=ref.get();if(row!=null)row.setSummary("Read-only access; files are matched by [video ID]. "+ExternalFiles.status());}});}
+    private static void heading(Context c,PreferenceScreen page,String text){PreferenceCategory group=app.bdcrusher.ytmusic.common.FeaturePreferences.heading(c);group.setTitle(text);page.addPreference(group);}
     public static void install(PreferenceFragment fragment){
         Context c=fragment.getActivity();if(!PersonalRuntime.installed(c,"playlists"))return;
         PreferenceScreen root=fragment.getPreferenceScreen();if(root.findPreference("bdcrusher_playlists_screen")!=null)return;
         PreferenceScreen page=fragment.getPreferenceManager().createPreferenceScreen(c);page.setKey("bdcrusher_playlists_screen");page.setTitle("Playlist downloads");page.setOrder(7);root.addPreference(page);
-        Preference routing=new Preference(c);routing.setTitle("Uses your Downloads mode");routing.setSummary("Default uses YouTube Music's own playlist download. In-app saves an ordered offline playlist. External opens the selected downloader's normal review screen. Change the mode under Player > Downloads.");routing.setSelectable(false);page.addPreference(routing);
-        Preference batches=new Preference(c);batches.setTitle("Offline playlists and progress");batches.setSummary("Play saved entries, pause, resume, cancel remaining items, or retry failures");batches.setOnPreferenceClickListener(p->{showBatches(fragment.getActivity());return true;});page.addPreference(batches);
+        heading(c,page,"Download routing");
+        Preference routing=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);routing.setTitle("Uses your Downloads mode");routing.setSummary("Default uses YouTube Music's own playlist download. In-app saves this playlist's ordered offline index. External opens the selected downloader's normal review screen. Change the mode under Player > Downloads.");routing.setSelectable(false);page.addPreference(routing);
+        heading(c,page,"YTDLnis files");
+        Preference folder=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);folder.setTitle("Choose download folder");folder.setSummary("Read-only access; files are matched by [video ID]. "+ExternalFiles.status());folder.setOnPreferenceClickListener(pref->{ExternalFiles.choose(c);return true;});page.addPreference(folder);folderRows.add(new java.lang.ref.WeakReference<>(folder));
+        Preference scan=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);scan.setTitle("Check downloaded files");scan.setSummary("Refresh availability without moving or deleting external files");scan.setOnPreferenceClickListener(pref->{PlaylistRuntime.refreshFiles(true);return true;});page.addPreference(scan);
+        Preference disconnect=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);disconnect.setTitle("Disconnect download folder");disconnect.setOnPreferenceClickListener(pref->{new AlertDialog.Builder(c).setTitle("Disconnect folder?").setMessage("External music files are kept. You can choose the folder again later.").setNegativeButton("Cancel",null).setPositiveButton("Disconnect",(d,w)->ExternalFiles.forget(c)).show();return true;});page.addPreference(disconnect);
+        heading(c,page,"Saved playlists");
+        Preference batches=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);batches.setTitle("Offline playlists and progress");batches.setSummary("Play saved entries, pause, resume, cancel remaining items, or retry failures");batches.setOnPreferenceClickListener(p->{showBatches(fragment.getActivity());return true;});page.addPreference(batches);
         page.addPreference(new StoragePreference(c,false));
         app.bdcrusher.ytmusic.common.PersonalCredits.add(c,page);
     }
@@ -34,7 +43,7 @@ public final class PlaylistSettingsPage {
         AlertDialog dialog=new AlertDialog.Builder(activity).setTitle("Offline playlists").setView(scroll).setNegativeButton("Close",null).create();
         Runnable render=()->{
             list.removeAllViews();
-            if(PlaylistRuntime.snapshot().isEmpty()){TextView empty=new TextView(activity);empty.setText("No saved playlists yet. Use Download playlist in a playlist header with In-app download mode selected.");list.addView(empty);}
+            if(PlaylistRuntime.snapshot().isEmpty()){TextView empty=new TextView(activity);empty.setText("No saved playlists yet. Select the Download playlist patch when patching, then use the added playlist-header action with In-app or External mode.");list.addView(empty);}
             for(JSONObject batch:PlaylistRuntime.snapshot()){
                 String id=batch.optString("id");TextView title=new TextView(activity);title.setText(batch.optString("title"));title.setTextSize(18);title.setTypeface(null,android.graphics.Typeface.BOLD);list.addView(title);
                 JSONArray entries=batch.optJSONArray("entries");int complete=0,failed=0;

@@ -16,22 +16,25 @@ final class LyricsRepository {
     private static final List<JSONObject> results = new ArrayList<>();
     private static LyricsCatalog catalog;
     private static String identity = "", notice = "";
+    private static TrackInfo currentTrack;
+    static boolean current(String id){return id!=null&&!id.isEmpty()&&id.equals(identity);}
+    static TrackInfo track(String id){return current(id)?currentTrack:null;}
     private static int generation;
     private static boolean finished;
     private static Boolean definitelyNotFound;
     private static JSONObject health;
 
     static String identity(TrackInfo track, String id) {
-        return id + "\u0000" + track.title() + "\u0000" + track.artist();
+        return id;
     }
 
     static void ensure(Context context, TrackInfo track, String id, boolean refresh) {
         String next = identity(track, id);
-        if (!refresh && next.equals(identity)) {if(catalog!=null)catalog.refine(track);return;}
+        if (!refresh && next.equals(identity)) {if(!track.title().isBlank()&&!track.artist().isBlank()){currentTrack=track;if(catalog!=null)catalog.refine(track);}return;}
         if(refresh&&next.equals(identity)){
             generation++;if(catalog!=null)catalog.close();catalog=null;finished=false;definitelyNotFound=null;
         }else clear();
-        identity = next;
+        identity = next;currentTrack=track;
         int expected = generation;
         catalog = new LyricsCatalog(context.getApplicationContext(), track, id, refresh, new LyricsCatalog.Sink() {
             public void health(JSONObject value){main.post(()->{if(expected!=generation)return;health=value;for(var sink:new ArrayList<>(sinks))sink.health(value);});}
@@ -57,7 +60,7 @@ final class LyricsRepository {
     }
 
     static void connectionChanged() { if(catalog!=null)catalog.connectionChanged(); }
-    static void rerank(Context context,String videoId){if(videoId==null||!identity.startsWith(videoId+"\u0000"))return;LyricsLibrary library=new LyricsLibrary(context);for(JSONObject result:new ArrayList<>(results))library.offer(videoId,result);}
+    static void rerank(Context context,String videoId){if(videoId==null||!identity.equals(videoId))return;LyricsLibrary library=new LyricsLibrary(context);for(JSONObject result:new ArrayList<>(results))library.offer(videoId,result);}
 
     static void subscribe(LyricsCatalog.Sink sink) {
         if (sinks.contains(sink)) return;
@@ -73,6 +76,6 @@ final class LyricsRepository {
     static void clear() {
         generation++;
         if (catalog != null) catalog.close();
-        catalog = null; identity = ""; results.clear(); sinks.clear(); notice = ""; finished = false;definitelyNotFound=null;health=null;
+        catalog = null; identity = "";currentTrack=null; results.clear(); sinks.clear(); notice = ""; finished = false;definitelyNotFound=null;health=null;
     }
 }

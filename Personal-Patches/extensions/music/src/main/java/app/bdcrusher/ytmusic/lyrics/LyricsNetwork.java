@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /** Fixed public origins; no arbitrary URL, credential, cookie or host-key bridge. */
 final class LyricsNetwork implements AutoCloseable {
+    private static final java.util.concurrent.Semaphore TRANSPORT=new java.util.concurrent.Semaphore(4,true);
+    static final class TransportBusy extends IOException {}
     static final class PayloadLimit extends IOException {PayloadLimit(){super("Lyrics response exceeds size limit");}}
     static final class HttpFailure extends IOException {
         final int status;final long retryAfterMs;
@@ -32,14 +34,18 @@ final class LyricsNetwork implements AutoCloseable {
         URL parsed=new URL(url);
         if(!"https".equals(parsed.getProtocol())||!java.util.Arrays.asList("lyrics.api.dacubeking.com","api.betterlyrics.org","unison.betterlyrics.org","lrclib.net","translate.googleapis.com").contains(parsed.getHost()))throw new IOException("Unsupported lyrics origin");
         if(closed)throw new IOException("Lyrics request canceled");
-        HttpURLConnection connection=(HttpURLConnection)parsed.openConnection();
-        connection.setConnectTimeout(8000);connection.setReadTimeout(18000);connection.setInstanceFollowRedirects(false);
-        connection.setRequestProperty("User-Agent","BDCrusher-YTMusic-Lyrics/0.1 (personal Android client)");
-        connection.setRequestProperty("Accept","application/json, text/event-stream");connection.setRequestMethod(method);
+        if(!TRANSPORT.tryAcquire())throw new TransportBusy();
+        HttpURLConnection connection;try{connection=(HttpURLConnection)parsed.openConnection();}catch(Exception failure){TRANSPORT.release();throw failure;}
         connections.add(connection);
         if(closed){release(connection);throw new IOException("Lyrics request canceled");}
-        try{if(body!=null){byte[] bytes=body.getBytes(StandardCharsets.UTF_8);connection.setDoOutput(true);connection.setRequestProperty("Content-Type",contentType);connection.setFixedLengthStreamingMode(bytes.length);try(var out=connection.getOutputStream()){out.write(bytes);}}}
+        try{
+            connection.setConnectTimeout(8000);connection.setReadTimeout(18000);connection.setInstanceFollowRedirects(false);
+            connection.setRequestProperty("User-Agent","BDCrusher-YTMusic-Lyrics/0.1 (personal Android client)");
+            connection.setRequestProperty("Accept","application/json, text/event-stream");connection.setRequestMethod(method);
+            if(body!=null){byte[] bytes=body.getBytes(StandardCharsets.UTF_8);connection.setDoOutput(true);connection.setRequestProperty("Content-Type",contentType);connection.setFixedLengthStreamingMode(bytes.length);try(var out=connection.getOutputStream()){out.write(bytes);}}
+        }
         catch(Exception failure){release(connection);throw failure;}
+        if(closed){release(connection);throw new IOException("Lyrics request canceled");}
         return connection;
     }
     String request(String url,String method,String body,String type)throws Exception{
@@ -54,6 +60,6 @@ final class LyricsNetwork implements AutoCloseable {
             }
         }finally{release(connection);}
     }
-    void release(HttpURLConnection connection){connections.remove(connection);connection.disconnect();}
-    @Override public void close(){closed=true;for(HttpURLConnection connection:connections)connection.disconnect();connections.clear();}
+    void release(HttpURLConnection connection){if(connections.remove(connection)){connection.disconnect();TRANSPORT.release();}}
+    @Override public void close(){closed=true;for(HttpURLConnection connection:new java.util.ArrayList<>(connections))release(connection);}
 }

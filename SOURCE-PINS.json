@@ -242,5 +242,19 @@
     "diagnostics": "Existing BaseSettings.DEBUG / Logger export; actual platform deadlines plus bounded callback cadence. No timed capture.",
     "report": "Research/FIXES-0.5.0-BETA.1-2026-10-29.md",
     "phoneVerified": false
+  },
+  "playlistOwnershipRevision": {
+    "version": "0.6.0-beta.1",
+    "date": "2026-10-30",
+    "targets": [
+      "9.42.52/94252240 arm64-v8a",
+      "9.43.51/94351240 arm64-v8a"
+    ],
+    "report": "Research/FIXES-0.6.0-BETA.1-2026-10-30.md",
+    "nativeContracts": "Exact native row extension161429595, native browse request/response adapters, Elements Uri image loader and native scoped FileProvider; no duplicate AndroidX/Guava implementations.",
+    "storage": "One best rich lyric per recording. Static downloaded-playlist covers and native page snapshots; animation media remains streamed, metadata-only permanent shader storage.",
+    "externalFiles": "Persisted user-granted read-only SAF folder; exact known recording ID matching, not title inference.",
+    "debugging": "Existing Enable debug logging / Export debug logs; no capture timer; reproduce line stutter without screen recording.",
+    "phoneVerified": false
   }
 }

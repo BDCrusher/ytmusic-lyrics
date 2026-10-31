@@ -14,6 +14,8 @@ final class LyricsViewport implements AutoCloseable {
     private final Map<ViewGroup, boolean[]> clipping = new IdentityHashMap<>();
     private int baseMargin, lastMargin, baseHeight, lastHeight;
     private boolean owned;
+    private android.graphics.drawable.Drawable inherited,backgroundBefore;
+    private View backgroundOwner;private int backgroundSignature;
     private final android.os.Handler handler=new android.os.Handler(android.os.Looper.getMainLooper());
     private long geometry=Long.MIN_VALUE,stableAt;private int navigation;
     private final Runnable settle=()->update(navigation);
@@ -27,6 +29,7 @@ final class LyricsViewport implements AutoCloseable {
             close();
             return;
         }
+        refreshBackground();
         ViewGroup.LayoutParams params = root.getLayoutParams();
         if (params == null) return;
         int[] position = new int[2];
@@ -65,8 +68,31 @@ final class LyricsViewport implements AutoCloseable {
         FeatureDiagnostics.event("Panel-layout","entry="+FeatureDiagnostics.entry()+" extendedBottom="+gap+" navigation="+navigationBottom);
     }
 
+    private static boolean transparent(android.graphics.drawable.Drawable value){return value.getAlpha()==0||value.getOpacity()==android.graphics.PixelFormat.TRANSPARENT;}
+    /** Paint the actual extended foreground body with its native sheet background, not a nav strip. */
+    void refreshBackground(){
+        if(inherited!=null&&root.getBackground()!=inherited){inherited=null;backgroundOwner=null;}
+        if(root.getBackground()!=null&&root.getBackground()!=inherited&&!transparent(root.getBackground()))return;
+        View owner=null;android.graphics.drawable.Drawable source=null;
+        for(android.view.ViewParent p=root.getParent();p instanceof View view&&view!=decor;p=view.getParent()){
+            if(view.getBackground()!=null&&!transparent(view.getBackground())){owner=view;source=view.getBackground();break;}
+        }
+        if(source==null||source.getConstantState()==null)return;
+        int signature=System.identityHashCode(source.getConstantState());
+        if(source instanceof android.graphics.drawable.ColorDrawable color)signature=31*signature+color.getColor();
+        if(source instanceof android.graphics.drawable.GradientDrawable gradient){
+            if(gradient.getColor()!=null)signature=31*signature+gradient.getColor().getDefaultColor();
+            signature=31*signature+java.util.Arrays.hashCode(gradient.getColors());
+        }
+        android.content.res.ColorStateList tint=owner.getBackgroundTintList();if(tint!=null)signature=31*signature+tint.getColorForState(owner.getDrawableState(),tint.getDefaultColor());
+        if(inherited!=null&&owner==backgroundOwner&&signature==backgroundSignature)return;
+        if(inherited==null)backgroundBefore=root.getBackground();
+        inherited=source.getConstantState().newDrawable(root.getResources()).mutate();backgroundOwner=owner;backgroundSignature=signature;
+        if(tint!=null)inherited.setTintList(tint);root.setBackground(inherited);
+    }
     @Override public void close() {
         handler.removeCallbacks(settle);geometry=Long.MIN_VALUE;
+        if(inherited!=null&&root.getBackground()==inherited)root.setBackground(backgroundBefore);inherited=null;backgroundOwner=null;
         if (owned) {
             ViewGroup.LayoutParams params = root.getLayoutParams();
             if (params != null) {

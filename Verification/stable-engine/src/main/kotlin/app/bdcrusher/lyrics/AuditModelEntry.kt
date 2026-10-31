@@ -13,7 +13,7 @@ fun main(args:Array<String>){
  val own="Lapp/bdcrusher/ytmusic/lyrics/"
  for(path in File(args.single()).readLines().filter {it.isNotBlank()}){
   val file=File(path).canonicalFile;require(file.toPath().startsWith(permitted.toPath())&&file.name=="verified-unsigned.apk")
-  val classes=mutableSetOf<String>();val callbackNames=mutableSetOf<String>();var callbackReturns=0;var entryHooks=0;var identityGetters=0;var catalogConstructors=0;var panelConstructors=0
+  val classes=mutableSetOf<String>();val callbackNames=mutableSetOf<String>();var callbackReturns=0;var entryHooks=0;var identityGetters=0;var catalogConstructors=0;var panelConstructors=0;var playlistPrefetchConstructors=0
   var controllerCapture=0;var presenterCapture=0;var nativeModel=0;var nativePanel=0;var parsers=0;var root=0;var id=0;var definitions=0;var nativeRefresh=0;var nativeVideoFields=0;var modelCalls=0;var scoped=false;var legacyDisabled=false;var publicModel=false
   var nativeIdentityInputs=0;var originalModelCaptures=0;var nativeRendererFields=0;var navigationSync=0;var navigationRelease=0;var hasNavigationHelper=false;var hiddenNativeScrollbars=0;var definitionCapture=0;var rendererClockHooks=0
   ZipFile(file).use {z->for(e in z.entries().asSequence().filter {it.name.matches(Regex("classes[0-9]*\\.dex"))}){
@@ -101,6 +101,7 @@ fun main(args:Array<String>){
       }
       if(c.type.startsWith(own)&&r.definingClass==own+"LyricsCatalog;"&&r.name=="<init>"){
        if(c.type==own+"LyricsCatalog;")require(m.name=="<init>"&&r.parameterTypes.size==7){"Unexpected catalog constructor delegation"}
+       else if(c.type==own+"LyricsPrefetch;"){playlistPrefetchConstructors++;require(m.name.startsWith("lambda\$enqueue")&&r.parameterTypes.size==5){"Unexpected background playlist catalog owner: $m"};require(c.methods.single {it.name=="enqueue"}.implementation!!.instructions.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.let {it.definingClass==own+"LyricsPrefetch;"&&it.name=="installed"}==true}){"Playlist lyrics discovery must check installed personal lyrics assets"}}
        else{catalogConstructors++;if(c.type==own+"BetterLyricsPanelView;")panelConstructors++;require(c.type==own+"LyricsRepository;"){"View-owned catalog construction: $m"}}
       }
      }
@@ -108,7 +109,7 @@ fun main(args:Array<String>){
    }
   }}
   require(rendererClockHooks==1){"Missing or duplicate personal renderer clock hook"}
-  require(callbackNames==setOf("onSetMetadata","onSetPlaybackState")&&callbackReturns>=2&&identityGetters==1&&catalogConstructors==1&&panelConstructors==0)
+  require(callbackNames==setOf("onSetMetadata","onSetPlaybackState")&&callbackReturns>=2&&identityGetters==1&&catalogConstructors==1&&panelConstructors==0&&playlistPrefetchConstructors==1)
   require(controllerCapture==1&&presenterCapture==1&&nativeModel==1&&nativePanel==1&&parsers==2&&root==1&&id==1&&definitions==1&&nativeRefresh==1&&nativeRendererFields==1&&nativeVideoFields==0&&nativeIdentityInputs==4&&originalModelCaptures==1&&navigationSync==0&&navigationRelease==0&&!hasNavigationHelper&&hiddenNativeScrollbars==2&&modelCalls==3&&definitionCapture==1&&scoped&&legacyDisabled&&publicModel){"Native replay audit counts: controller=$controllerCapture presenter=$presenterCapture model=$nativeModel panel=$nativePanel parsers=$parsers root=$root id=$id definitions=$definitions refresh=$nativeRefresh renderer=$nativeRendererFields identity=$nativeIdentityInputs original=$originalModelCaptures navigation=$navigationSync/$navigationRelease scrollbars=$hiddenNativeScrollbars calls=$modelCalls scoped=$scoped legacy=$legacyDisabled public=$publicModel"}
   for(name in listOf("LyricsEntryCoordinator;","LyricsRepository;","LyricsEntryButton;","NativeLyricsHost;","NativePanelWire;","NativeActionModel;","ProtoWire;","RendererPlayback;"))require(own+name in classes)
   val hash=java.security.MessageDigest.getInstance("SHA-256").digest(file.readBytes()).joinToString(""){"%02x".format(it)}

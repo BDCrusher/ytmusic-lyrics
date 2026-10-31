@@ -9195,7 +9195,7 @@
     setResumeAffordanceVisible: (visible) => $("resume").hidden = !visible,
     seek: (seconds) => {
       if (settings.tapSeek) {
-        native?.seek(Math.round(seconds * 1e3));
+        native?.seek(generation, Math.round(seconds * 1e3));
         resumeFollow();
       }
     },
@@ -9400,6 +9400,11 @@
       $("empty").textContent = "Looking for lyrics\u2026";
       $("empty").hidden = false;
       $("track").textContent = track.title + " \xB7 " + track.artist;
+    },
+    metadata(track) {
+      if (!params || track.generation !== generation || track.videoId !== params.videoId) return;
+      Object.assign(params, { song: track.title, artist: track.artist, album: track.album, duration: track.duration });
+      $("track").textContent = [track.title, track.artist].filter(Boolean).join(" \xB7 ");
     },
     async source(id, payload) {
       if (id !== generation || !params) return;
@@ -9619,12 +9624,12 @@
   };
   $("collapse").onclick = () => setCollapsed(!collapsed, true);
   $("copy").onclick = () => native?.copy(generation, (currentResult?.lyrics || []).map((line) => line.words).join("\n").slice(0, 1e5));
-  $("refresh").addEventListener("click", () => native?.refresh());
+  $("refresh").addEventListener("click", () => native?.refresh(generation));
   $("connect").addEventListener("click", () => native?.connect());
   $("resume").addEventListener("click", resumeFollow);
   for (const kind of ["translate", "romanize"]) $(kind).addEventListener("click", () => native?.toggle(kind));
-  $("earlier").addEventListener("click", () => native?.offset(-100));
-  $("later").addEventListener("click", () => native?.offset(100));
+  $("earlier").addEventListener("click", () => native?.offset(generation, -100));
+  $("later").addEventListener("click", () => native?.offset(generation, 100));
   $("scroll").addEventListener("scroll", () => {
     if (performance.now() >= resumeScrollUntil) renderer.noteUserScroll();
   }, { passive: true });

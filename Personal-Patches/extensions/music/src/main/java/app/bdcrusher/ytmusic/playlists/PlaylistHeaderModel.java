@@ -31,7 +31,9 @@ public final class PlaylistHeaderModel {
             if(download!=null&&download.wire==2){if(at>=0)return raw;at=i;command=new ProtoWire(download.data).child(9);}
         }
         if(at<0||command==null||command.length>65536)return raw;
-        ProtoWire nativeCommand=new ProtoWire(command);nativeCommand.put(ProtoWire.blob(MARKER,ProtoWire.message(ProtoWire.blob(1,id.getBytes(StandardCharsets.US_ASCII)),ProtoWire.blob(2,title.getBytes(StandardCharsets.UTF_8)))));
+        ProtoWire nativeCommand=new ProtoWire(command);byte[] marker=ProtoWire.message(ProtoWire.blob(1,id.getBytes(StandardCharsets.US_ASCII)),ProtoWire.blob(2,title.getBytes(StandardCharsets.UTF_8)));nativeCommand.put(ProtoWire.blob(MARKER,marker));
+        ProtoWire.Field endpoint=nativeCommand.one(133724106);if(endpoint!=null&&endpoint.wire==2){ProtoWire offline=new ProtoWire(endpoint.data);offline.put(ProtoWire.blob(MARKER,marker));nativeCommand.put(ProtoWire.blob(133724106,offline.bytes()));}
+        ProtoWire originalAction=new ProtoWire(header.fields.get(at).data),originalDownload=new ProtoWire(originalAction.child(3));originalDownload.put(ProtoWire.blob(9,nativeCommand.bytes()));originalAction.put(ProtoWire.blob(3,originalDownload.bytes()));header.fields.set(at,ProtoWire.blob(7,originalAction.bytes()));
         byte[] button=ProtoWire.message(
             ProtoWire.blob(1,"yt_outline_bdcrusher_download_playlist_vd_theme_24".getBytes(StandardCharsets.US_ASCII)),
             ProtoWire.blob(6,ProtoWire.message(ProtoWire.blob(169495254,nativeCommand.bytes()))),

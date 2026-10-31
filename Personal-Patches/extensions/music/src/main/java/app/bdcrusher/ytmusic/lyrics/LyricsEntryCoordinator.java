@@ -56,6 +56,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
             if (!instance.started) {
                 instance.started = true;
                 LyricsManager.getInstance().addListener(instance);
+                VideoInformation.addVideoIdListener(id->instance.main.post(()->{NativeLyricsHost.recordingChanged();instance.sync(false);}));
                 instance.main.post(instance.tick);
             }
             instance.sync(false);
@@ -65,7 +66,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
     @Override public void onLyricsChanged(LyricsManager.State state, Lyrics lyrics) {
         sync(false);
         LyricsManager manager=LyricsManager.getInstance();String id=VideoInformation.getVideoId();
-        if(lyrics==null||lyrics.isEmpty()||manager.getCurrentTrack()==null||id==null||!id.equals(manager.getCommittedVideoId()))return;
+        if(state!=LyricsManager.State.LOADED||lyrics==null||lyrics.isEmpty()||manager.getCurrentTrack()==null||id==null||!id.equals(manager.getCommittedVideoId())||!id.equals(manager.getLyricsVideoId()))return;
         try{JSONObject payload=NativeLyricPayload.from(lyrics,manager.getCurrentTrack());if(payload!=null&&Utils.getActivity()!=null)new LyricsLibrary(Utils.getActivity()).offer(id,payload);}
         catch(Exception ex){LyricsDiagnostics.record("Lyrics library","Native lyric adaptation failed: "+ex.getClass().getSimpleName());}
     }
@@ -82,14 +83,12 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
         LyricsManager manager = LyricsManager.getInstance();
         TrackInfo track = manager.getCurrentTrack();
         String id = VideoInformation.getVideoId();
-        if (!Settings.LYRICS_ENABLED.get() || track == null || id == null || id.isEmpty()) {
+        if (!Settings.LYRICS_ENABLED.get() || id == null || !id.matches("[A-Za-z0-9_-]{11}")) {
             if (!identity.isEmpty()) LyricsRepository.clear();
             identity = ""; available = false; entry.clear(); ServiceConnection.cancel(); return;
         }
-        if (!id.equals(manager.getCommittedVideoId())) {
-            if (!identity.isEmpty()) LyricsRepository.clear();
-            identity = ""; available = false; entry.trackChanged(""); return;
-        }
+        // Recording-only discovery (Unison/saved results) must not wait for uploader metadata.
+        if(track==null||!id.equals(manager.getCommittedVideoId()))track=new TrackInfo("","","",0);
         if (activity == null || activity.isFinishing() || activity.isDestroyed()) {
             entry.clear(); return;
         }
@@ -113,7 +112,7 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
         Activity activity = Utils.getActivity();
         String id = VideoInformation.getVideoId();
         if ((available||LyricsManager.getInstance().hasLyrics()) && Settings.LYRICS_ENABLED.get() && activity != null
-                && id != null && id.equals(LyricsManager.getInstance().getCommittedVideoId())) {
+                && id != null && LyricsRepository.current(id)) {
             entry.update(activity, identity);
         } else if(!definitelyNotFound&&Settings.LYRICS_ENABLED.get()&&activity!=null)entry.orderWhilePending(identity);
         else if(definitelyNotFound)entry.notFound(identity);
