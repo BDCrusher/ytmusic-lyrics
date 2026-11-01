@@ -37,6 +37,7 @@ private val downloadsResourcePatch = resourcePatch {
     dependsOn(settingsPatch)
 
     execute {
+        this["assets/bdcrusher-features/downloads.enabled"].apply {parentFile.mkdirs();writeText("1\n")}
         PreferenceScreen.PLAYER.addPreferences(
             PreferenceScreenPreference(
                 key = "morphe_external_downloader_screen",
@@ -97,7 +98,8 @@ val downloadsPatch = bytecodePatch(
         downloadsResourcePatch,
         settingsPatch,
         textComponentPatch,
-        musicVideoInformationPatch
+        musicVideoInformationPatch,
+        app.bdcrusher.ytmusic.playlists.localPlaybackPatch
     )
 
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)

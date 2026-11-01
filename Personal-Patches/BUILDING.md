@@ -1,3 +1,54 @@
+# Verified source - 0.7.0-beta.2
+
+Final local verification is complete. Publication is pending the verified receipt Verification/publication/v0.7.0-beta.2/publication-result.json. Candidate SHA256 1e18816198dbb6a57257b3cc489b83c13e2205c90c845148ed0b2eaf377abf39. Supersedes the unpublished beta.1 preparation, which must never be published.
+
+Exact original arm64-v8a YouTube Music **9.42.52 / 94252240** and **9.43.51 / 94351240**, minSDK26. Use this Full Collection alone; Shaders and Download playlist are optional. Download playlist requires Downloads. Jam remains 9.42.52-only. Enable Pre-release patches and Experimental app versions, refresh and repatch the original APK. MPP SHA256: `1e18816198dbb6a57257b3cc489b83c13e2205c90c845148ed0b2eaf377abf39`.
+
+Themed Opus quality/size/remember selection, playlist batching and original-playlist native playback adapters, read-only supported YTDLnis files, static artwork routing, storage totals and SponsorBlock sidecars are implemented. Shaders follow visible native player/sheet ownership, restore header/theme paints, fit complete covers and limit expensive readbacks. The foreground Lyrics sheet extends behind transparent system navigation. Existing lyrics engine/recovery/library/settings and normal debug switch/export remain intact.
+
+Build/JVM/lint, 14 positive two-target APK configurations, 2 expected missing-Downloads rejections, catalog/Jam guards, 14 feature/reference/invocation audits, 8 native Lyrics audits and 14 native download/media/artwork audits pass. 527 source/harness checks: 320 fresh, 207 inherited only after exact source hashes match. Changed-source and old-disposal evidence groups are excluded from inheritance. Browser/provider results are explicitly inherited with unchanged source hashes; NOTICE version change reviewed separately.
+
+Phone native decoding/queue behavior, visible Samsung three-button/gesture transparency, shaders/video, recording-free smoothness and Recents behavior still need acceptance. No device/MuMu/sign/install/uninstall or real media download operations. No zero-stutter claim. External files require completed indexing, exact IDs, seekable WebM/Opus or M4A/AAC-LC and online-prepared native metadata. Download status is native subtitle text/symbols. SponsorBlock sidecars retain the original timeline; no embedded chapter tags/new chapter picker.
+
+Settings: existing Morphe > Player > Downloads mode, quality, Ask each time, Save SponsorBlock chapters and storage. Playlist downloads manages batches/chosen folder. Shaders has its own settings. Keep existing preferences, credentials, offsets, permanent lyrics and folder grants. Use the normal Enable debug logging / Export debug logs for further issues, without screen recording; no timer.
+
+
+See Verification/revision40/WORK.md, source-freeze-r3.json and matrix-final-r3.log. Shared Toolkit runs in place; no globals copied. Preserve old distributions, history and retained scratch. Never rerun completed staging/publication recipes or push private history.
+
+## Earlier records
+
+# Verified source - 0.7.0-beta.1
+
+The Opus download/foreground update is verified locally and staged at Personal-Patches/dist/0.7.0-beta.1. MPP SHA256 `dc454175f6f251eb663ed351947bb090f8b342c9bbbad8808c172eef43ce6b5c`. Publication is pending until Verification/publication/v0.7.0-beta.1/publication-result.json confirms it. Existing source history, preferences, credentials, offsets, permanent lyrics, chosen-folder grants and prior distributions are preserved.
+
+Exact original arm64 Music **9.42.52/94252240** and **9.43.51/94351240**, minSDK26. Full Collection alone; optional Shaders and Download playlist, with Downloads required for playlist downloading. Jam remains 9.42.52-only. Enable Pre-release patches and Experimental app versions, refresh and repatch an original APK.
+
+Themed Opus quality/estimated-size/remember selection, native playlist identity/routing, two-track batches, original-playlist native byte/metadata playback adapters, supported read-only YTDLnis files, static artwork routing, storage totals and SponsorBlock sidecars are implemented. Shared lifecycle/settings are injected once even without personal lyrics. Native cache preserves original errors/cancellation and warms/retries on foreground. Shaders follow the visible native player and full Lyrics sheet, restore header/theme paints, fit the complete cover, and stop repeated slow frame readbacks. The real foreground sheet extends behind transparent navigation.
+
+Build/JVM/lint, fourteen positive APK configurations, two missing-Downloads rejections, catalog/Jam guards, fourteen feature/access/reference audits, eight native Lyrics audits and fourteen native media/download/artwork audits pass. 527 source/harness checks: 320 fresh, 207 inherited after exact source hashes match. Changed-source/old-disposal groups are excluded from inheritance. Browser/provider evidence is explicitly inherited; only the web NOTICE version changed. No devices/MuMu/sign/install/uninstall, real media downloads, cleanup or global-tool copies.
+
+Native decoding/queue/SAF behavior, real Samsung three-button/gesture transparency, shaders/video, recording-free stutter and Recents timing need phone acceptance. External indexing must finish; supported native files are seekable WebM/Opus or M4A/AAC-LC, with online-prepared native metadata. Native row status uses accessible subtitle symbols/text rather than a verified stock circular badge. SponsorBlock chapters are sidecars plus existing colored seekbar/skip policy, not embedded tags/new chapter picker. No universal zero-stutter claim.
+
+Settings: existing Morphe > Player > Downloads mode/quality/Ask each time/chapters/storage; Playlist downloads for batches and chosen folder; Shaders for effects. Existing Enable debug logging / Export debug logs remains the only diagnostics flow, with no timer. Read Research/DOWNLOADS-AND-FOREGROUND-0.7.0-BETA.1-2026-11-01.md, Verification/revision40/WORK.md and the staged verification.json. Never rerun completed old staging/publication, overwrite released bytes or push private Personal-Patches history.
+
+## Earlier records
+
+# Published - 0.6.1-beta.1
+
+[0.6.1-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.6.1-beta.1) fixes the generated native row invocation defect responsible for 0.6 Library/Search VerifyError, and defers effect/browser disposal to remove the reentrant child-array teardown hazard. Existing public history retained. Toolkit verified 11 public assets, 7585 exact source files and dev feed. Source `862705acac5f35442f116efa951556a39b638010`; feed `4090eeac3e970cb7b637b3e4cbb26045c1af65e7`. MPP SHA256 `b12b2d51d5911f2b0926783b28baab8354d2193b673b828e25ab2abe0e7b0633`. Receipt Verification/publication/v0.6.1-beta.1/publication-result.json.
+
+Exact original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Full Collection alone; Shaders and Download playlist optional. Download playlist requires Downloads. Jam remains 9.42.52-only. Refresh existing source with Pre-release patches/Experimental app versions enabled and repatch an original APK. Preferences, credentials, permanent lyrics, chosen folder and playlist data namespaces remain unchanged.
+
+Private native row/getter calls select direct invocation by access flags; no visibility widening or VerifyError suppression. Expanded audit includes injected native bridge hosts and validates invocation vs access/constructor/static rules. It rejects both old defective compiled row adapters. Common weak/idempotent ViewDisposal hides immediately and removes/releases after the current UI traversal, preserving native sibling order and new replacement surfaces. Apply to shader effects, lyrics browsers and source verification browsers. Exact 0.5 and 0.6 source snapshots reproduce null-child failure under the same modeled traversal; corrected actual binding passes.
+
+Build/JVM/lint, 14 positive APK combinations, 2 missing-Downloads rejections, catalog/Jam guards, 14 feature/access/reference audits and 8 native Lyrics audits pass. 383 source/harness checks: 23 fresh teardown/source regressions and 360 retained by exact source hashes. Web executable/style/host and provider sources unchanged; earlier browser/provider evidence is explicitly inherited, not fresh phone/live testing. NOTICE version line reviewed separately. Structural audits do not replace ART execution.
+
+Real phone Library/Search, playlist status updates, closing/reopening/rotation/dialogs, Samsung appearance, graphics/media and recording-free stutter remain acceptance checks. No zero-stutter claim or device/MuMu/sign/install/uninstall/real media downloads. Native-main-player/Lyrics offline integration remains unestablished; existing separate service unchanged. Use existing Enable debug logging / Export debug logs for further failures, without screen recording; no timed capture.
+
+Read Research/CRASH-FIXES-0.6.1-BETA.1-2026-10-31.md and Personal-Patches/dist/0.6.1-beta.1/verification.json. Raw nine crash reports remain private in Inputs/crashes-2026-10-31; do not export them. Regenerable verification scratch retained in Verification/scratch/revision39-final-r1-* and recorded in Verification/revision39/retained-scratch.json. No cleanup authorized. Never rerun completed staging/publication recipes, overwrite released bytes or push private Personal-Patches history. Shared Toolkit tools run in place, no globals copied.
+
+## Earlier records
+
 # Verified crash-correction source - 0.6.1-beta.1
 
 Current source fixes the private native row invocation responsible for 0.6 Library/Search crashes and the synchronous sibling-removal teardown hazard. Exact original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26; Jam 9.42-only. Full Collection alone, optional Shaders and Download playlist. No emulator/MuMu/device/sign/install/uninstall or real downloads.

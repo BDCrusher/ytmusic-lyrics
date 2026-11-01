@@ -1,3 +1,35 @@
+# YT-Music personal patches 0.7.0-beta.2
+
+Adds a themed Opus quality/estimated-size/remember sheet for In-app mode, with cancellation when the dialog closes or detaches, native-player local-byte and song-metadata adapters for the original playlist, supported read-only YTDLnis files, static artwork routing, download storage totals and SponsorBlock sidecars. Default and External retain the existing mode/account/review flow. Playlist actions resolve the displayed playlist rather than Now Playing; batches preserve order, repeated entries, partial failures and interrupted progress.
+
+Fixes shader ownership of the initially hidden native background slot and the full Lyrics foreground sheet/header. Extends the actual sheet behind transparent navigation, preserves native theme/close interactions, fits the complete animated cover, and stops repeated slow texture readbacks while retaining Kawarp movement. Lyrics/Braccato remains the same engine. No permanent animated media cache is introduced. Native player configuration is retained for saved audio; a following network-client config cannot replace it. Storage totals include native artwork copies and download preferences.
+
+Exact original arm64 Music **9.42.52 / 94252240** and **9.43.51 / 94351240**. Use this Full Collection alone. Shaders and Download playlist remain optional; Download playlist requires Downloads. Jam remains 9.42.52-only. Enable Pre-release patches and Experimental app versions, refresh, review selections and repatch the original APK.
+
+Build/JVM/lint, fourteen positive two-target APK configurations, two expected missing-Downloads rejections, catalog/Jam guards, fourteen feature/reference/invocation audits, eight native Lyrics audits and fourteen native media/download/artwork audits pass. **527 source/harness checks: 320 fresh, 207 inherited only after exact source hashes match.** Changed-source/old-disposal evidence is excluded from inheritance. Browser/provider results are explicitly inherited with unchanged source; the web NOTICE version change is reviewed separately.
+
+Native decoding/queue/SAF, real Samsung navigation, visible graphics/video, recording-free smoothness and Recents timing still need phone acceptance. No device/MuMu/sign/install/uninstall or real media download operations. External folder indexing must finish; the native external adapter supports seekable WebM/Opus and M4A/AAC-LC with online-prepared song metadata. Status is native subtitle text/symbols rather than a stock circular badge. SponsorBlock sidecars preserve original timestamps, category names/colors and normal skip behavior; no audio cutting, embedded chapter tags or new native chapter picker. Slow readback uses one retained frame for moving Kawarp while the cover decoder continues looping. No universal zero-stutter claim.
+
+Settings: **Morphe > Player > Downloads** for existing mode/app selection, quality, Ask each time, Save SponsorBlock chapters and storage; Playlist downloads for batches/chosen folder; Shaders for effects. Quality policies can resolve to the same available Opus stream. Cover artwork is saved as a JPEG sidecar and mapped into native loading. Permanent lyrics/offsets/preferences/source credentials and folder grants keep their namespaces. Use the existing **Enable debug logging / Export debug logs** flow; no capture timer. Inspect native song/UI details before sharing logs.
+
+## Prior releases
+
+# YT-Music personal patches 0.7.0-beta.1
+
+Adds a themed Opus quality/estimated-size/remember sheet for In-app mode, native-player local-byte and song-metadata adapters for the original playlist, supported read-only YTDLnis files, static artwork routing, download storage totals and SponsorBlock sidecars. Default and External retain the existing mode/account/review flow. Playlist actions resolve the displayed playlist rather than Now Playing; batches preserve order, repeated entries, partial failures and interrupted progress.
+
+Fixes shader ownership of the initially hidden native background slot and the full Lyrics foreground sheet/header. Extends the actual sheet behind transparent navigation, preserves native theme/close interactions, fits the complete animated cover, and stops repeated slow texture readbacks while retaining Kawarp movement. Lyrics/Braccato remains the same engine. No permanent animated media cache is introduced.
+
+Exact original arm64 Music **9.42.52 / 94252240** and **9.43.51 / 94351240**. Use this Full Collection alone. Shaders and Download playlist remain optional; Download playlist requires Downloads. Jam remains 9.42.52-only. Enable Pre-release patches and Experimental app versions, refresh, review selections and repatch the original APK.
+
+Build/JVM/lint, fourteen positive two-target APK configurations, two expected missing-Downloads rejections, catalog/Jam guards, fourteen feature/reference/invocation audits, eight native Lyrics audits and fourteen native media/download/artwork audits pass. **527 source/harness checks: 320 fresh, 207 inherited only after exact source hashes match.** Changed-source/old-disposal evidence is excluded from inheritance. Browser/provider results are explicitly inherited with unchanged source; the web NOTICE version change is reviewed separately.
+
+Native decoding/queue/SAF, real Samsung navigation, visible graphics/video, recording-free smoothness and Recents timing still need phone acceptance. No device/MuMu/sign/install/uninstall or real media download operations. External folder indexing must finish; the native external adapter supports seekable WebM/Opus and M4A/AAC-LC with online-prepared song metadata. Status is native subtitle text/symbols rather than a stock circular badge. SponsorBlock sidecars preserve original timestamps, category names/colors and normal skip behavior; no audio cutting, embedded chapter tags or new native chapter picker. Slow readback uses one retained frame for moving Kawarp while the cover decoder continues looping. No universal zero-stutter claim.
+
+Settings: **Morphe > Player > Downloads** for existing mode/app selection, quality, Ask each time, Save SponsorBlock chapters and storage; Playlist downloads for batches/chosen folder; Shaders for effects. Quality policies can resolve to the same available Opus stream. Cover artwork is saved as a JPEG sidecar and mapped into native loading. Permanent lyrics/offsets/preferences/source credentials and folder grants keep their namespaces. Use the existing **Enable debug logging / Export debug logs** flow; no capture timer. Inspect native song/UI details before sharing logs.
+
+## Prior releases
+
 # YT-Music personal patches 0.6.1-beta.1
 
 Fix the Library/Search crash in 0.6.0-beta.1 and the unsafe teardown found while investigating the supplied closing-crash logs.

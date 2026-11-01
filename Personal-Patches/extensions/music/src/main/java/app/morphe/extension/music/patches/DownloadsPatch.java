@@ -293,7 +293,7 @@ public final class DownloadsPatch {
             }
             Utils.verifyOnMainThread();
 
-            if (isDownloadSender(map)) {
+            if (isDownloadSender(map) && playerSender(map)) {
                 final long now = System.currentTimeMillis();
                 if (now - lastMainPlayerDownloadTime < IGNORE_DOUBLE_CLICK_DURATION_MS) {
                     return true;
@@ -319,6 +319,8 @@ public final class DownloadsPatch {
                 return false;
             }
             Utils.verifyOnMainThread();
+
+            if (app.bdcrusher.ytmusic.playlists.PlaylistRuntime.endpoint(p1.toByteArray())) return true;
 
             if (inAppDownloads()) {
                 byte[] commandBytes = p1.toByteArray();
