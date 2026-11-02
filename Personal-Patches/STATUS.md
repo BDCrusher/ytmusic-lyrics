@@ -1,3 +1,38 @@
+# Verified source - 0.7.0-beta.3
+
+Final local verification complete. Publication pending Verification/publication/v0.7.0-beta.3/publication-result.json. MPP SHA256 c298383cc34395f32635b5c6be5ef7110f5719e4ab6b404129b7192e3dd9edd3. Prior distributions and published history remain unchanged.
+
+Exact original arm64-v8a Music **9.42.52/94252240** and **9.43.51/94351240**, minSDK26. Full Collection alone; Shaders and Download playlist optional. In-app playlist batches require Download playlist and Downloads. Jam remains9.42.52-only. MPP SHA256 `c298383cc34395f32635b5c6be5ef7110f5719e4ab6b404129b7192e3dd9edd3`.
+
+Routes the native encoded song/playlist download command through the existing selected In-app/External mode without a label or Now Playing fallback. Default account/eligibility handling remains native. Worker dispatch opens UI on the main thread. Quality choice labels use the host foreground. Storage shows actual owned bytes and free space from an existing volume, with colored segments, legends and accessible callouts. No source credentials, files, permanent lyrics or settings are cleared.
+
+Build/JVM/lint, six positive configurations on both exact targets, two missing-Downloads rejections, catalog/Jam guards, six feature/reference/access audits, four native Lyrics audits, six native media audits and six new download/settings audits pass. 578 source/harness checks:100 fresh,478 inherited only after source-hash validation. Browser/provider evidence is inherited from unchanged code, with NOTICE version reviewed separately. Previous14-case matrix applies only to beta.2.
+
+Real Samsung appearance, actual app handoff, native decoder/queue/SAF, shaders/video, recording-free lyric smoothness and Recents timing remain phone acceptance. No devices, signing/install/uninstall, real media downloads or cleanup. No zero-stutter claim. Existing offline-format/metadata and SponsorBlock sidecar limitations remain in verification.json.
+
+Refresh the existing source with Pre-release patches and Experimental app versions enabled, review selections and repatch an original APK. Settings: Morphe > Player > Downloads; Playlist downloads for batches/folder; Shaders for effects. Existing Enable debug logging / Export debug logs, no timer. Toolkit used in place; no globals copied.
+
+
+See Verification/revision41/WORK.md and Research/DOWNLOAD-ROUTING-AND-SETTINGS-0.7.0-BETA.3-2026-11-01.md. Never rerun completed staging/publication recipes or push private Personal-Patches history.
+
+## Earlier records
+
+# Published - 0.7.0-beta.2
+
+[0.7.0-beta.2](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.7.0-beta.2) delivers the themed Opus quality/estimated-size/remember sheet, original-playlist native offline byte/metadata adapters, supported read-only YTDLnis files, native subtitle download states, storage totals and SponsorBlock sidecars. Shaders follow visible main-player and full Lyrics-sheet ownership, preserve header interactions, fit complete animated covers and limit expensive frame readbacks. The actual foreground sheet extends behind transparent navigation. Saved recordings retain native player configuration; closing/detaching the download sheet cancels its preview.
+
+Toolkit verified 11 public assets, 7628 exact source files and dev feed. Source `94c2f909884dc9c9af3034a80efe8661072e7734`; feed `a08cb63079ad8d4f8d84502cc0404eedbfbc1053`. MPP SHA256 `1e18816198dbb6a57257b3cc489b83c13e2205c90c845148ed0b2eaf377abf39`. Receipt Verification/publication/v0.7.0-beta.2/publication-result.json. Published history retained; shared Toolkit run in place, no global copies.
+
+Exact original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Full Collection alone; Shaders and Download playlist optional. Download playlist requires Downloads. Jam remains 9.42.52-only. Enable Pre-release patches and Experimental app versions, refresh, review selections and repatch an original APK. Existing preferences, source credentials, offsets, permanent lyrics and chosen-folder grants remain.
+
+Build/JVM/lint, 14 positive APK configurations, 2 missing-Downloads rejections, catalog/Jam guards, 14 feature/access/reference audits, 8 native Lyrics audits and 14 native media/download/artwork audits pass. 527 source/harness checks: 320 fresh, 207 inherited only after exact source hashes match. Browser/provider evidence is inherited with unchanged executable sources; NOTICE version separately reviewed. No device/MuMu/sign/install/uninstall, real media downloads or cleanup.
+
+Native decoder/queue/SAF behavior, real Samsung three-button/gesture transparency, visible graphics/video, recording-free stutter and Recents timing remain phone acceptance. External indexing must finish, supported native files are seekable WebM/Opus or M4A/AAC-LC with online-prepared native metadata. Native download states use subtitle symbols/text rather than verified stock circular badges. SponsorBlock sidecars use original timestamps and existing colors/skip policy, without embedded chapter tags or new chapter picker. No universal zero-stutter claim.
+
+Settings: existing Morphe > Player > Downloads for mode/app, quality, Ask each time, chapters and storage; Playlist downloads for batches/chosen folder; Shaders for effects. Existing Enable debug logging / Export debug logs, no timer. Read Research/DOWNLOADS-AND-FOREGROUND-0.7.0-BETA.2-2026-11-01.md and dist verification.json. Retained regenerable revision40 scratch is inventoried in Verification/revision40/retained-scratch.json; no cleanup authorized. Never rerun completed staging/publication or push private Personal-Patches history.
+
+## Earlier records
+
 # Verified source - 0.7.0-beta.2
 
 Final local verification is complete. Publication is pending the verified receipt Verification/publication/v0.7.0-beta.2/publication-result.json. Candidate SHA256 1e18816198dbb6a57257b3cc489b83c13e2205c90c845148ed0b2eaf377abf39. Supersedes the unpublished beta.1 preparation, which must never be published.
@@ -328,7 +363,7 @@ See ../Research/CATEGORIES-2026-10-22.md and ../Verification/publication/v0.2.4-
 
 ## Historical record
 
-# Current status â€” 2026-10-22
+# Current status — 2026-10-22
 
 Published **0.2.3-beta.3** corrects the native Lyrics model and Music panel setup. The user's phone screenshots **reject 0.2.2-beta.3**: view-level enable/listener/alpha changes left the native model disabled and last in the action row; the generic personal panel produced a black video-sized sheet. Prior static/simulated passes did not establish correct phone behavior. Old deliveries remain retained unchanged.
 
@@ -342,7 +377,7 @@ Verification: both editions built; 6 JVM tests executed and 5 APK-dependent test
 
 **New phone acceptance remains pending.** Native enabled foreground/position, actual compact playback header, panel extent/theme, native close/back/drag, video behavior, rotation, large fonts, authentication and synchronization require a phone test. Native layout experiments and the app's chosen palette can affect presentation; the patch preserves native palette binding and requests the proper snap state, without forcing unrelated experiments or inventing a color. Alternate audio/video timeline conversion is unimplemented. SDK/JVM/simulated checks do not prove those behaviors.
 
-Local delivery: Personal-Patches/dist/0.2.3-beta.3. Settings: YouTube Music â†’ Settings â†’ Morphe â†’ Lyrics. Use local MPP files to repatch the original APK. Full is used alone; add-on is paired with official patches and official Third-party lyrics disabled. Enable experimental compatibility on each active source. GitHub prerelease 0.2.3-beta.3 is now published. Both dev source feeds advertise this version; main retains bootstrap metadata. Public source and all11 release assets/feed downloads passed verification. See Research/GITHUB-TWO-SOURCES-2026-10-22.md and the final publication receipts.
+Local delivery: Personal-Patches/dist/0.2.3-beta.3. Settings: YouTube Music → Settings → Morphe → Lyrics. Use local MPP files to repatch the original APK. Full is used alone; add-on is paired with official patches and official Third-party lyrics disabled. Enable experimental compatibility on each active source. GitHub prerelease 0.2.3-beta.3 is now published. Both dev source feeds advertise this version; main retains bootstrap metadata. Public source and all11 release assets/feed downloads passed verification. See Research/GITHUB-TWO-SOURCES-2026-10-22.md and the final publication receipts.
 
 No signing or intentional installation is part of this correction. Earlier audit-shell quoting accidentally launched MuMu and its logs reported install attempts for app.morphe.android.apps.youtube.music; installed state remains unconfirmed. User declined inspection/removal. MuMu has remained untouched after that instruction. Current compiled audits pass one text manifest through the batch wrapper; APK paths are Java file data. See Research/AUDIT-SHELL-INCIDENT-2026-10-22.md.
 

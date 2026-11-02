@@ -10,6 +10,11 @@ package app.morphe.patches.music.interaction.downloads
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.patch.resourcePatch
+import app.morphe.patcher.patch.PatchException
+import com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.reference.StringReference
+import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import app.morphe.patches.music.misc.settings.PreferenceScreen
 import app.morphe.patches.music.misc.settings.settingsPatch
 import app.morphe.patches.music.shared.Constants.COMPATIBILITY_YOUTUBE_MUSIC
@@ -105,6 +110,15 @@ val downloadsPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
 
     execute {
+        // The native download promotion carries a serialized identity, not a plain
+        // recording ID. Both exact originals expose this one-string command schema.
+        val offlineCommands=mutableListOf<com.android.tools.smali.dexlib2.iface.ClassDef>()
+        classDefForEach { c -> if(c.methods.any {m->m.name=="<clinit>"&&m.implementation?.instructions?.any {it is WideLiteralInstruction&&it.wideLiteral==133724106L}==true})offlineCommands+=c }
+        val nativeOffline=offlineCommands.singleOrNull()?:throw PatchException("Downloads: offline download command schema is missing or ambiguous")
+        val expectedSchema=listOf(4,1,0,1,1,1,1,0,0,0,1,4104,0)
+        if(nativeOffline.methods.none {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? StringReference)?.string?.map {it.code}==expectedSchema}==true}||
+            nativeOffline.methods.none {m->m.implementation?.instructions?.any {i->((i as? ReferenceInstruction)?.reference as? MethodReference)?.name=="newSingularGeneratedExtension"}==true})
+            throw PatchException("Downloads: native offline parameter contract changed")
         hookSpannableString(EXTENSION_CLASS)
 
         CommandResolverFingerprint.method.cloneParameters().apply {
