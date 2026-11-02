@@ -1,6 +1,6 @@
 {
-  "version": "0.7.0-beta.4",
-  "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+  "version": "0.7.0-beta.5",
+  "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
   "experimentalTargets": [
     {
       "version": "9.42.52",
@@ -65,14 +65,14 @@
   "jam94351Rejection": {
     "expectedFailure": true,
     "mode": "jam-unsupported",
-    "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+    "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
     "officialSha256": "",
     "reason": "Jam queue sharing currently supports 9.42.52 only. Disable Jam on 9.43.51; other Full Collection patches remain available."
   },
   "runs": {
     "9.43.51/features": {
       "inputSha256": "da28424a01714090f392f963c2d822dff10eed9dc397b443e3e34e3691cf4dd9",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "mode": "features",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -130,15 +130,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 406,
+      "personalClassDefinitions": 415,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "396ee5420ff1c970fe34ac259c9c01d0c7fcfd5e46d4b31f75ba998305bc15d9",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision42-final-r2-94351-features\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "78934ad8bcb959ce486a6aaeea830a1ed91f661fda4d29dc48df9b448406fe83",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision43-final-r3-94351-features\\verified-unsigned.apk"
     },
     "9.43.51/defaults": {
       "inputSha256": "da28424a01714090f392f963c2d822dff10eed9dc397b443e3e34e3691cf4dd9",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "mode": "defaults",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -194,15 +194,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 406,
+      "personalClassDefinitions": 415,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "230feed1c700f710cf348767e82162f21d36b39dc4ae74a310d25763954da822",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision42-final-r2-94351-defaults\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "2cde738c9f9abff8e116a763f5d6e788c00802a3423a55aa3ca7ed089de9ecf9",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision43-final-r3-94351-defaults\\verified-unsigned.apk"
     },
     "9.43.51/without-lyrics-features": {
       "inputSha256": "da28424a01714090f392f963c2d822dff10eed9dc397b443e3e34e3691cf4dd9",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "mode": "without-lyrics-features",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -259,22 +259,22 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 406,
+      "personalClassDefinitions": 415,
       "metadataHooks": 0,
       "playbackHooks": 0,
-      "outputUnsignedApkSha256": "8746286ff4c20a84c1d5314c9ce8cbf8d6379997ffd798444ddef66dbb1e97b3",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision42-final-r2-94351-without-lyrics-features\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "20c21fbd2e43a46317420af6c49596c474b2158040952e41cbb725177a2b8081",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision43-final-r3-94351-without-lyrics-features\\verified-unsigned.apk"
     },
     "9.43.51/features-missing-downloads": {
       "expectedFailure": true,
       "mode": "features-missing-downloads",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "officialSha256": "",
       "reason": "Download playlist requires the Downloads patch to be selected in Full or official Morphe 1.48.0."
     },
     "9.42.52/features": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "mode": "features",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -333,15 +333,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 406,
+      "personalClassDefinitions": 415,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "bc28bb289c76853148edd3f97f554507a773e036690e6b45bad9d0ce0d56927f",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision42-final-r2-94252-features\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "cd92bfc357669ddfc70ea5d03329f9780e1cb852ed241149c132af0a2203f886",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision43-final-r3-94252-features\\verified-unsigned.apk"
     },
     "9.42.52/defaults": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "mode": "defaults",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -398,15 +398,15 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 406,
+      "personalClassDefinitions": 415,
       "metadataHooks": 1,
       "playbackHooks": 1,
-      "outputUnsignedApkSha256": "6c1c56e3a5d1bb3f8d2d87f3289afa7922a958a7b20112af38fa0517c75ea98a",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision42-final-r2-94252-defaults\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "26471f0570407086a06c28754bb48bc33ccdc8bea3a71f74b9c72132cbad5592",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision43-final-r3-94252-defaults\\verified-unsigned.apk"
     },
     "9.42.52/without-lyrics-features": {
       "inputSha256": "9c38d63907362715f6172545bcb36f11ddbd45f014938626068016f06dcc3c56",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "mode": "without-lyrics-features",
       "officialSha256": "",
       "duplicateClasses": 0,
@@ -464,22 +464,22 @@
       "sdkDexVerification": true,
       "assetIdentity": true,
       "visibilityDoesNotReconfigure": true,
-      "personalClassDefinitions": 406,
+      "personalClassDefinitions": 415,
       "metadataHooks": 0,
       "playbackHooks": 0,
-      "outputUnsignedApkSha256": "29a79c463d34066c85f330257f92fc73d3c75f6028aaf9cf1bb46b7e32d2db7d",
-      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision42-final-r2-94252-without-lyrics-features\\verified-unsigned.apk"
+      "outputUnsignedApkSha256": "a63bca669807ed618bef67f9531467d4b97ddfc8d0b836c71bd2f880fedb0763",
+      "outputUnsignedApk": "C:\\Morphe\\App's\\YT-Music\\Verification\\scratch\\revision43-final-r3-94252-without-lyrics-features\\verified-unsigned.apk"
     },
     "9.42.52/features-missing-downloads": {
       "expectedFailure": true,
       "mode": "features-missing-downloads",
-      "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+      "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
       "officialSha256": "",
       "reason": "Download playlist requires the Downloads patch to be selected in Full or official Morphe 1.48.0."
     }
   },
   "catalog": {
-    "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+    "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
     "patches": [
       {
         "name": "Download playlist",
@@ -740,7 +740,7 @@
   },
   "targetMetadata": {
     "passed": true,
-    "bundleSha256": "602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058",
+    "bundleSha256": "47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8",
     "patches": [
       {
         "name": "Download playlist",
@@ -1507,11 +1507,11 @@
   "compiledFeatureAudits": {
     "9.43.51/features": {
       "passed": true,
-      "apkSha256": "396ee5420ff1c970fe34ac259c9c01d0c7fcfd5e46d4b31f75ba998305bc15d9",
-      "ownedClasses": 406,
-      "validatedRuntimeReferences": 7279,
-      "injectedAccessCallsChecked": 3616,
-      "nativeBridgeMethodsAccessChecked": 58,
+      "apkSha256": "78934ad8bcb959ce486a6aaeea830a1ed91f661fda4d29dc48df9b448406fe83",
+      "ownedClasses": 415,
+      "validatedRuntimeReferences": 7396,
+      "injectedAccessCallsChecked": 3681,
+      "nativeBridgeMethodsAccessChecked": 63,
       "invalidInjectedCalls": 0,
       "unresolvedRuntimeReferences": 0,
       "sharedLifecycleHooks": 1,
@@ -1538,11 +1538,11 @@
     },
     "9.43.51/defaults": {
       "passed": true,
-      "apkSha256": "230feed1c700f710cf348767e82162f21d36b39dc4ae74a310d25763954da822",
-      "ownedClasses": 406,
-      "validatedRuntimeReferences": 7276,
-      "injectedAccessCallsChecked": 3560,
-      "nativeBridgeMethodsAccessChecked": 43,
+      "apkSha256": "2cde738c9f9abff8e116a763f5d6e788c00802a3423a55aa3ca7ed089de9ecf9",
+      "ownedClasses": 415,
+      "validatedRuntimeReferences": 7393,
+      "injectedAccessCallsChecked": 3625,
+      "nativeBridgeMethodsAccessChecked": 48,
       "invalidInjectedCalls": 0,
       "unresolvedRuntimeReferences": 0,
       "sharedLifecycleHooks": 1,
@@ -1569,11 +1569,11 @@
     },
     "9.43.51/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "8746286ff4c20a84c1d5314c9ce8cbf8d6379997ffd798444ddef66dbb1e97b3",
-      "ownedClasses": 406,
-      "validatedRuntimeReferences": 7275,
-      "injectedAccessCallsChecked": 3599,
-      "nativeBridgeMethodsAccessChecked": 58,
+      "apkSha256": "20c21fbd2e43a46317420af6c49596c474b2158040952e41cbb725177a2b8081",
+      "ownedClasses": 415,
+      "validatedRuntimeReferences": 7392,
+      "injectedAccessCallsChecked": 3664,
+      "nativeBridgeMethodsAccessChecked": 63,
       "invalidInjectedCalls": 0,
       "unresolvedRuntimeReferences": 0,
       "sharedLifecycleHooks": 1,
@@ -1600,11 +1600,11 @@
     },
     "9.42.52/features": {
       "passed": true,
-      "apkSha256": "bc28bb289c76853148edd3f97f554507a773e036690e6b45bad9d0ce0d56927f",
-      "ownedClasses": 406,
-      "validatedRuntimeReferences": 7279,
-      "injectedAccessCallsChecked": 3588,
-      "nativeBridgeMethodsAccessChecked": 54,
+      "apkSha256": "cd92bfc357669ddfc70ea5d03329f9780e1cb852ed241149c132af0a2203f886",
+      "ownedClasses": 415,
+      "validatedRuntimeReferences": 7396,
+      "injectedAccessCallsChecked": 3653,
+      "nativeBridgeMethodsAccessChecked": 59,
       "invalidInjectedCalls": 0,
       "unresolvedRuntimeReferences": 0,
       "sharedLifecycleHooks": 1,
@@ -1631,11 +1631,11 @@
     },
     "9.42.52/defaults": {
       "passed": true,
-      "apkSha256": "6c1c56e3a5d1bb3f8d2d87f3289afa7922a958a7b20112af38fa0517c75ea98a",
-      "ownedClasses": 406,
-      "validatedRuntimeReferences": 7276,
-      "injectedAccessCallsChecked": 3532,
-      "nativeBridgeMethodsAccessChecked": 39,
+      "apkSha256": "26471f0570407086a06c28754bb48bc33ccdc8bea3a71f74b9c72132cbad5592",
+      "ownedClasses": 415,
+      "validatedRuntimeReferences": 7393,
+      "injectedAccessCallsChecked": 3597,
+      "nativeBridgeMethodsAccessChecked": 44,
       "invalidInjectedCalls": 0,
       "unresolvedRuntimeReferences": 0,
       "sharedLifecycleHooks": 1,
@@ -1662,11 +1662,11 @@
     },
     "9.42.52/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "29a79c463d34066c85f330257f92fc73d3c75f6028aaf9cf1bb46b7e32d2db7d",
-      "ownedClasses": 406,
-      "validatedRuntimeReferences": 7275,
-      "injectedAccessCallsChecked": 3571,
-      "nativeBridgeMethodsAccessChecked": 54,
+      "apkSha256": "a63bca669807ed618bef67f9531467d4b97ddfc8d0b836c71bd2f880fedb0763",
+      "ownedClasses": 415,
+      "validatedRuntimeReferences": 7392,
+      "injectedAccessCallsChecked": 3636,
+      "nativeBridgeMethodsAccessChecked": 59,
       "invalidInjectedCalls": 0,
       "unresolvedRuntimeReferences": 0,
       "sharedLifecycleHooks": 1,
@@ -1695,7 +1695,7 @@
   "nativeLyricsAudits": {
     "9.43.51/features": {
       "passed": true,
-      "apkSha256": "396ee5420ff1c970fe34ac259c9c01d0c7fcfd5e46d4b31f75ba998305bc15d9",
+      "apkSha256": "78934ad8bcb959ce486a6aaeea830a1ed91f661fda4d29dc48df9b448406fe83",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -1715,7 +1715,7 @@
     },
     "9.43.51/defaults": {
       "passed": true,
-      "apkSha256": "230feed1c700f710cf348767e82162f21d36b39dc4ae74a310d25763954da822",
+      "apkSha256": "2cde738c9f9abff8e116a763f5d6e788c00802a3423a55aa3ca7ed089de9ecf9",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -1735,7 +1735,7 @@
     },
     "9.42.52/features": {
       "passed": true,
-      "apkSha256": "bc28bb289c76853148edd3f97f554507a773e036690e6b45bad9d0ce0d56927f",
+      "apkSha256": "cd92bfc357669ddfc70ea5d03329f9780e1cb852ed241149c132af0a2203f886",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -1755,7 +1755,7 @@
     },
     "9.42.52/defaults": {
       "passed": true,
-      "apkSha256": "6c1c56e3a5d1bb3f8d2d87f3289afa7922a958a7b20112af38fa0517c75ea98a",
+      "apkSha256": "26471f0570407086a06c28754bb48bc33ccdc8bea3a71f74b9c72132cbad5592",
       "timestampedRendererClockHooks": 1,
       "nativeActionModes": 3,
       "nativeDefinitionCaptureSites": 1,
@@ -1777,7 +1777,7 @@
   "nativeDownloadAudits": {
     "9.43.51/features": {
       "passed": true,
-      "apkSha256": "396ee5420ff1c970fe34ac259c9c01d0c7fcfd5e46d4b31f75ba998305bc15d9",
+      "apkSha256": "78934ad8bcb959ce486a6aaeea830a1ed91f661fda4d29dc48df9b448406fe83",
       "originalVersion": "9.43.51",
       "nativeContractClasses": 9,
       "pairedEntryMethods": 8,
@@ -1789,7 +1789,7 @@
     },
     "9.43.51/defaults": {
       "passed": true,
-      "apkSha256": "230feed1c700f710cf348767e82162f21d36b39dc4ae74a310d25763954da822",
+      "apkSha256": "2cde738c9f9abff8e116a763f5d6e788c00802a3423a55aa3ca7ed089de9ecf9",
       "originalVersion": "9.43.51",
       "nativeContractClasses": 9,
       "pairedEntryMethods": 8,
@@ -1801,7 +1801,7 @@
     },
     "9.43.51/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "8746286ff4c20a84c1d5314c9ce8cbf8d6379997ffd798444ddef66dbb1e97b3",
+      "apkSha256": "20c21fbd2e43a46317420af6c49596c474b2158040952e41cbb725177a2b8081",
       "originalVersion": "9.43.51",
       "nativeContractClasses": 9,
       "pairedEntryMethods": 8,
@@ -1813,7 +1813,7 @@
     },
     "9.42.52/features": {
       "passed": true,
-      "apkSha256": "bc28bb289c76853148edd3f97f554507a773e036690e6b45bad9d0ce0d56927f",
+      "apkSha256": "cd92bfc357669ddfc70ea5d03329f9780e1cb852ed241149c132af0a2203f886",
       "originalVersion": "9.42.52",
       "nativeContractClasses": 9,
       "pairedEntryMethods": 8,
@@ -1825,7 +1825,7 @@
     },
     "9.42.52/defaults": {
       "passed": true,
-      "apkSha256": "6c1c56e3a5d1bb3f8d2d87f3289afa7922a958a7b20112af38fa0517c75ea98a",
+      "apkSha256": "26471f0570407086a06c28754bb48bc33ccdc8bea3a71f74b9c72132cbad5592",
       "originalVersion": "9.42.52",
       "nativeContractClasses": 9,
       "pairedEntryMethods": 8,
@@ -1837,7 +1837,7 @@
     },
     "9.42.52/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "29a79c463d34066c85f330257f92fc73d3c75f6028aaf9cf1bb46b7e32d2db7d",
+      "apkSha256": "a63bca669807ed618bef67f9531467d4b97ddfc8d0b836c71bd2f880fedb0763",
       "originalVersion": "9.42.52",
       "nativeContractClasses": 9,
       "pairedEntryMethods": 8,
@@ -1858,7 +1858,7 @@
         "LyricQuality.java": "2752f5bb95dc633a676a16c202016e7ed2fedb72c44bc013bab0b3d1e6dcf6f6",
         "LyricsDiskCache.java": "677e0c7002c0333afb3762430621409d3ba09f4560becef8e434c3e66dbda1d1"
       },
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "artworkToken": {
       "checks": 12,
@@ -1866,14 +1866,14 @@
       "normalVerificationPreserved": true,
       "serviceAndSolverSimulated": true,
       "sourceSha256": "9c7d7a2c2902e2cbd837a214518aa362c834860d78fbf9a900b1461155a17dd4",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "repository": {
       "checks": 21,
       "transportAndMainBoundarySimulated": true,
       "passed": true,
       "sourceSha256": "0adb469ab1513f5a01e85368705efb72b32a61e6a42fb85ed93584db2e3c6433",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "recovery": {
       "transportAndClockSimulated": true,
@@ -1885,7 +1885,7 @@
         "LyricsRetry.java": "ca379c56180ca3c4198ea2b40780aed44312c2e350b0b5997dacda1edb5e083d",
         "TrackInfo.java": "ba7d368ddfaaf51af40beca0cfc6a2b9420376c2e46a9da1ef4d94c157b2a6b0"
       },
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "entry": {
       "passed": true,
@@ -1898,7 +1898,7 @@
         "NativeActionModel.java": "aec6a5684ba9dba1777b81779601f803fa923ccfd13565f6383263c520006293",
         "NativePanelWire.java": "11dbd7a3696d2ef32174f675a11386326f7e10224316a52ad08776c94a091645"
       },
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "network": {
       "passed": true,
@@ -1906,7 +1906,7 @@
       "transportSimulated": true,
       "networkRequestsSent": false,
       "sourceSha256": "31a38bd3d11088fbc14b99daa075f16c1740eecb88791a065f7301391ab5464c",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "normalLogger": {
       "passed": true,
@@ -1931,7 +1931,7 @@
         "LyricsFrameRate.java": "0aa401f2f68d62615b322aa69c3f65fa78cce7a2c6bdd360b869c73dda348dcb",
         "RecordingBinding.java": "d0a936515f799db575de5ffa8d70e3a947cfedff4f3e8cfb420354c94f3bd950"
       },
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "artwork": {
       "checks": 14,
@@ -1939,7 +1939,7 @@
       "transportSimulated": true,
       "passed": true,
       "sourceSha256": "7377b7d99cfead07a510751cc88d70f38fa6f82b826624b596c8224546c1c48f",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "clock": {
       "passed": true,
@@ -1949,7 +1949,7 @@
       "actualSourceSha256": {
         "RendererPlayback.java": "2e5a3f66e8a81f01225496768fece8fa3ef0cefe04f081ac2e1a8ce0c6c2c984"
       },
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "opusQuality": {
       "checks": 17,
@@ -1959,7 +1959,7 @@
       "passed": true,
       "evidenceFile": "Verification/revision40/quality/result.json",
       "evidenceSha256": "80ccffa5706e8f33623cbfab72435df29d037c6c1e14cd53f145757815626134",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "localByteTransport": {
       "stdout": "PASS 59 actual byte-transport/range checks\n",
@@ -1972,7 +1972,7 @@
       "passed": true,
       "evidenceFile": "Verification/revision40/transport-r3/result.json",
       "evidenceSha256": "a2176fa3dbd4e0c80f7e7c670c2cac2f3778761c813ce6f4253079a6086b43e2",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "nativeMediaCache": {
       "stdout": "PASS 40 actual native-cache/local-response checks\n",
@@ -1992,7 +1992,7 @@
       "passed": true,
       "evidenceFile": "Verification/revision40/native-cache-r5/result.json",
       "evidenceSha256": "920d178d852701e267a671e4f289951634476d290f3efbf31b197f760829f63d",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "externalNative": {
       "stdout": "PASS 22 actual external adapter checks; codecs and SAF simulated\n",
@@ -2005,7 +2005,7 @@
       "passed": true,
       "evidenceFile": "Verification/revision40/external-native-r2/result.json",
       "evidenceSha256": "4861d7bf0192d69fa3e807d20e0db1babe5cec1d4d9a8004cc03c6a8f11097f1",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "sponsorBlockChapters": {
       "stdout": "PASS 18 actual SponsorBlock sidecar/policy checks\n",
@@ -2015,7 +2015,7 @@
       "passed": true,
       "evidenceFile": "Verification/revision40/chapters/result.json",
       "evidenceSha256": "6dfbbf5d6358151bfe98facba61dc041f44421ba0e22e17407d5db7c1cc30041",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "shaderOwnership": {
       "androidTraversalAndMediaSimulated": true,
@@ -2028,7 +2028,7 @@
       },
       "evidenceFile": "Verification/revision40/shader/verification.json",
       "evidenceSha256": "a65452dbb3045269da363692b13ec015900b1fea6bb305db6cdbaa500d3ad23e",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "foregroundViewport": {
       "stdout": "PASS 14 actual foreground viewport checks; Android layout simulated\n",
@@ -2038,7 +2038,7 @@
       "passed": true,
       "evidenceFile": "Verification/revision40/viewport/result.json",
       "evidenceSha256": "b0e8c9a233c95c025133ffb0f928f8ee30fee2224292af7575f1d0b9657750b6",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "animatedCover": {
       "stdout": "PASS 22 actual cover/readback checks; decoder and GPU simulated\n",
@@ -2048,7 +2048,7 @@
       "passed": true,
       "evidenceFile": "Verification/revision40/cover/result.json",
       "evidenceSha256": "e519b3497040577a7b955edf8f979722e3f395c908fbbf92558e15278181ea20",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "nativePagesAndArtwork": {
       "checks": 31,
@@ -2074,7 +2074,7 @@
       ],
       "evidenceFile": "Verification/revision40/page-io/verification.json",
       "evidenceSha256": "42c3bd5bac0ae547ccb91946908bb0b1103d2d14bea01eb702f2bd270f4da60b",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "externalFolder": {
       "checks": 18,
@@ -2088,7 +2088,7 @@
       },
       "evidenceFile": "Verification/revision40/external-files/verification.json",
       "evidenceSha256": "59aca6ece10c6fd0bd18bf433780f144094edd1a20219ea1ec7de071a665660a",
-      "evidenceProvenance": "Inherited 0.7.0-beta.3 actual-source fixtures; every named source hash revalidated for this correction."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "playlistRouting": {
       "androidAndMediaTransportSimulated": true,
@@ -2108,7 +2108,7 @@
       },
       "evidenceFile": "Verification/revision40/playlists-rev42/verification.json",
       "evidenceSha256": "174b8c05f89149b4301ff85ae663152fed67bc3296ba8cd8848029fd8a26e5eb",
-      "evidenceProvenance": "Fresh actual-source fixtures; explicit Android/transport/app-launch seams simulated."
+      "evidenceProvenance": "Inherited beta.4 actual-source fixtures; every named source hash revalidated for this correction."
     },
     "downloadRoutingAndStorage": {
       "passed": true,
@@ -2116,31 +2116,32 @@
         "NativeDownloadContext.bd_video(Object)",
         "NativeDownloadContext.bd_playlist(Object)"
       ],
-      "stdout": "PASS 88 actual command/router/storage checks\n",
+      "stdout": "PASS 129 actual command/router/storage/owner/snapshot checks\n",
       "sources": {
         "Personal-Patches/extensions/music/src/main/java/app/bdcrusher/ytmusic/lyrics/ProtoWire.java": "4ec64157d8e34b226781d5707161713767bbc1331b1d298d2d468e2c67371e49",
         "Personal-Patches/extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/PlaylistHeaderModel.java": "f15a5baf6d643963ec24cd5f38c8decd837c03bccd4c4f2d3856f484b6a967e3",
         "Personal-Patches/extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadCommand.java": "eeee351e22bb21d2ee49d60eb1ea76b862a3d12507e279b02e1bef8e31a976fd",
         "Personal-Patches/extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadStorage.java": "bc927a548b38956cda68ac6e566cb5ed8ad0bb3d4093d225b372b3c164bc983b",
         "Personal-Patches/extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/NativeDownloadContext.java": "ef79bb314abfb73d8e90b4aa2c0f126abcf73eda4ffa657019019eca45da2004",
-        "Personal-Patches/extensions/music/src/main/java/app/morphe/extension/music/patches/DownloadsPatch.java": "094a102b46d3825b674820bd8854cc56ed58a0815e7f810698e76ab06e5d0eb5"
+        "Personal-Patches/extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadViewContext.java": "4ee343cd257e7480e4500890b7384a7411de15578e45a2fd42f5961a0969b288",
+        "Personal-Patches/extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadIdentity.java": "a458b17f6bac569673dab6a7443980d845bc2eac42ebb635614021de688c8ebc",
+        "Personal-Patches/extensions/music/src/main/java/app/morphe/extension/music/patches/DownloadsPatch.java": "e0f14585ea1fa691af9395190bf00ed5fbe4f51ba350098392280ae092de5898"
       },
       "fixtures": {
         "Inputs\\native-video-actionbar-element.pb": "92cdef16a4263a467c6f48b3d3ddab2116dc35f683d1c4f895b7d12411ef8444",
         "Inputs\\playlist-regression-20261025\\header-native.pb": "9cfcec8656480ed6b07957c24093b9d52095e723357adee8d78fddf0607b602c"
       },
       "scope": "Actual production parser/router/storage with real native command bytes. Android views, settings, downloader/external-app launch and the two APK-installed native identity helpers are simulated; their concrete DEX adapters are separately audited. No phone or real media downloads.",
-      "checks": 88,
-      "evidenceFile": "Verification/revision42/downloads-r2/result.json",
-      "evidenceSha256": "b4108c4b37183ad254e4127f4da09da3bd3289ee902bdf4f83ca352c6828fd57",
-      "evidenceProvenance": "Fresh actual-source fixtures; explicit Android/transport/app-launch seams simulated."
+      "checks": 129,
+      "evidenceFile": "Verification/revision43/downloads-final-r3/result.json",
+      "evidenceSha256": "f0e8cf152baca35f6aa2aab33941450aaf6e32c5605c2ef9361a9465cd4289e7",
+      "evidenceProvenance": "Fresh production parser/router/storage/owner/snapshot fixtures. Android native getter/UI/downloader seams explicitly simulated; compiled adapters separately audited."
     }
   },
-  "javaCheckTotal": 615,
-  "freshJavaCheckTotal": 137,
-  "inheritedJavaCheckTotal": 478,
+  "javaCheckTotal": 656,
+  "freshJavaCheckTotal": 129,
+  "inheritedJavaCheckTotal": 527,
   "excludedStaleEvidenceGroups": [
-    "playlistRouting",
     "downloadRoutingAndStorage"
   ],
   "browserChecks": {
@@ -2452,7 +2453,7 @@
     "patches/src/main/resources/bdcrusher-lyrics/index.html": "b9101eacc567d17c1a26357401ad5ae603d2cac8ace5c74d2463b04e4e5fd551",
     "patches/src/main/resources/bdcrusher-lyrics/instrumental.css": "5f059474105380860565fcbc8cca67576fa4799753f6e13baeef08fb274805c0",
     "patches/src/main/resources/bdcrusher-lyrics/lyrics.css": "aa2859f3be1f4e73e1d8609584fff6c276955c230c7652add22ea40477d32f7d",
-    "patches/src/main/resources/bdcrusher-lyrics/NOTICE.txt": "527130ea530485843d3aaf41ce5f399889a2558606a917917d5338d19cb09628",
+    "patches/src/main/resources/bdcrusher-lyrics/NOTICE.txt": "36198a46b34e95109b3b45f1e2d52d69039270ea2fd83b1ebbc7a0b150d4d275",
     "patches/src/main/resources/bdcrusher-lyrics/providers.json": "2b07b69360b95814567bac1e03bac78347bc19a10e77578f4afd9ad194ab678d",
     "patches/src/main/resources/bdcrusher-lyrics/renderer.js": "f53009156b9b2e7e780995432af184b5f955b2a1b9a3f33ed0719479409115e4",
     "patches/src/main/resources/bdcrusher-lyrics/Satoshi-Variable.woff2": "e739aff9b4d02c264341d6d4872edcda28e79373aeda936f659566a1cd3eb47f",
@@ -2506,9 +2507,9 @@
       "skipped": "5",
       "failures": "0",
       "errors": "0",
-      "timestamp": "2026-11-02T02:01:22.137Z",
+      "timestamp": "2026-11-02T03:02:26.712Z",
       "hostname": "BDCRUSHER-PC",
-      "time": "0.118"
+      "time": "0.116"
     },
     {
       "name": "app.morphe.patches.music.interaction.jam.JamQueueCommandTest",
@@ -2516,9 +2517,9 @@
       "skipped": "0",
       "failures": "0",
       "errors": "0",
-      "timestamp": "2026-11-02T02:01:22.256Z",
+      "timestamp": "2026-11-02T03:02:26.830Z",
       "hostname": "BDCRUSHER-PC",
-      "time": "0.472"
+      "time": "0.452"
     },
     {
       "name": "app.morphe.patches.util.resource.RawXmlResourcesTest",
@@ -2526,9 +2527,9 @@
       "skipped": "0",
       "failures": "0",
       "errors": "0",
-      "timestamp": "2026-11-02T02:01:22.729Z",
+      "timestamp": "2026-11-02T03:02:27.283Z",
       "hostname": "BDCRUSHER-PC",
-      "time": "0.012"
+      "time": "0.014"
     }
   ],
   "lint": {
@@ -2536,7 +2537,7 @@
     "warnings": 32
   },
   "payloadIsolation": {
-    "uniqueSelectedClasses": 407,
+    "uniqueSelectedClasses": 416,
     "duplicateClasses": 0,
     "morpheImplementationClassesInPersonalPayload": 0,
     "compilerHelper": "Lcom/android/tools/r8/RecordTag;",
@@ -2592,9 +2593,11 @@
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/AudioStoragePreference.java": "6e4cddebad58b1244f16d8390aef4a759f140bbb8c0db3e8010469454dbef4ff",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadChapters.java": "73bc5b8dd95da942b0d5fc49b62069f9c74da54e6c4993476c6474ea80d32501",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadCommand.java": "eeee351e22bb21d2ee49d60eb1ea76b862a3d12507e279b02e1bef8e31a976fd",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadIdentity.java": "a458b17f6bac569673dab6a7443980d845bc2eac42ebb635614021de688c8ebc",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadPrompt.java": "564da75f4ad98174f1506a5118840284b3a7fcae419ec41c9bcc70ca5fe086ed",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadSettings.java": "ce202a840898c10ce059936b39f2687fe8924b1c5b1706de747ef4abf285b9c7",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadStorage.java": "bc927a548b38956cda68ac6e566cb5ed8ad0bb3d4093d225b372b3c164bc983b",
+    "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/DownloadViewContext.java": "4ee343cd257e7480e4500890b7384a7411de15578e45a2fd42f5961a0969b288",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/ExternalFiles.java": "14e601577f7040d9c9df490a801283b4f793cddc6ead78b1428849d70d494243",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/ExternalFolderActivity.java": "1ca70f0634fad48c0b759f3bac1257d8dbb93239f5606c21c7098fd550a658d0",
     "extensions/music/src/main/java/app/bdcrusher/ytmusic/playlists/ExternalNativeFormat.java": "7f42d17b859151e089eceb7240dff20160c74a5c504e0fb181722b4d65ed9616",
@@ -2625,6 +2628,7 @@
     "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/NativeLyricsHooks.kt": "ea9a5afbed519aa74a48ae5fd71bd4b99a23dfe5cd4ccbc0fd5b87c7379fe048",
     "shared-lyrics-patches/src/main/kotlin/app/bdcrusher/ytmusic/nativeentry/PersonalRuntimePatch.kt": "3e96e726c207b7aaa8132f278204e8fc6f3fcdb2253e985d6b29cde92d1013e9",
     "lyrics-addon/src/main/kotlin/app/bdcrusher/ytmusic/addon/LyricsAddon.kt": "cac290c06440e83b325c50acdd1981da3964367e708b4ae1b5d228db9ae17520",
+    "patches/src/main/kotlin/app/bdcrusher/ytmusic/playlists/DownloadViewContextPatch.kt": "552ad60089337c1b6bd6f50a3df992da7fe8cfe58775e239308a8f138faf68b9",
     "patches/src/main/kotlin/app/bdcrusher/ytmusic/playlists/LocalPlaybackPatch.kt": "4b553f229ffec2b723d9b14c6bceb3802b67d1222a68bb817eba07c29aa7721c",
     "patches/src/main/kotlin/app/bdcrusher/ytmusic/playlists/NativeDownloadContextPatch.kt": "6529dcbc35b8478dbc4082600304fb7d5108a441da2d44794ac79a7d07791107",
     "patches/src/main/kotlin/app/bdcrusher/ytmusic/playlists/NativeMediaCachePatch.kt": "d521e4063184a7c2bd2e7853f114009631d7317f177e8f2a1e9d64f71c1f180f",
@@ -2633,14 +2637,14 @@
     "patches/src/main/kotlin/app/bdcrusher/ytmusic/shaders/ShadersPatch.kt": "3088e6ae5d3141fa6372ef272c3fe5c61f42663af1d6b0cb73b075ab874aee75"
   },
   "fullNativeModifiedSourceSha256": {
-    "extensions/music/src/main/java/app/morphe/extension/music/patches/DownloadsPatch.java": "094a102b46d3825b674820bd8854cc56ed58a0815e7f810698e76ab06e5d0eb5",
+    "extensions/music/src/main/java/app/morphe/extension/music/patches/DownloadsPatch.java": "e0f14585ea1fa691af9395190bf00ed5fbe4f51ba350098392280ae092de5898",
     "extensions/music/src/main/java/app/morphe/extension/music/patches/downloads/LocalDownloadManager.java": "18d9633f2afc275eaf7ab45361ee24d5cb3cd5ae173bd52182cff17b8a070080",
     "extensions/music/src/main/java/app/morphe/extension/music/patches/downloads/LocalDownloadsFragment.java": "94de3713b527de3d1fc5b1f399c42f52da9ac3626f598ce7be63ec828ef60a47",
     "extensions/music/src/main/java/app/morphe/extension/music/patches/lyrics/LyricsManager.java": "1742781038781956a5d7d2c1a181571991aef14ebda5cdbf382bc21b287381a4",
     "extensions/music/src/main/java/app/morphe/extension/music/sponsorblock/MusicSponsorBlockConfig.java": "2d78e85c136c24b4e93144e50e8d71e19258f2f331f03a3129055db819ad04cb",
     "extensions/shared-youtube/library/src/main/java/app/morphe/extension/shared/sponsorblock/SegmentPlaybackController.java": "67be26a6bc406b1dbee0e38ed6e084b5cd9652823f57f5872a44a81383c7e85d",
     "extensions/shared-youtube/library/src/main/java/app/morphe/extension/shared/spoof/requests/StreamingDataRequest.java": "dde53c1b5ab30722dec415c073954c5742b425d15cdefa8bff9b0b6ff8d7bc58",
-    "patches/src/main/kotlin/app/morphe/patches/music/interaction/downloads/DownloadsPatch.kt": "63822e84545e4a567485a87babfcdbf432dd4ed320a7326989db48df4a5463d5",
+    "patches/src/main/kotlin/app/morphe/patches/music/interaction/downloads/DownloadsPatch.kt": "c6876bad0e53829b7073daf1c30fe2312bc20e8a8e914b6e5a2b2c06642b7cb2",
     "patches/src/main/kotlin/app/morphe/patches/music/interaction/jam/JamPatch.kt": "c4ddde7eae75eccb38f0388e0771273b677b6195ee70ed4e54c5ee1a70fa7b28",
     "patches/src/main/kotlin/app/morphe/patches/music/layout/miniplayer/EnableSwipeToDismissMiniplayerPatch.kt": "1c5e29c7e0c46582010e89135ae6e105354719c9a468d16989fcad8a00743f28",
     "patches/src/main/kotlin/app/morphe/patches/music/layout/sponsorblock/SponsorBlockPatch.kt": "b038977e4b47d7e41c3803936db6893f54426db673a7066de5a0769b23292b13",
@@ -2650,15 +2654,16 @@
   "completenessReview": {
     "previousRouteRegression": {
       "passed": true,
-      "previousSourceArchiveSha256": "2e192a950621b068f86c4662aa603b65928f1397ccb96cb57a6d7e700980ec95",
-      "stdout": "PASS: published beta.3 reproduces native fallback for the empty tagged download action\n",
-      "scope": "Exact published source; Android/UI/native tag simulated. Reproduces old return-to-native; not a device run."
+      "previousSourceArchiveSha256": "a59b46e9eb1271d0523b31b9d06c96c279785c5d7e3c5acaea1dd6dc23a3cee6",
+      "routerSourceSha256": "748b3306bb1d1471bf8a672adf9fdd5562d96d3793b2863bce96707fdb0deb71",
+      "stdout": "PASS: published beta.4 consumes both no-tag clicks without a download, including after a menu with a known recording ID\n",
+      "scope": "Exact published beta.4 router; UI/settings/downloader/native tag seams simulated, absent tag as in phone log. No device or media downloads."
     },
     "passed": true,
     "unfinishedMarkers": [],
-    "sourceFreezeSha256": "80d6d6790a5a3d357ba21af14fd40195a25169ecc92e399e33674cb59814a28c",
-    "nativeOfflineCommandSchema": "Encoded133724106 and empty443434441; APK-selected video/playlist tag getters from scoped native offline helper owner. Guards replaced and access audited on both originals.",
-    "focusedCompatibility": "Six fresh positive configurations, two expected missing-Downloads rejections. Prior14-case matrix belongs to beta.2 only."
+    "sourceFreezeSha256": "4464577328d20b483da409128403825a10200a63c9ef7543bd288a239a735cd2",
+    "nativeOfflineCommandSchema": "Encoded133724106 and empty443434441. Optional native tag getters plus actual presenter roots, native header entity kinds24/25, popup session and immutable pre-worker snapshot.",
+    "focusedCompatibility": "Six positive configurations and two expected missing-Downloads rejections. Prior broad matrix belongs to beta.2 only."
   },
   "phoneVerified": false,
   "deviceOperations": false,
@@ -2676,7 +2681,7 @@
   "downloadSettingsAudits": {
     "9.43.51/features": {
       "passed": true,
-      "apkSha256": "396ee5420ff1c970fe34ac259c9c01d0c7fcfd5e46d4b31f75ba998305bc15d9",
+      "apkSha256": "78934ad8bcb959ce486a6aaeea830a1ed91f661fda4d29dc48df9b448406fe83",
       "encodedRoutingBeforeMainThreadGuard": true,
       "explicitChoiceTextColor": true,
       "existingVolumeStorage": true,
@@ -2684,7 +2689,7 @@
     },
     "9.43.51/defaults": {
       "passed": true,
-      "apkSha256": "230feed1c700f710cf348767e82162f21d36b39dc4ae74a310d25763954da822",
+      "apkSha256": "2cde738c9f9abff8e116a763f5d6e788c00802a3423a55aa3ca7ed089de9ecf9",
       "encodedRoutingBeforeMainThreadGuard": true,
       "explicitChoiceTextColor": true,
       "existingVolumeStorage": true,
@@ -2692,7 +2697,7 @@
     },
     "9.43.51/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "8746286ff4c20a84c1d5314c9ce8cbf8d6379997ffd798444ddef66dbb1e97b3",
+      "apkSha256": "20c21fbd2e43a46317420af6c49596c474b2158040952e41cbb725177a2b8081",
       "encodedRoutingBeforeMainThreadGuard": true,
       "explicitChoiceTextColor": true,
       "existingVolumeStorage": true,
@@ -2700,7 +2705,7 @@
     },
     "9.42.52/features": {
       "passed": true,
-      "apkSha256": "bc28bb289c76853148edd3f97f554507a773e036690e6b45bad9d0ce0d56927f",
+      "apkSha256": "cd92bfc357669ddfc70ea5d03329f9780e1cb852ed241149c132af0a2203f886",
       "encodedRoutingBeforeMainThreadGuard": true,
       "explicitChoiceTextColor": true,
       "existingVolumeStorage": true,
@@ -2708,7 +2713,7 @@
     },
     "9.42.52/defaults": {
       "passed": true,
-      "apkSha256": "6c1c56e3a5d1bb3f8d2d87f3289afa7922a958a7b20112af38fa0517c75ea98a",
+      "apkSha256": "26471f0570407086a06c28754bb48bc33ccdc8bea3a71f74b9c72132cbad5592",
       "encodedRoutingBeforeMainThreadGuard": true,
       "explicitChoiceTextColor": true,
       "existingVolumeStorage": true,
@@ -2716,7 +2721,7 @@
     },
     "9.42.52/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "29a79c463d34066c85f330257f92fc73d3c75f6028aaf9cf1bb46b7e32d2db7d",
+      "apkSha256": "a63bca669807ed618bef67f9531467d4b97ddfc8d0b836c71bd2f880fedb0763",
       "encodedRoutingBeforeMainThreadGuard": true,
       "explicitChoiceTextColor": true,
       "existingVolumeStorage": true,
@@ -2726,7 +2731,7 @@
   "nativeDownloadContextAudits": {
     "9.43.51/features": {
       "passed": true,
-      "apkSha256": "396ee5420ff1c970fe34ac259c9c01d0c7fcfd5e46d4b31f75ba998305bc15d9",
+      "apkSha256": "78934ad8bcb959ce486a6aaeea830a1ed91f661fda4d29dc48df9b448406fe83",
       "nativeTagGetters": 2,
       "nativeTagGetterOwner": "Lfev;",
       "sourceGuardsReplaced": true,
@@ -2737,7 +2742,7 @@
     },
     "9.43.51/defaults": {
       "passed": true,
-      "apkSha256": "230feed1c700f710cf348767e82162f21d36b39dc4ae74a310d25763954da822",
+      "apkSha256": "2cde738c9f9abff8e116a763f5d6e788c00802a3423a55aa3ca7ed089de9ecf9",
       "nativeTagGetters": 2,
       "nativeTagGetterOwner": "Lfev;",
       "sourceGuardsReplaced": true,
@@ -2748,7 +2753,7 @@
     },
     "9.43.51/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "8746286ff4c20a84c1d5314c9ce8cbf8d6379997ffd798444ddef66dbb1e97b3",
+      "apkSha256": "20c21fbd2e43a46317420af6c49596c474b2158040952e41cbb725177a2b8081",
       "nativeTagGetters": 2,
       "nativeTagGetterOwner": "Lfev;",
       "sourceGuardsReplaced": true,
@@ -2759,7 +2764,7 @@
     },
     "9.42.52/features": {
       "passed": true,
-      "apkSha256": "bc28bb289c76853148edd3f97f554507a773e036690e6b45bad9d0ce0d56927f",
+      "apkSha256": "cd92bfc357669ddfc70ea5d03329f9780e1cb852ed241149c132af0a2203f886",
       "nativeTagGetters": 2,
       "nativeTagGetterOwner": "Lfhz;",
       "sourceGuardsReplaced": true,
@@ -2770,7 +2775,7 @@
     },
     "9.42.52/defaults": {
       "passed": true,
-      "apkSha256": "6c1c56e3a5d1bb3f8d2d87f3289afa7922a958a7b20112af38fa0517c75ea98a",
+      "apkSha256": "26471f0570407086a06c28754bb48bc33ccdc8bea3a71f74b9c72132cbad5592",
       "nativeTagGetters": 2,
       "nativeTagGetterOwner": "Lfhz;",
       "sourceGuardsReplaced": true,
@@ -2781,11 +2786,85 @@
     },
     "9.42.52/without-lyrics-features": {
       "passed": true,
-      "apkSha256": "29a79c463d34066c85f330257f92fc73d3c75f6028aaf9cf1bb46b7e32d2db7d",
+      "apkSha256": "a63bca669807ed618bef67f9531467d4b97ddfc8d0b836c71bd2f880fedb0763",
       "nativeTagGetters": 2,
       "nativeTagGetterOwner": "Lfhz;",
       "sourceGuardsReplaced": true,
       "emptyActionContextRouted": true,
+      "noNowPlayingFallback": true,
+      "privateInvokeFailures": 0,
+      "phoneVerified": false
+    }
+  },
+  "nativeDownloadOwnerAudits": {
+    "9.43.51/features": {
+      "passed": true,
+      "apkSha256": "78934ad8bcb959ce486a6aaeea830a1ed91f661fda4d29dc48df9b448406fe83",
+      "nativePresenterOwners": 2,
+      "headerModelCapture": true,
+      "committedPlayerIdentity": true,
+      "snapshotBeforeExecutor": true,
+      "popupDetachOwnership": true,
+      "noNowPlayingFallback": true,
+      "privateInvokeFailures": 0,
+      "phoneVerified": false
+    },
+    "9.43.51/defaults": {
+      "passed": true,
+      "apkSha256": "2cde738c9f9abff8e116a763f5d6e788c00802a3423a55aa3ca7ed089de9ecf9",
+      "nativePresenterOwners": 2,
+      "headerModelCapture": true,
+      "committedPlayerIdentity": true,
+      "snapshotBeforeExecutor": true,
+      "popupDetachOwnership": true,
+      "noNowPlayingFallback": true,
+      "privateInvokeFailures": 0,
+      "phoneVerified": false
+    },
+    "9.43.51/without-lyrics-features": {
+      "passed": true,
+      "apkSha256": "20c21fbd2e43a46317420af6c49596c474b2158040952e41cbb725177a2b8081",
+      "nativePresenterOwners": 2,
+      "headerModelCapture": true,
+      "committedPlayerIdentity": true,
+      "snapshotBeforeExecutor": true,
+      "popupDetachOwnership": true,
+      "noNowPlayingFallback": true,
+      "privateInvokeFailures": 0,
+      "phoneVerified": false
+    },
+    "9.42.52/features": {
+      "passed": true,
+      "apkSha256": "cd92bfc357669ddfc70ea5d03329f9780e1cb852ed241149c132af0a2203f886",
+      "nativePresenterOwners": 2,
+      "headerModelCapture": true,
+      "committedPlayerIdentity": true,
+      "snapshotBeforeExecutor": true,
+      "popupDetachOwnership": true,
+      "noNowPlayingFallback": true,
+      "privateInvokeFailures": 0,
+      "phoneVerified": false
+    },
+    "9.42.52/defaults": {
+      "passed": true,
+      "apkSha256": "26471f0570407086a06c28754bb48bc33ccdc8bea3a71f74b9c72132cbad5592",
+      "nativePresenterOwners": 2,
+      "headerModelCapture": true,
+      "committedPlayerIdentity": true,
+      "snapshotBeforeExecutor": true,
+      "popupDetachOwnership": true,
+      "noNowPlayingFallback": true,
+      "privateInvokeFailures": 0,
+      "phoneVerified": false
+    },
+    "9.42.52/without-lyrics-features": {
+      "passed": true,
+      "apkSha256": "a63bca669807ed618bef67f9531467d4b97ddfc8d0b836c71bd2f880fedb0763",
+      "nativePresenterOwners": 2,
+      "headerModelCapture": true,
+      "committedPlayerIdentity": true,
+      "snapshotBeforeExecutor": true,
+      "popupDetachOwnership": true,
       "noNowPlayingFallback": true,
       "privateInvokeFailures": 0,
       "phoneVerified": false

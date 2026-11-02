@@ -28,6 +28,7 @@ import app.morphe.patches.shared.misc.textcomponent.hookSpannableString
 import app.morphe.patches.shared.misc.textcomponent.textComponentPatch
 import app.morphe.util.cloneParameters
 import app.bdcrusher.ytmusic.playlists.installNativeDownloadContext
+import app.bdcrusher.ytmusic.playlists.installDownloadViewContext
 
 private val OFFLINE_PLAYBACK_PERMISSIONS = listOf(
     "android.permission.WAKE_LOCK",
@@ -160,4 +161,5 @@ val downloadsPatch = bytecodePatch(
             )
         }
     }
+    finalize { installDownloadViewContext() }
 }

@@ -430,6 +430,11 @@ public final class DownloadsPatch {
         return false;
     }
 
+    public static Map<Object,Object> captureDownloadContext(ProtocolBufferFieldInterface command,Map<Object,Object> map){
+        try{return !isFlyoutMenuOverridden()||command==null?map:app.bdcrusher.ytmusic.playlists.DownloadViewContext.capture(command.toByteArray(),map);}
+        catch(Exception failure){Logger.printException(()->"Download click context capture failed",failure);return map;}
+    }
+
     private static boolean routeEncodedDownload(ProtocolBufferFieldInterface command,@Nullable Map<Object,Object> map){
         DownloadMode mode=Settings.DOWNLOAD_MODE.get();
         if(mode==DownloadMode.DEFAULT||command==null||map==null)return false;
@@ -437,7 +442,7 @@ public final class DownloadsPatch {
         if(!(sender instanceof View)&&tag==null)return false;
         byte[] bytes=command.toByteArray();boolean contextual=app.bdcrusher.ytmusic.playlists.DownloadCommand.contextual(bytes);
         var encoded=app.bdcrusher.ytmusic.playlists.DownloadCommand.target(bytes);
-        var resolved=contextual?app.bdcrusher.ytmusic.playlists.NativeDownloadContext.target(tag):encoded;
+        var resolved=contextual?app.bdcrusher.ytmusic.playlists.DownloadViewContext.target(map):encoded;
         final var target=resolved;
         if(target==null){
             if(!contextual)return false;
