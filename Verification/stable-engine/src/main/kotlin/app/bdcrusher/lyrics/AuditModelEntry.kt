@@ -71,7 +71,7 @@ fun main(args:Array<String>){
        val tail=((code.getOrNull(prior) as? ReferenceInstruction)?.reference as? MethodReference)
        // Downloads now registers the same native presenter after Lyrics capture.
        // Permit only this exact call, and prove no branch/handler can enter after capture.
-       if(tail?.definingClass=="Lapp/bdcrusher/ytmusic/playlists/DownloadViewContext;"&&tail.name=="register"&&tail.parameterTypes==listOf("Lapp/bdcrusher/ytmusic/playlists/DownloadViewContext\$Owner;"))prior--
+       if(tail?.definingClass=="Lapp/bdcrusher/ytmusic/playlists/DownloadViewContext;"&&tail.name=="register"&&tail.parameterTypes==listOf("Ljava/lang/Object;"))prior--
        val before=((code.getOrNull(prior) as? ReferenceInstruction)?.reference as? MethodReference)
        require(before?.definingClass==capture.definingClass&&before.name==capture.name&&(prior+1..index).all {addresses[it] !in targets}){"Bypassable constructor capture $m"}
       }

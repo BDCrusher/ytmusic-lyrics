@@ -1,3 +1,35 @@
+# Verified source — 0.8.0-beta.1
+
+Combined native-download update is verified locally; GitHub publication is pending. Full Collection only, with optional Shaders and Download playlist. Original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Jam remains 9.42.52-only. MPP SHA256 `295e7be5d92ce91d5064b75d30e9c6cd1067ff5f4fd18c78d872b1fe880d0101`. Dist: Personal-Patches/dist/0.8.0-beta.1.
+
+Fixes the themed header's clobbered receiver and invalid-owner poisoning. Adds the Audio/Video quality sheet, native-watch playback, owned catalogue inside Library Downloads, shared row/notification progress, durable range recovery, atomic metadata/cover writes and typed batch migration. Saved audio retains online video choices; native authorization rejection is preserved. No separate offline player is started. Native provider/database contracts were inspected; the approved matching-component fallback is used inside the native destination. Existing files, preferences, lyrics, credentials and folder grants remain.
+
+Build/JVM/lint, 12 positive configurations, 2 missing-Downloads rejections, catalog/Jam guards, payload isolation and compiled feature/reference/access/Lyrics/media/settings/context/receiver audits pass. 820 source/harness checks: 549 fresh, 271 inherited after source-hash validation. The receiver audit reproduces the previous release's defect on both targets. Platform, codec, authenticated transport and launch seams are simulated in source fixtures; actual adapters are audited in final DEX.
+
+Phone appearance, actual decoding/Audio-Video switching, native player/queue/insets and offline network-action states remain acceptance checks. Existing Shaders/Samsung navigation and recording-free Lyrics smoothness remain device checks. No universal zero-stutter or pixel-parity claim. No MuMu, signing/install/uninstall, real media downloads or cleanup.
+
+Settings: Morphe > Player > Downloads > In-app for the quality sheet; External uses the existing selected app. Enable Download playlist for batches. Library > Downloads uses the integrated destination. Keep the existing Enable debug logging / Export debug logs; no timer. After publication, refresh with Pre-release patches and Experimental app versions enabled and repatch an original APK.
+
+Authoritative evidence: Verification/revision44/source-freeze-r3.json, matrix-plan-r3.json, matrix-final-r3.log, audits-final-r3.log and dist verification.json. Earlier runs are intermediate only. Read Research/NATIVE-DOWNLOADS-0.8.0-BETA.1-2026-11-02.md and Verification/revision44/WORK.md. Never rerun completed staging/publication helpers or push private Personal-Patches history. Toolkit runs in place; private inputs/raw phone logs stay private. Publication receipt will be Verification/publication/v0.8.0-beta.1/publication-result.json.
+
+## Earlier records
+
+# Published — 0.7.0-beta.5
+
+[0.7.0-beta.5](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.7.0-beta.5) fixes absent-tag download identity routing. Downloads binds to native action-bar/header roots and current native model identities, decodes escaped playlist entity keys, scopes flyout identity to its window/session and captures immutable click targets before worker dispatch. Delayed clicks retain their item after track/page rebinding. Internal commands from the same menu opener preserve its session; a different main-window control invalidates it. Unsupported/ambiguous identities remain explicit errors. Default preserves native eligibility handling. Existing In-app/External settings and data remain.
+
+Toolkit verified 11 public assets and 7658 source files. Source `b14464781377d34f3d395bee1e330e403d03aa28`; dev feed `22384155595e3145bae2a0d76159bc12530707b1`. MPP SHA256 `47748e5dbcfeefd545823591a93f71dd5cca70ffa8b64c429e4263c534edb7c8`. Receipt Verification/publication/v0.7.0-beta.5/publication-result.json. Published history preserved; shared Toolkit runs in place.
+
+Original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Full Collection only; Shaders and Download playlist optional. In-app playlist batches require Downloads and Download playlist. External playlist handoff does not require personal Lyrics or the batching patch. Jam stays 9.42.52-only. Settings: Morphe > Player > Downloads. Refresh with Pre-release patches/Experimental app versions enabled, then repatch an original supported APK.
+
+Build/JVM/lint, six final positive selections, two missing-Downloads rejections, catalog/Jam guard, compiled feature/access/reference, native Lyrics, media/settings/tag and new owner/dispatcher audits pass. 656 source/harness checks: 129 fresh, 527 inherited after named source hashes match. Published beta.4 reproduces both no-tag failures. Source fixtures simulate platform/native getter and download/app-launch seams; concrete hooks are separately checked in target DEX. Browser/provider evidence is inherited with unchanged sources.
+
+Phone click ownership and prompt/handoff appearance remain acceptance checks, along with existing native decoder/queue/SAF, graphics/navigation and recording-free lyric behavior. No universal button or zero-stutter claim. No devices/MuMu/sign/install/uninstall, actual media downloads or cleanup. Existing preferences, files, credentials, lyric storage and chosen-folder grants preserved. Existing Enable debug logging / Export debug logs; no timer. Raw phone logs/vendor fixtures remain private.
+
+Final evidence uses source-freeze-r3, matrix-plan-r3, matrix-final-r3, audits-final-r3 and downloads-final-r3. Earlier candidate directories remain intermediate evidence. See Research/DOWNLOAD-OWNER-CONTEXT-0.7.0-BETA.5-2026-11-01.md and dist verification.json. Scratch remains retained and inventoried; no cleanup authorized. Never rerun completed staging/publication or push private Personal-Patches history.
+
+## Earlier records
+
 # Verified source — 0.7.0-beta.5
 
 Download identity correction is complete locally. Native action-bar/header owners, typed playlist entity decoding, scoped popup sessions and immutable pre-worker click identity replace the absent-tag dependency. Row recordings win over associated parent playlists; a verified header owner preserves whole-playlist identity. No global playing-song substitution. Default eligibility behavior, selected downloader modes, preferences and files are preserved.

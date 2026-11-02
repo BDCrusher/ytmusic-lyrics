@@ -42,8 +42,11 @@ internal fun BytecodePatchContext.installDownloadViewContext(){
         owner.addBridge("bd_downloadRoot",emptyList(),"Landroid/view/View;",2,body="iget-object v0, p0, $root\nreturn-object v0")
         owner.addBridge("bd_downloadVideo",emptyList(),"Ljava/lang/String;",2,body=if(video==null)"const/4 v0, 0x0\nreturn-object v0" else "iget-object v0, p0, $video\nreturn-object v0")
         val constructors=owner.methods.filter {it.name=="<init>"};if(constructors.isEmpty())fail("presenter constructor")
-        for(ctor in constructors){for(index in ctor.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_VOID}.map {it.index}.reversed())
-            ctor.addInstruction(index,"invoke-static/range { p0 .. p0 }, $CONTEXT->register($OWNER)V")
+        for(original in constructors){
+            // Native constructors reuse parameter registers; keep a fresh receiver alias.
+            val ctor=original.cloneParameters()
+            for(index in ctor.implementation!!.instructions.withIndex().filter {it.value.opcode==Opcode.RETURN_VOID}.map {it.index}.reversed())
+                ctor.addInstruction(index,"invoke-static/range { p0 .. p0 }, $CONTEXT->register(Ljava/lang/Object;)V")
         }
     }
     val factories=header.methods.flatMap {m->m.implementation?.instructions?.mapNotNull {i->
@@ -53,14 +56,15 @@ internal fun BytecodePatchContext.installDownloadViewContext(){
         if(result.fields.count {it.type=="[B"}!=1||!implementsType(ref.parameterTypes.single().toString(),"Lcom/google/protobuf/MessageLite;"))return@mapNotNull null
         m to ref
     }.orEmpty()}
-    val (method,factory)=factories.singleOrNull()?:fail("header model factory")
+    val (originalBind,factory)=factories.singleOrNull()?:fail("header model factory")
     val proto=factory.parameterTypes.single().toString()
     header.addBridge("bd_downloadHeader",listOf(proto),proto,3,body="""
         invoke-interface { p1 }, Lcom/google/protobuf/MessageLite;->toByteArray()[B
         move-result-object v0
-        invoke-static { p0, v0 }, $CONTEXT->header($OWNER[B)V
+        invoke-static { p0, v0 }, $CONTEXT->header(Ljava/lang/Object;[B)V
         return-object p1
     """)
+    val method=originalBind.cloneParameters()
     val index=method.implementation!!.instructions.indexOfFirst {it.getReference<MethodReference>()==factory}
     val call=method.implementation!!.instructions.elementAt(index) as? FiveRegisterInstruction?:fail("header factory registers")
     val receiver=method.implementation!!.registerCount-method.parameterTypes.size-1

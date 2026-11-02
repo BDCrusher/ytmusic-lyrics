@@ -14,14 +14,20 @@ public final class DownloadViewContext {
     private static final String SNAPSHOT="app.bdcrusher.ytmusic.download.snapshot";
     public interface Owner {View bd_downloadRoot();String bd_downloadVideo();}
     private record Captured(DownloadCommand.Target target){}
-    private static final WeakHashMap<Owner,DownloadCommand.Target> owners=new WeakHashMap<>();
+    private static final WeakHashMap<Object,DownloadCommand.Target> owners=new WeakHashMap<>();
     private static long epoch,opened;
     private static WeakReference<View> origin=new WeakReference<>(null);
     private static WeakReference<View> opener=new WeakReference<>(null),popup=new WeakReference<>(null);
     private static DownloadCommand.Target menuTarget;
     private DownloadViewContext(){}
-    public static synchronized void register(Owner owner){owners.putIfAbsent(owner,null);}
-    public static synchronized void header(Owner owner,byte[] bytes){owners.put(owner,DownloadIdentity.header(bytes));}
+    public static synchronized void register(Object value){
+        if(!(value instanceof Owner)){Logger.printDebug(()->"Rejected native download owner: "+(value==null?"null":value.getClass().getName()));return;}
+        owners.putIfAbsent(value,null);
+    }
+    public static synchronized void header(Object value,byte[] bytes){
+        if(!(value instanceof Owner)){register(value);return;}
+        owners.put(value,DownloadIdentity.header(bytes));
+    }
     private static boolean main(){return Looper.myLooper()==Looper.getMainLooper();}
     private static synchronized void clearMenu(){epoch++;menuTarget=null;origin.clear();opener.clear();popup.clear();}
     /** Runs before native command mappings can send their map to a worker. Copy immutable maps. */
@@ -68,12 +74,12 @@ public final class DownloadViewContext {
         }
         // A main-window download must never inherit an earlier popup's recording.
         clearMenu();
-        List<Owner> live=new ArrayList<>(owners.keySet());
+        List<Object> live=new ArrayList<>(owners.keySet());
         Object node=sender;
         for(int depth=0;node instanceof View view&&depth<64;depth++,node=view.getParent()){
             DownloadCommand.Target found=null;boolean matched=false;
-            for(Owner owner:live){View area=owner.bd_downloadRoot();if(area!=view||!area.isAttachedToWindow()||!area.isShown())continue;
-                String video=owner.bd_downloadVideo();DownloadCommand.Target candidate=video!=null&&video.matches("[A-Za-z0-9_-]{11}")?new DownloadCommand.Target(video,false):owners.get(owner);
+            for(Object value:live){if(!(value instanceof Owner owner)){owners.remove(value);continue;}View area;try{area=owner.bd_downloadRoot();}catch(RuntimeException invalid){owners.remove(value);Logger.printDebug(()->"Removed invalid download owner",invalid);continue;}if(area==null||area!=view||!area.isAttachedToWindow()||!area.isShown())continue;
+                String video;try{video=owner.bd_downloadVideo();}catch(RuntimeException invalid){owners.remove(value);Logger.printDebug(()->"Removed invalid download identity owner",invalid);continue;}DownloadCommand.Target candidate=video!=null&&video.matches("[A-Za-z0-9_-]{11}")?new DownloadCommand.Target(video,false):owners.get(owner);
                 if(matched&&!Objects.equals(found,candidate))return null;matched=true;found=candidate;
             }
             if(matched){final DownloadCommand.Target result=found;Logger.printDebug(()->"Download presenter identity; found="+(result!=null)+"; playlist="+(result!=null&&result.playlist()));return found;}

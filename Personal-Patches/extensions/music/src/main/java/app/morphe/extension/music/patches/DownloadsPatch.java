@@ -120,24 +120,6 @@ public final class DownloadsPatch {
                 videoId, Utils.getActivity(), "https://music.youtube.com/watch?v=" + videoId);
     }
 
-    private static void openLocalDownloads() {
-        Activity activity = Utils.getActivity();
-        if (activity == null) return;
-
-        // A single tap on the offline chip resolves its command twice, which would otherwise
-        // stack a second copy of the screen on top of the first.
-        final long now = System.currentTimeMillis();
-        if (now - lastLocalDownloadsOpenTime < IGNORE_DOUBLE_CLICK_DURATION_MS) return;
-        lastLocalDownloadsOpenTime = now;
-        Logger.printDebug(() -> "Offline tab opened, showing the local downloads");
-
-        Intent intent = new Intent();
-        intent.setClassName(activity, "com.google.android.gms.common.api.GoogleApiActivity");
-        intent.setPackage(activity.getPackageName());
-        intent.setData(Uri.parse(BaseActivityHook.MORPHE_DOWNLOADS_INTENT));
-        activity.startActivity(intent);
-    }
-
     private static boolean isOfflineBrowseCommand(byte[] bytes) {
         byte[] target = OFFLINE_BROWSE_ID;
         outer: for (int i = 0; i <= bytes.length - target.length; i++) {
@@ -329,7 +311,8 @@ public final class DownloadsPatch {
             if (inAppDownloads()) {
                 byte[] commandBytes = p1.toByteArray();
                 if (commandBytes != null && isOfflineBrowseCommand(commandBytes)) {
-                    openLocalDownloads();
+                    // Native Library/Downloads now owns this destination and its player.
+                    app.bdcrusher.ytmusic.common.FeatureDiagnostics.record("Downloads-library","Native Downloads navigation retained");
                     // The local screen is opened on top of the stock one rather than in place of
                     // it. Consuming the command instead leaves the app with a navigation it never
                     // finished, which it replays on the next start and cancels again.
