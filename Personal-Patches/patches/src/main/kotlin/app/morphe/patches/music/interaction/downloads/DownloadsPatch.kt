@@ -27,6 +27,7 @@ import app.morphe.patches.shared.misc.settings.preference.TextPreference
 import app.morphe.patches.shared.misc.textcomponent.hookSpannableString
 import app.morphe.patches.shared.misc.textcomponent.textComponentPatch
 import app.morphe.util.cloneParameters
+import app.bdcrusher.ytmusic.playlists.installNativeDownloadContext
 
 private val OFFLINE_PLAYBACK_PERMISSIONS = listOf(
     "android.permission.WAKE_LOCK",
@@ -110,6 +111,8 @@ val downloadsPatch = bytecodePatch(
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
 
     execute {
+        OfflineVideoEndpointFingerprint.clearMatch()
+        installNativeDownloadContext(OfflineVideoEndpointFingerprint.originalMethod)
         // The native download promotion carries a serialized identity, not a plain
         // recording ID. Both exact originals expose this one-string command schema.
         val offlineCommands=mutableListOf<com.android.tools.smali.dexlib2.iface.ClassDef>()

@@ -1,3 +1,40 @@
+# Verified source - 0.7.0-beta.4
+
+Final local verification complete. Publication pending Verification/publication/v0.7.0-beta.4/publication-result.json. MPP SHA256 602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058. Prior distributions/history/raw phone inputs preserved.
+
+Exact original arm64-v8a Music **9.42.52/94252240** and **9.43.51/94351240**, minSDK26. Full Collection alone; Shaders and Download playlist optional. In-app playlists require Downloads and Download playlist. Jam remains 9.42.52-only. MPP SHA256 `602ba90508e1d520bf79075a4dee62a8fb450efe225a3beffe846022b1538058`.
+
+Adds the client-generated empty download-action path shown in the phone log. APK-selected native context getters resolve the clicked recording/playlist without reflection or Now Playing substitution. External playlist context retains folder/batch tracking. Selected In-app/External mode gets explicit unresolved-identity feedback and bounded normal-debug diagnostics instead of silent Premium fallthrough. Default account/eligibility behavior stays native. Beta.3 quality/storage fixes remain.
+
+Build/JVM/lint, six positive two-target configurations, two missing-Downloads rejections, catalog/Jam guards, six feature/reference/access audits, four native Lyrics audits, six media audits, six settings audits and six new native-context audits pass. 615 source/harness checks:137 fresh,478 inherited after source-hash validation. The exact previous published source reproduces return-to-native for the empty action; two native getter factory seams are simulated only in the source fixture and replaced/audited in compiled APKs. Browser/provider evidence inherited from unchanged code, NOTICE version reviewed separately.
+
+Actual phone tag types, handoff/prompt appearance, native decoding/queue/SAF, Samsung graphics/navigation and recording-free lyrics remain phone acceptance. Unsupported identities report their unresolved state; no all-client-tag or zero-stutter guarantee. No devices/MuMu/sign/install/uninstall, actual media downloads or cleanup. Existing data/preferences/credentials/permanent lyrics/downloaded music/folder grants preserved.
+
+Refresh with prerelease/experimental versions enabled and repatch an original APK. Morphe > Player > Downloads: choose In-app for the audio prompt or External for the selected app. Existing Enable debug logging / Export debug logs, no timer. Shared Toolkit in place; no global copies. Raw phone logs/vendor inputs remain private.
+
+
+Read Verification/revision42/WORK.md and Research/EMPTY-DOWNLOAD-ACTIONS-0.7.0-BETA.4-2026-11-01.md. Final evidence is review2 (-r2); the earlier candidate is intermediate only. Never rerun completed staging/publication or push private Personal-Patches history.
+
+## Earlier records
+
+# Published - 0.7.0-beta.3
+
+[0.7.0-beta.3](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.7.0-beta.3) fixes native song/playlist download commands falling through to the Premium sheet in External/In-app mode, unreadable quality-dialog labels and Downloads storage measurement/bar presentation. The typed route uses the exact encoded identity and existing selected mode/app, consumes duplicates and dispatches UI on the main thread. No Now Playing fallback for playlists. Default native account/eligibility behavior is preserved.
+
+Storage shows actual owned audio, covers, metadata/chapters/preferences, temporary files and available device space, with colored segments, legends and accessible callouts. External files remain read-only and excluded from owned totals. Existing data, source credentials, offsets, permanent lyrics, folder grants and downloaded music remain.
+
+Toolkit verified 11 release assets and 7637 source files. Source `1727b985935ffda89391ab81eef8bb04142db575`; dev feed `d4e586e7795ba91c9deb3cec55a47cd34799432a`. MPP SHA256 `c298383cc34395f32635b5c6be5ef7110f5719e4ab6b404129b7192e3dd9edd3`. Receipt Verification/publication/v0.7.0-beta.3/publication-result.json. Published history retained; shared Toolkit run in place, no global copies.
+
+Exact original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Full Collection alone; optional Shaders and Download playlist. In-app playlist batches require Downloads and Download playlist. Jam remains 9.42.52-only. Enable Pre-release patches and Experimental app versions, refresh, review selections and repatch an original APK.
+
+Build/JVM/lint, six fresh positive configurations on both targets, two expected missing-Downloads rejections, catalog/Jam guards, six feature/access/reference audits, four native Lyrics audits, six native media audits and six new download/settings audits pass. 578 source/harness checks: 100 fresh, 478 inherited after exact source hashes match. Browser/provider evidence inherited from unchanged sources, NOTICE version separately reviewed. Previous 14-case matrix belongs to beta.2 only.
+
+Actual phone button handoff, native offline decoding/queue/SAF, Samsung appearance, shader/video and recording-free lyric smoothness remain acceptance requirements. No zero-stutter claim. No devices/MuMu/sign/install/uninstall, real media downloads or cleanup. Existing native offline/external format/metadata and SponsorBlock sidecar limitations remain. Settings: Morphe > Player > Downloads; Playlist downloads; Shaders. Existing Enable debug logging / Export debug logs, no timer.
+
+Read Research/DOWNLOAD-ROUTING-AND-SETTINGS-0.7.0-BETA.3-2026-11-01.md, dist verification.json and Verification/revision41/WORK.md. Retained regenerable scratch is inventoried in Verification/revision41/retained-scratch.json; no cleanup authorized. Never rerun completed staging/publication recipes or push private Personal-Patches history.
+
+## Earlier records
+
 # Verified source - 0.7.0-beta.3
 
 Final local verification complete. Publication pending Verification/publication/v0.7.0-beta.3/publication-result.json. MPP SHA256 c298383cc34395f32635b5c6be5ef7110f5719e4ab6b404129b7192e3dd9edd3. Prior distributions and published history remain unchanged.

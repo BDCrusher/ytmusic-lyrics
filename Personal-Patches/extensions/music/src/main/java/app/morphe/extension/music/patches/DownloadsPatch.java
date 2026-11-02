@@ -431,10 +431,20 @@ public final class DownloadsPatch {
     }
 
     private static boolean routeEncodedDownload(ProtocolBufferFieldInterface command,@Nullable Map<Object,Object> map){
-        if(!isActionButtonOverridden()||command==null||map==null||!(map.get(ELEMENTS_SENDER_VIEW) instanceof View))return false;
-        var target=app.bdcrusher.ytmusic.playlists.DownloadCommand.target(command.toByteArray());
-        if(target==null)return false;
         DownloadMode mode=Settings.DOWNLOAD_MODE.get();
+        if(mode==DownloadMode.DEFAULT||command==null||map==null)return false;
+        Object tag=map.get(app.bdcrusher.ytmusic.playlists.NativeDownloadContext.TAG),sender=map.get(ELEMENTS_SENDER_VIEW);
+        if(!(sender instanceof View)&&tag==null)return false;
+        byte[] bytes=command.toByteArray();boolean contextual=app.bdcrusher.ytmusic.playlists.DownloadCommand.contextual(bytes);
+        var encoded=app.bdcrusher.ytmusic.playlists.DownloadCommand.target(bytes);
+        var resolved=contextual?app.bdcrusher.ytmusic.playlists.NativeDownloadContext.target(tag):encoded;
+        final var target=resolved;
+        if(target==null){
+            if(!contextual)return false;
+            Logger.printDebug(()->"Native download action unresolved; mode="+mode+"; tag="+(tag==null?"none":tag.getClass().getName())+"; sender="+(sender==null?"none":sender.getClass().getName()));
+            Utils.runOnMainThread(()->Utils.showToastShort("Could not identify this download. Open the song or playlist page and try again."));
+            return true;
+        }
         String key=(target.playlist()?"playlist:":"song:")+target.id();long now=android.os.SystemClock.uptimeMillis();
         synchronized(DownloadsPatch.class){
             if(key.equals(lastEncodedTarget)&&now-lastEncodedTime<IGNORE_DOUBLE_CLICK_DURATION_MS)return true;
@@ -446,13 +456,16 @@ public final class DownloadsPatch {
             try{
                 if(target.playlist()){
                     Activity activity=Utils.getActivity();if(activity==null)return;
-                    if(mode==DownloadMode.EXTERNAL)ExternalDownloaderPreference.launchExternalDownloader(target.id(),activity,app.bdcrusher.ytmusic.playlists.PlaylistRuntime.url(target.id()));
+                    if(mode==DownloadMode.EXTERNAL){
+                        if(app.bdcrusher.ytmusic.common.PersonalRuntime.installed(activity,"playlists"))app.bdcrusher.ytmusic.playlists.PlaylistRuntime.external(target.id(),"");
+                        ExternalDownloaderPreference.launchExternalDownloader(target.id(),activity,app.bdcrusher.ytmusic.playlists.PlaylistRuntime.url(target.id()));
+                    }
                     else if(app.bdcrusher.ytmusic.common.PersonalRuntime.installed(activity,"playlists"))app.bdcrusher.ytmusic.playlists.PlaylistRuntime.download(target.id(),"");
                     else Utils.showToastShort("Select the Download playlist patch to download a whole playlist in-app");
                 }else startDownload(target.id(),mode==DownloadMode.EXTERNAL);
             }catch(Exception failure){Logger.printException(()->"Configured download route failed",failure);Utils.showToastShort("Could not open the selected downloader. Check Downloads settings.");}
         });
-        Logger.printDebug(()->"Native download parameters routed to "+mode+"; playlist="+target.playlist());
+        Logger.printDebug(()->"Native download "+(contextual?"action context":"parameters")+" routed to "+mode+"; playlist="+target.playlist()+"; tag="+(tag==null?"none":tag.getClass().getName()));
         return true;
     }
 }

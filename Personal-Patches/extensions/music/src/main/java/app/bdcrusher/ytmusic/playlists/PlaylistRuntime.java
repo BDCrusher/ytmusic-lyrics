@@ -52,6 +52,8 @@ public final class PlaylistRuntime {
     public static String url(String id){if(!PlaylistHeaderModel.validId(id))throw new IllegalArgumentException("Invalid playlist identity");return "https://music.youtube.com/playlist?list="+id;}
     /** Validated native download parameters can reach this without a rewritten header marker. */
     public static void download(String id,String title){if(!PlaylistHeaderModel.validId(id))return;DownloadPrompt.playlist(Utils.getActivity(),id,title,()->start(id,title));}
+    /** Retain original playlist/folder tracking for native external-download actions too. */
+    public static void external(String id,String title){if(PlaylistHeaderModel.validId(id))startExternal(id,title);}
     public record Preview(int count,long seconds,int unknown,java.util.List<app.morphe.extension.shared.innertube.PlayerResponseOuterClass.Format> sample){}
     /** Size preview enumerates authenticated pages without queuing media or changing playback. */
     public static Future<?> preview(String playlist,java.util.function.Consumer<Preview> success,java.util.function.Consumer<String> failure){return BROWSE.submit(()->{

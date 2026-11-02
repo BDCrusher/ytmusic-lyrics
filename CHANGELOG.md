@@ -1,3 +1,19 @@
+# YT-Music personal patches 0.7.0-beta.4
+
+Adds the missing client-generated download-action path exposed by the phone log. Empty command443434441 keeps its identity in tagged native context, rather than encoded133724106 parameters. APK-selected native recording/playlist getters now resolve that context through owned adapters, without reflection or Now Playing substitution. External playlist actions retain original-playlist/folder tracking. Explicit row recordings win over associated playlists; raw11-character recording IDs, including PL-prefixed IDs, remain recordings.
+
+Selected In-app/External mode now reports an unresolved identity explicitly with concise normal-debug mode/tag/sender context, instead of silently treating it as a playlist and opening the Premium sheet. Default keeps native account/eligibility handling. Beta.3 quality-dialog/storage fixes remain. No settings, credentials, offsets, permanent lyrics, music files or folder grants cleared.
+
+Exact original arm64 Music **9.42.52/94252240** and **9.43.51/94351240**, minSDK26. Full Collection alone; Shaders and Download playlist optional. In-app playlists require Downloads and Download playlist. Jam remains9.42.52-only. Refresh with prerelease/experimental versions enabled and repatch an original APK.
+
+Build/JVM/lint, six positive configurations on both targets, two missing-Downloads rejections, catalog/Jam guards, six feature/access/reference audits, four native Lyrics audits, six native media audits, six settings audits and six new native-context audits pass. **615 source/harness checks:137 fresh,478 inherited after source hashes match.** The exact previous published source reproduces the missed empty-action fallback. The source fixture simulates only explicit platform/downloader boundaries and two APK-generated native getter bodies; concrete adapters are separately audited in target DEX. Browser/provider evidence inherited from unchanged executable sources, NOTICE version separately reviewed.
+
+Actual phone tag types, handoff/prompt appearance, native decoding/queue/SAF, Samsung graphics/navigation and recording-free lyric smoothness remain acceptance checks. Unsupported identities report their unresolved state; no all-client-tag or zero-stutter guarantee. No devices/MuMu/sign/install/uninstall, real media downloads or cleanup. Existing format/metadata/SponsorBlock sidecar limitations remain. Raw phone logs and vendor inputs stay private. Shared Toolkit in place, no global copies.
+
+Settings: **Morphe > Player > Downloads**. In-app opens the audio prompt; External uses the existing selected app's review flow. Existing Enable debug logging / Export debug logs, no timer.
+
+## Prior releases
+
 # YT-Music personal patches 0.7.0-beta.3
 
 Fixes native download buttons opening the Premium sheet in External/In-app mode by decoding the exact native offline command's song or playlist identity. Uses the existing selected mode/app, accepts executor-dispatched callbacks, consumes duplicates and never substitutes Now Playing for a playlist. Default retains native account/eligibility handling. Whole-playlist In-app downloading requires Downloads and Download playlist.

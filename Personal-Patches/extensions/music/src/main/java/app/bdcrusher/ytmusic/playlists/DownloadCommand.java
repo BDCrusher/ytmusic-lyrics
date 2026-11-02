@@ -9,11 +9,26 @@ import java.util.Base64;
 /** Exact native offline-upsell identity. Never search arbitrary bytes or use Now Playing. */
 public final class DownloadCommand {
     public static final int OFFLINE_UPSELL=133724106;
+    public static final int DOWNLOAD_ACTION=443434441;
     public record Target(String id,boolean playlist){}
     private DownloadCommand(){}
     public static Target target(byte[] command){
         if(command==null||command.length>65536)return null;
         try{return command(new ProtoWire(command),0);}catch(Exception malformed){return null;}
+    }
+    /** Client-generated download actions keep their identity in endpoint.tag, not the payload. */
+    public static boolean contextual(byte[] command){
+        if(command==null||command.length>65536)return false;
+        try{
+            ProtoWire value=new ProtoWire(command);
+            for(int depth=0;depth<=4;depth++){
+                ProtoWire.Field action=value.one(DOWNLOAD_ACTION),wrapper=value.one(169495254);
+                if(action!=null){if(action.wire!=2||wrapper!=null||value.one(OFFLINE_UPSELL)!=null)return false;new ProtoWire(action.data);return true;}
+                if(wrapper==null||wrapper.wire!=2||value.one(OFFLINE_UPSELL)!=null)return false;
+                value=new ProtoWire(wrapper.data);
+            }
+        }catch(IllegalArgumentException malformed){}
+        return false;
     }
     private static Target command(ProtoWire message,int depth)throws Exception{
         if(depth>4)return null;
