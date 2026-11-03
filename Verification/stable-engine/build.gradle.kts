@@ -83,3 +83,5 @@ tasks.register<JavaExec>("auditDownloads43") {
 
 tasks.register<JavaExec>("inspectDownloads44"){dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.InspectDownloads44Kt");workingDir=rootDir;maxHeapSize="4g";doFirst {setArgs(listOf(providers.gradleProperty("target44").get(),providers.gradleProperty("phase44").get(),providers.gradleProperty("focus44").getOrElse("")))}}
 tasks.register<JavaExec>("auditDownloads44"){dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.AuditDownloads44Kt");workingDir=rootDir;maxHeapSize="4g";doFirst{setArgs(listOf(providers.gradleProperty("auditManifest").get(),providers.gradleProperty("receiverExpected").getOrElse("expect-pass")))}}
+
+tasks.register<JavaExec>("auditReferenceReturns45"){dependsOn("classes");classpath=sourceSets["main"].runtimeClasspath;mainClass.set("app.bdcrusher.lyrics.AuditReferenceReturns45Kt");workingDir=rootDir;maxHeapSize="4g";doFirst{setArgs(listOf(providers.gradleProperty("auditManifest").get(),providers.gradleProperty("returnExpected").getOrElse("expect-pass")))}}

@@ -26,8 +26,12 @@ internal fun BytecodePatchContext.installDownloadsHost(){
         const v1, $container
         invoke-virtual { v0, v1 }, Landroid/view/View;->findViewById(I)Landroid/view/View;
         move-result-object v0
+        instance-of v1, v0, Landroid/view/ViewGroup;
+        if-eqz v1, :absent
         check-cast v0, Landroid/view/ViewGroup;
+        return-object v0
         :absent
+        const/4 v0, 0x0
         return-object v0
     """)
     type.addBridge("bd_downloadDestination",emptyList(),"Z",3,body="""

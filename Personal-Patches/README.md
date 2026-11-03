@@ -1,3 +1,39 @@
+# Verified correction — 0.8.0-beta.2
+
+Fixes the **Library VerifyError introduced in 0.8.0-beta.1**. The native content bridge now has separate typed ViewGroup and explicit null returns, with safe fallback for missing/non-container content. Existing Audio/Video downloads, playlist routing and native-player integration are retained; files, lyrics, settings, credentials and chosen-folder grants are unchanged.
+
+Exact experimental original arm64-v8a Music **9.42.52/94252240** and **9.43.51/94351240**, minSDK26. Full Collection only; Shaders and Download playlist optional. In-app playlist batching requires Downloads plus Download playlist. Jam remains 9.42.52-only. Do not combine complete collections. MPP SHA256 `4c1c23dcb54be422c31b88cd9b4bcb16664688a98fb86903a47a33f2d6c0fe34`.
+
+Build/JVM/lint, **8 positive configurations**, **2 missing-Downloads rejections**, catalog/Jam guards and **8 compiled audit groups** pass. New control-flow/register-type analysis reproduces beta.1's bad reference return on both targets and checks all selected bridge returns in the corrected outputs. Four actual-DEX content fixtures per output cover absent root, missing/wrong content and valid container. This is scoped desktop analysis, not complete ART verification.
+
+**820 source/harness checks: 39 fresh normal-logger checks, 781 inherited after exact source-hash validation.** Other production files match beta.1 except the bridge, version, logger version and notice version. Existing renderer/retrieval/playback fixture evidence is inherited rather than described as fresh device testing.
+
+Reopening Library on the Samsung phone remains required acceptance. Native playback/decoder/queue, Audio/Video switching, offline actions, sheet/Downloads appearance, Samsung navigation, Shaders and recording-free lyric smoothness remain phone checks. The approved matching-component catalogue stays inside Library Downloads; the stock offline database is untouched. No MuMu/device, signing, installation, actual media downloading or cleanup operations occurred.
+
+Refresh the beta source with Pre-release patches and Experimental app versions enabled and **repatch a supported original APK**. Refreshing the feed alone does not fix an installed APK. The playlist-header download button uses your configured mode: In-app shows one Audio/Video sheet for the batch; External sends the playlist URL to the selected app; Default retains native handling. Enable Download playlist during patch selection for in-app batching, not as an extra per-download menu step. Existing Enable debug logging / Export debug logs remains available without a timer.
+
+GitHub publication is pending. Exact local evidence: Verification/revision45/source-freeze.json, matrix.log, audits.log, released-regression-final.log and dist verification.json. Read Research/LIBRARY-VERIFIER-FIX-0.8.0-BETA.2-2026-11-02.md and Verification/revision45/WORK.md. Existing published source is 8e9fa3a905d34a01dd3adb2cc1e29341fbcbe027; dev feed d8b6e5f7890a4563a40637cf9aad5b2bfa02df43. Preserve that history. Toolkit runs in place. Never rerun completed staging/publication helpers or push private Personal-Patches history. Scratch is retained and regenerable; no cleanup authorized.
+
+## Earlier records
+
+# Published — 0.8.0-beta.1
+
+[0.8.0-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.8.0-beta.1) is the combined native-download update. It fixes the playlist-header receiver and invalid-owner poisoning, adds the YouTube-style Audio/Video quality sheet, preserves separate remembered choices, and routes downloaded entries through the native watch command and player. Shared progress, inline downloaded icons, durable range recovery, atomic metadata/artwork writes and typed batch migration are included. Saved media is preferred while online metadata and native authorization handling remain intact. No user-facing path starts the separate offline player.
+
+Owned downloads appear inside Library > Downloads using the approved matching-component fallback within the native destination. Native provider/catalogue and offline-browse contracts were inspected; the stock offline database is untouched. Existing audio files, artwork, playlists, lyrics, settings, credentials and read-only chosen-folder grants are preserved.
+
+Toolkit verified 11 public assets and 7684 source files. Source `8e9fa3a905d34a01dd3adb2cc1e29341fbcbe027`; dev feed `d8b6e5f7890a4563a40637cf9aad5b2bfa02df43`. MPP SHA256 `295e7be5d92ce91d5064b75d30e9c6cd1067ff5f4fd18c78d872b1fe880d0101`. Publication receipt: Verification/publication/v0.8.0-beta.1/publication-result.json. Release files: Personal-Patches/dist/0.8.0-beta.1. Published history is preserved; shared Toolkit ran in place.
+
+Exact experimental originals: arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Full Collection only; Shaders and Download playlist remain optional. In-app playlist batches require Downloads plus Download playlist. Jam remains 9.42.52-only. Settings: Morphe > Player > Downloads; choose In-app for the quality sheet, or External for the existing selected application. Refresh with Pre-release patches and Experimental app versions enabled, then repatch a supported original APK.
+
+Final build/JVM/lint, 12 positive configurations, 2 missing-Downloads rejections, catalog/Jam guards, payload isolation and all 7 compiled audits pass. 820 source/harness checks comprise 549 fresh checks and 271 inherited checks with matching source hashes. The new receiver audit reproduces the previous release's defect on both targets. Fixtures simulate Android/codec/authenticated transport/launch boundaries; final DEX separately verifies concrete hooks, receiver aliases, references and access. Source freeze r3 and final build r4 are authoritative; earlier candidates are intermediate evidence.
+
+Phone acceptance remains open: actual native playback/decoder/queue, Audio/Video switching, sheet and Downloads appearance/insets, offline action availability, Samsung navigation, Shaders and recording-free Lyrics smoothness. No physical-device verification, universal zero-stutter or pixel-parity claim. MuMu, devices, signing, installation and real media downloads were untouched. Existing Enable debug logging / Export debug logs remains the diagnostics path, without a timer.
+
+Read Research/NATIVE-DOWNLOADS-0.8.0-BETA.1-2026-11-02.md, dist verification.json and Verification/revision44/WORK.md. Scratch is retained and inventoried in Verification/revision44/retained-scratch.json; no cleanup was authorized. Never rerun completed staging/publication or push private Personal-Patches history.
+
+## Earlier records
+
 # Verified source — 0.8.0-beta.1
 
 Combined native-download update is verified locally; GitHub publication is pending. Full Collection only, with optional Shaders and Download playlist. Original arm64 Music 9.42.52/94252240 and 9.43.51/94351240, minSDK26. Jam remains 9.42.52-only. MPP SHA256 `295e7be5d92ce91d5064b75d30e9c6cd1067ff5f4fd18c78d872b1fe880d0101`. Dist: Personal-Patches/dist/0.8.0-beta.1.
