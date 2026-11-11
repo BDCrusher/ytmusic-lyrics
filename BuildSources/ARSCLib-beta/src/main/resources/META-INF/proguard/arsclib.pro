@@ -1,3 +1,0 @@
--keep class org.xmlpull.v1.** { *; }
--keep class android.util.AttributeSet { *; }
--keep class android.content.res.XmlResourceParser { *; }

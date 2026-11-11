@@ -1,0 +1,22 @@
+diff --git a/settings.gradle.kts b/settings.gradle.kts
+index ea3c122..f416b87 100644
+--- a/settings.gradle.kts
++++ b/settings.gradle.kts
+@@ -2,7 +2,7 @@ rootProject.name = "morphe-patcher"
+ 
+ // Include Morphe forks of libraries as composite builds if they exist locally
+ mapOf(
+-    "ARSCLib" to "com.github.MorpheApp:ARSCLib",
++    "ARSCLib-675bed2de3" to "com.github.MorpheApp:ARSCLib",
+ ).forEach { (libraryPath, libraryName) ->
+     val libDir = file("../$libraryPath")
+     if (libDir.exists()) {
+@@ -15,7 +15,7 @@ mapOf(
+ }
+ 
+ // Include the Morphe fork of smali as a composite build if it exists locally
+-file("../smali").takeIf { it.exists() }?.let { smaliDir ->
++file("../smali-patcher210").takeIf { it.exists() }?.let { smaliDir ->
+     includeBuild(smaliDir) {
+         dependencySubstitution {
+             substitute(module("com.github.MorpheApp.smali:smali")).using(project(":smali"))

@@ -1,0 +1,35 @@
+diff --git a/settings.gradle.kts b/settings.gradle.kts
+index ea142ac..35bc2ad 100644
+--- a/settings.gradle.kts
++++ b/settings.gradle.kts
+@@ -9,8 +9,8 @@ pluginManagement {
+             name = "GitHubPackages"
+             url = uri("https://maven.pkg.github.com/MorpheApp/registry")
+             credentials {
+-                username = providers.gradleProperty("gpr.user").getOrElse(System.getenv("GITHUB_ACTOR"))
+-                password = providers.gradleProperty("gpr.key").getOrElse(System.getenv("GITHUB_TOKEN"))
++                username = providers.gradleProperty("gpr.user").getOrElse(System.getenv("GITHUB_ACTOR") ?: "")
++                password = providers.gradleProperty("gpr.key").getOrElse(System.getenv("GITHUB_TOKEN") ?: "")
+             }
+         }
+         // Obtain baksmali/smali from source builds - https://github.com/iBotPeaches/smali
+@@ -32,8 +32,8 @@ dependencyResolutionManagement {
+             name = "GitHubPackages"
+             url = uri("https://maven.pkg.github.com/MorpheApp/registry")
+             credentials {
+-                username = providers.gradleProperty("gpr.user").getOrElse(System.getenv("GITHUB_ACTOR"))
+-                password = providers.gradleProperty("gpr.key").getOrElse(System.getenv("GITHUB_TOKEN"))
++                username = providers.gradleProperty("gpr.user").getOrElse(System.getenv("GITHUB_ACTOR") ?: "")
++                password = providers.gradleProperty("gpr.key").getOrElse(System.getenv("GITHUB_TOKEN") ?: "")
+             }
+         }
+         // Obtain baksmali/smali from source builds - https://github.com/iBotPeaches/smali
+@@ -55,7 +55,7 @@ include(":patch-library")
+ 
+ // Include morphe-patcher as composite build if it exists locally
+ mapOf(
+-    "morphe-patcher" to "app.morphe:morphe-patcher",
++    "morphe-patcher-2.3.0" to "app.morphe:morphe-patcher",
+ ).forEach { (libraryPath, libraryName) ->
+     val libDir = file("../$libraryPath")
+     if (libDir.exists()) {
