@@ -10,6 +10,9 @@ import java.util.*;
 /** Application-scoped ownership of personal features; never starts the lyrics renderer. */
 public final class PersonalRuntime implements Application.ActivityLifecycleCallbacks {
     private static PersonalRuntime instance;
+    private final Set<Activity> resumed=Collections.newSetFromMap(new WeakHashMap<>());
+    private final Handler main=new Handler(Looper.getMainLooper());
+    private final Runnable syncShaderVisibility=()->app.bdcrusher.ytmusic.shaders.ShaderRuntime.hostVisible(!resumed.isEmpty());
     private final Map<Activity,NavigationWindow> windows=new WeakHashMap<>();
     private final Map<Window,NavigationWindow> dialogs=new WeakHashMap<>();
     private PersonalRuntime(){}
@@ -36,10 +39,11 @@ public final class PersonalRuntime implements Application.ActivityLifecycleCallb
         });
     }
     public void onActivityCreated(Activity a,Bundle b){if(!windows.containsKey(a)){NavigationWindow owner=new NavigationWindow(a.getWindow());windows.put(a,owner);owner.start();}}
-    public void onActivityResumed(Activity a){app.bdcrusher.ytmusic.playlists.DownloadPrompt.activityResumed(a);app.bdcrusher.ytmusic.shaders.ShaderRuntime.hostVisible(true);NavigationWindow owner=windows.get(a);if(owner!=null)owner.update();new Handler(Looper.getMainLooper()).post(()->{app.bdcrusher.ytmusic.playlists.PlaylistRuntime.refreshFiles(false);app.bdcrusher.ytmusic.playlists.NativeMediaCache.recover();});}
-    public void onActivityPaused(Activity a){app.bdcrusher.ytmusic.playlists.DownloadPrompt.activityPaused(a);FeatureDiagnostics.event("Lifecycle","Activity paused; background playback unchanged");app.bdcrusher.ytmusic.shaders.ShaderRuntime.hostVisible(false);}
+    public void onActivityResumed(Activity a){app.bdcrusher.ytmusic.playlists.DownloadPrompt.activityResumed(a);resumed.add(a);updateShaderVisibility();NavigationWindow owner=windows.get(a);if(owner!=null)owner.update();new Handler(Looper.getMainLooper()).post(()->{app.bdcrusher.ytmusic.playlists.PlaylistRuntime.refreshFiles(false);app.bdcrusher.ytmusic.playlists.NativeMediaCache.recover();});}
+    public void onActivityPaused(Activity a){app.bdcrusher.ytmusic.playlists.DownloadPrompt.activityPaused(a);FeatureDiagnostics.event("Lifecycle","Activity paused; background playback unchanged");resumed.remove(a);updateShaderVisibility();}
+    private void updateShaderVisibility(){main.removeCallbacks(syncShaderVisibility);main.post(syncShaderVisibility);}
     public void onActivityStarted(Activity a){}
     public void onActivityStopped(Activity a){FeatureDiagnostics.event("Lifecycle","Activity stopped");}
     public void onActivitySaveInstanceState(Activity a,Bundle b){}
-    public void onActivityDestroyed(Activity a){NavigationWindow owner=windows.remove(a);if(owner!=null)owner.close();}
+    public void onActivityDestroyed(Activity a){if(resumed.remove(a))updateShaderVisibility();NavigationWindow owner=windows.remove(a);if(owner!=null)owner.close();}
 }

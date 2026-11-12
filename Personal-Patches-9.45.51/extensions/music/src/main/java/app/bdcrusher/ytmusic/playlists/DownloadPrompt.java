@@ -14,6 +14,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.format.Formatter;
 import android.view.Gravity;
+import android.view.MotionEvent;
+import android.view.ViewConfiguration;
+import android.view.WindowInsets;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -186,6 +189,7 @@ public final class DownloadPrompt {
         final LinearLayout tabs;
         final View indicator;
         final LinearLayout rows;
+        final ScrollView scroll;
         final TextView download;
         final CheckBox remember;
         final Consumer<Selection> accept;
@@ -197,6 +201,10 @@ public final class DownloadPrompt {
         MediaOptions options;
         Quality selected;
         boolean showingVideo;
+        boolean expanded;
+        float gripStart;
+        boolean dragging;
+        int dispatchedBottom;
 
         Sheet(Activity activity, Consumer<Selection> accept, Runnable cancel) {
             this.activity = activity;
@@ -210,13 +218,16 @@ public final class DownloadPrompt {
             root.setOrientation(LinearLayout.VERTICAL);
             root.setPadding(dp(20), dp(10), dp(20), dp(16));
             root.setBackground(shape(background, 24, 0));
-            TextView handle = text("", 0, foregroundColor);
+            FrameLayout grip = new FrameLayout(activity);
+            View handle = new View(activity);
             handle.setBackground(shape(foregroundColor & 0x55ffffff, 3, 0));
-            LinearLayout.LayoutParams handleParams = new LinearLayout.LayoutParams(dp(36), dp(4));
-            handleParams.gravity = Gravity.CENTER_HORIZONTAL;
-            root.addView(handle, handleParams);
+            grip.addView(handle, new FrameLayout.LayoutParams(dp(36), dp(4), Gravity.CENTER));
+            grip.setContentDescription("Expand or collapse download options");
+            grip.setOnClickListener(view -> setExpanded(!expanded));
+            grip.setOnTouchListener(this::dragGrip);
+            root.addView(grip, new LinearLayout.LayoutParams(-1, dp(32)));
             TextView heading = text("Download quality", 24, foregroundColor);
-            heading.setPadding(0, dp(18), 0, dp(12));
+            heading.setPadding(0, dp(4), 0, dp(12));
             if (android.os.Build.VERSION.SDK_INT >= 28) heading.setAccessibilityHeading(true);
             root.addView(heading);
             tabArea = new FrameLayout(activity);
@@ -231,9 +242,12 @@ public final class DownloadPrompt {
             tabArea.addOnLayoutChangeListener((view, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom) -> {
                 if (right - left != oldRight - oldLeft) moveIndicator(false);
             });
-            ScrollView scroll = new ScrollView(activity) {
+            scroll = new ScrollView(activity) {
                 @Override protected void onMeasure(int width, int height) {
-                    int limit = (int) (getResources().getDisplayMetrics().heightPixels * .48f);
+                    int limit = (int) (getResources().getDisplayMetrics().heightPixels * (expanded ? .65f : .34f));
+                    if (MeasureSpec.getMode(height) != MeasureSpec.UNSPECIFIED) {
+                        limit = Math.min(limit, MeasureSpec.getSize(height));
+                    }
                     super.onMeasure(width, MeasureSpec.makeMeasureSpec(limit, MeasureSpec.AT_MOST));
                 }
             };
@@ -271,9 +285,11 @@ public final class DownloadPrompt {
             });
             root.addView(actions);
             root.setOnApplyWindowInsetsListener((view, insets) -> {
-                root.setPadding(dp(20), dp(10), dp(20), dp(16) + insets.getSystemWindowInsetBottom());
+                dispatchedBottom = navigationBottom(insets);
+                root.post(this::applyNavigationPadding);
                 return insets;
             });
+            root.getViewTreeObserver().addOnGlobalLayoutListener(this::applyNavigationPadding);
             dialog.setContentView(root);
         }
 
@@ -288,6 +304,73 @@ public final class DownloadPrompt {
             dialog.show();
             PersonalRuntime.dialog(dialog);
             if (window != null) window.setLayout(-1, -2);
+            root.requestApplyInsets();
+            root.post(this::applyNavigationPadding);
+        }
+
+        @SuppressWarnings("deprecation")
+        private int navigationBottom(WindowInsets insets) {
+            if (insets == null) return 0;
+            return android.os.Build.VERSION.SDK_INT >= 30
+                    ? insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+                    : insets.getStableInsetBottom();
+        }
+
+        private void applyNavigationPadding() {
+            if (!root.isAttachedToWindow() || root.getHeight() == 0) return;
+            int inset = Math.max(dispatchedBottom, navigationBottom(root.getRootWindowInsets()));
+            View activityDecor = activity.getWindow().getDecorView();
+            inset = Math.max(inset, navigationBottom(activityDecor.getRootWindowInsets()));
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                int[] location = new int[2];
+                root.getLocationOnScreen(location);
+                int displayBottom = activity.getWindowManager().getCurrentWindowMetrics().getBounds().bottom;
+                inset = Math.min(inset, Math.max(0, location[1] + root.getHeight() - (displayBottom - inset)));
+            }
+            int padding = dp(16) + inset;
+            if (root.getPaddingBottom() != padding) root.setPadding(dp(20), dp(10), dp(20), padding);
+        }
+
+        private void setExpanded(boolean value) {
+            if (expanded == value) return;
+            expanded = value;
+            scroll.requestLayout();
+        }
+
+        private boolean dragGrip(View grip, MotionEvent event) {
+            switch (event.getActionMasked()) {
+                case MotionEvent.ACTION_DOWN -> {
+                    gripStart = event.getRawY();
+                    dragging = false;
+                    root.animate().cancel();
+                }
+                case MotionEvent.ACTION_MOVE -> {
+                    float delta = event.getRawY() - gripStart;
+                    dragging |= Math.abs(delta) > ViewConfiguration.get(activity).getScaledTouchSlop();
+                    if (dragging) root.setTranslationY(Math.max(0, delta));
+                }
+                case MotionEvent.ACTION_UP -> {
+                    float delta = event.getRawY() - gripStart;
+                    if (!dragging) grip.performClick();
+                    else if (delta < -dp(24)) setExpanded(true);
+                    else if (delta > dp(56)) {
+                        if (!expanded || delta > dp(120)) {
+                            dialog.cancel();
+                            return true;
+                        }
+                        setExpanded(false);
+                    }
+                    settleGrip();
+                }
+                case MotionEvent.ACTION_CANCEL -> settleGrip();
+                default -> {}
+            }
+            return true;
+        }
+
+        private void settleGrip() {
+            if (ValueAnimator.areAnimatorsEnabled()) root.animate().translationY(0).setDuration(ANIMATION_MS).start();
+            else root.setTranslationY(0);
         }
 
         void close() {

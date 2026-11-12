@@ -6,8 +6,12 @@ import app.morphe.patcher.PatcherConfig
 import app.morphe.patcher.apk.ApkUtils.applyTo
 import app.morphe.patcher.dex.SdkDexVerifier
 import app.morphe.patcher.patch.loadPatchesFromJar
+import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import java.io.File
 import java.security.MessageDigest
@@ -51,7 +55,7 @@ fun main(args: Array<String>) {
             "lyrics" -> patch.name == "Third-party lyrics"
             "shaders" -> patch.name == "Shaders"
             "defaults" -> patch.default
-            "without-personal" -> patch.default && patch.name != "Third-party lyrics"
+            "without-personal" -> patch.default && patch.name !in setOf("Third-party lyrics", "Volume boost", "Theme")
             "without-downloads" -> patch.name != "Downloads" && (patch.default || patch.name == "Shaders")
             "features" -> patch.default || patch.name == "Shaders" || patch.name == "Downloads"
             else -> error("Unknown mode $mode")
@@ -83,12 +87,16 @@ fun main(args: Array<String>) {
     val host = "Lapp/morphe/extension/music/patches/downloads/NativeDownloadsHost;"
     val ownerInterface = "Lapp/morphe/extension/music/patches/downloads/NativeDownloadsHost\$Owner;"
     val libraryHooks = mutableMapOf<String, Set<String>>()
+    var libraryBackSites = 0
+    var libraryOwnerType = ""
+    var libraryBackFieldType = ""
     ZipFile(result).use { archive ->
         for (entry in archive.entries().asSequence().filter { it.name.matches(Regex("classes[0-9]*[.]dex")) }) {
             val dex = archive.getInputStream(entry).buffered().use { DexBackedDexFile.fromInputStream(null, it) }
             for (owner in dex.classes) {
                 check(seen.add(owner.type)) { "Duplicate ${owner.type}" }
                 if (ownerInterface in owner.interfaces) {
+                    libraryOwnerType = owner.type
                     check(owner.methods.single { it.name == "bd_libraryDownloadsContent" }.returnType == "Landroid/widget/FrameLayout;")
                     check(owner.methods.single { it.name == "bd_libraryDownloadsSelected" }.returnType == "Z")
                     for (method in owner.methods) {
@@ -111,8 +119,18 @@ fun main(args: Array<String>) {
                 }
                 for (method in owner.methods) {
                     check(method.name != "bd_downloadContent") { "Retired Library bridge remains: $method" }
-                    for (instruction in (method.implementation?.instructions ?: emptyList())) {
+                    val code = method.implementation?.instructions?.toList().orEmpty()
+                    for ((index, instruction) in code.withIndex()) {
                         val ref = (instruction as? ReferenceInstruction)?.reference as? MethodReference ?: continue
+                        if (ref.definingClass == host && ref.name == "handleBack") {
+                            val prior = code[index - 1] as TwoRegisterInstruction
+                            val field = (prior as ReferenceInstruction).reference as FieldReference
+                            val call = instruction as FiveRegisterInstruction
+                            check(prior.opcode == Opcode.IGET_OBJECT && call.registerC == prior.registerA)
+                            check(prior.registerB == method.implementation!!.registerCount - 1)
+                            libraryBackSites++
+                            libraryBackFieldType = field.type
+                        }
                         if (ref.definingClass.startsWith("Lapp/bdcrusher/ytmusic/"))
                             calls.merge("${ref.definingClass}->${ref.name}", 1, Int::plus)
                     }
@@ -132,9 +150,16 @@ fun main(args: Array<String>) {
         check(libraryHooks.keys.containsAll(listOf("onViewCreated", "onResume", "onHiddenChanged", "onStop", "onDestroyView")))
         check(libraryHooks.count { it.value == setOf("changed") } == 4)
         check(libraryHooks.count { it.value == setOf("release") } == 2)
+        check(libraryBackSites == 1 && libraryBackFieldType == libraryOwnerType) {
+            "Library back must read the actual stock presenter"
+        }
         println("PASS: native Library content type and lifecycle receiver audit ($libraryHooks)")
     } else {
         check(libraryHooks.isEmpty()) { "Native Downloads lifecycle hooks were installed without Downloads" }
+    }
+    val volume = "Lapp/bdcrusher/ytmusic/common/PlayerVolumeBoost;"
+    for (hook in listOf("bind", "audioSession", "releaseAudioTrack")) {
+        check(calls.getOrDefault("$volume->$hook", 0) == if (selected.any { it.name == "Volume boost" }) 1 else 0)
     }
     println("PASS: $mode, ${seen.size} unique classes; retired Library bridge absent")
     println("Patched unsigned APK ${hash(result)}")

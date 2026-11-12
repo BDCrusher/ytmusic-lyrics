@@ -9,6 +9,7 @@ import { FrameBudget } from './frame-budget.js';
 import { RenderDiagnostics } from './render-diagnostics.js';
 
 import { lookupMessage } from './lookup-status.js';
+import { unisonContributors } from './unison-source.js';
 
 export const PRIORITY = catalog.providers.map(({key})=>key);
 const $ = id => document.getElementById(id);
@@ -91,8 +92,7 @@ const dockResize=new ResizeObserver(()=>{
 });
 $('dock-content').addEventListener('transitionend',event=>{if(event.propertyName==='grid-template-rows')settleDockLayout();});
 const enrichmentRequested=new Set();
-let resumeScrollUntil=0;
-function resumeFollow(){resumeScrollUntil=performance.now()+120;renderer.resumeAutoscroll();}
+function resumeFollow(){renderer.resumeAutoscroll();}
 let renderer = createLyricsRenderer({document,window,mount:$('lyrics'),host:{
   getScrollElement:()=>$('scroll'),
   isViewVisible:()=>active && !document.hidden,
@@ -150,6 +150,11 @@ function showCredits(result){
   footer.hidden=!footer.childElementCount;
 }
 
+let chooseFrame=0;
+function queueChoice(){
+  if(chooseFrame)return;
+  chooseFrame=requestAnimationFrame(()=>{chooseFrame=0;choose();});
+}
 function choose(force=false) {
   if(!params)return;
   const custom=Array.isArray(settings.priority)?settings.priority.filter(k=>PRIORITY.includes(k)):[];
@@ -175,7 +180,8 @@ function choose(force=false) {
   const key=available.includes(pinned)?pinned:autoPreferred;
   availableKeys=available;
   if(!key){
-    selected='';currentResult=null;renderer.clear();showCredits(null);updateDock();$('sources').value='';
+    if(currentResult){renderer.clear();showCredits(null);}
+    selected='';currentResult=null;updateDock();$('sources').value='';
     if(available.length){$('empty').textContent='These lyrics differ from YouTube Music. Choose a source to use them.';$('empty').hidden=false;native?.displayed(generation,'choose-source');}
 
     return;
@@ -183,10 +189,11 @@ function choose(force=false) {
   $('sources').value=key;
   const result=params.sourceMap[key].lyricSourceResult;
   if(!force&&key===selected&&(result===currentResult||currentResult&&signature(result)===signature(currentResult))){params.sourceMap[key].lyricSourceResult=currentResult;updateDock();return;}
+  const first=!currentResult;
   selected=key;currentResult=result;
   
   updateDock();
-  renderer.setLyrics(result.lyrics,{language:result.language,songwriters:result.songwriters});
+  renderer.setLyrics(result.lyrics,{songKey:params.videoId,language:result.language,songwriters:result.songwriters});
   
   diagnostics.lines(renderer.lines);
   decorate();
@@ -195,7 +202,8 @@ function choose(force=false) {
   $('status').title=key;
   $('empty').hidden=true;
 
-  renderer.relayout();
+  if(first&&!settings.reducedMotion&&!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+    $('lyrics').animate([{opacity:0},{opacity:1}],{duration:180,easing:'ease-out'});
   native?.displayed(generation,key);
   enrichMissing();
 }
@@ -248,7 +256,8 @@ function renderFrame(now) {
   const position=clock.read(now);
   const before=diagnostics.enabled?performance.now():0;
   renderer.tick(position/1000,{eventCreationTime:Date.now(),isPlaying:clock.playing,
-    playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!settings.reducedMotion});
+    playbackRate:clock.rate,passiveScrollEnabled:settings.passive,smoothScroll:!settings.reducedMotion,
+    followPausedSeeks:true,countEveryUserScroll:true});
   diagnostics.sample(now,position/1000,diagnostics.enabled?performance.now()-before:0,clock.playing);
   raf=requestAnimationFrame(renderFrame);
 }
@@ -258,11 +267,13 @@ window.BDC = {
   debug(value){if(diagnostics.enabled!==(value===true))frameBudget.reset(performance.now());diagnostics.enable(value===true);},
   track(track) {
     
+    cancelAnimationFrame(chooseFrame);chooseFrame=0;
+    for(const animation of $('lyrics').getAnimations())animation.cancel();
     reportedMismatches.clear();autoPreferred='';seenPayloads=new Set();seenPayloadBytes=0;clock.reset();frameBudget.reset(performance.now());sourceHealth={pending:1,waiting:0};parsing=0;slow=false;decodingFailed=false;lastHealthLabel='';clearTimeout(slowTimer);$('notice').textContent='';$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');
     generation=track.generation;selected='';pinned=track.preferredSource||'';currentResult=null;enrichmentGeneration++;enrichmentRequested.clear();
     params={song:track.title,artist:track.artist,album:track.album,duration:track.duration,
       videoId:track.videoId,sourceMap:Object.fromEntries([...PRIORITY,'metadata'].map(key=>[key,{filled:false,lyricSourceResult:null}]))};
-    renderer.clear();resetPlaybackClock();renderer.resumeAutoscroll();$('resume').hidden=true;resumeScrollUntil=performance.now()+250;
+    renderer.clear();resetPlaybackClock();renderer.resumeAutoscroll();$('resume').hidden=true;
     closeSources();showCredits(null);availableKeys=[];updateDock();$('sources').replaceChildren();$('status').textContent='';
     const expected=generation;
     if(track.videoId)slowTimer=setTimeout(()=>{if(expected===generation){slow=true;updateHealth();}},12000);
@@ -290,9 +301,10 @@ window.BDC = {
         if(payload.result?.lyrics?.length)put(payload.key,payload.result);
       }else if(payload.kind==='unison'){
         const data=payload.data?.data||payload.data;
-        if(data.format==='ttml')fillTtml(data.lyrics,params,{richsyncKey:'unison-richsynced',syncedKey:'unison-synced',source:'Unison',sourceHref:'https://unison.betterlyrics.org',cacheAllowed:false});
+        const contributors=unisonContributors(data);
+        if(data.format==='ttml')fillTtml(data.lyrics,params,{richsyncKey:'unison-richsynced',syncedKey:'unison-synced',source:'Unison',sourceHref:'https://unison.betterlyrics.org',cacheAllowed:false,contributors});
         else if(data.lyrics)put(data.format==='plain'?'unison-plain':data.syncType==='richsync'?'unison-wordsynced':'unison-synced',
-          {lyrics:data.format==='plain'?PlainParser.parse(data.lyrics):parseLRC(data.lyrics,params.duration*1000),source:'Unison'});
+          {lyrics:data.format==='plain'?PlainParser.parse(data.lyrics):parseLRC(data.lyrics,params.duration*1000),source:'Unison',contributors});
       }else {
         const lyrics=parsePayload(payload);
         let key=payload.key;
@@ -300,18 +312,19 @@ window.BDC = {
           const parsed=parseTTMLContent(payload.raw,{songDurationMs:params.duration*1000});
           if(!parsed.isWordSynced)key=key.replace('-richsynced','-synced');
         }
-        put(key,{...payload,lyrics});
+        const contributors=key?.startsWith('unison-')?unisonContributors(payload.sourceMetadata):payload.contributors;
+        put(key,{...payload,lyrics,contributors});
       }
       // A slower provider response may be empty or less detailed than an earlier
       // public result. Only a track change or explicit refresh clears good lyrics.
       for(const [key,result] of previous)if(!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length)expected.sourceMap[key].lyricSourceResult=result;
       if(payload.kind!=='cachedResult')for(const key of PRIORITY){const result=expected.sourceMap[key]?.lyricSourceResult;if(!key.startsWith('spicy-')&&result?.lyrics?.length&&result!==previous.get(key))native?.cacheResult?.(generation,key,JSON.stringify(result));}
-      choose();
+      queueChoice();
     } catch(error){
       if(cached){cache.delete(payloadKey);if(params===expected)seenPayloadBytes-=payloadKey.length*2;}
       if(id!==generation||params!==expected)return;
       for(const [key,result] of previous)if(!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length)expected.sourceMap[key].lyricSourceResult=result;
-      choose();native?.diagnostic(generation,payload.key||payload.event||payload.kind||'unknown',String(error?.message||error).slice(0,240));
+      queueChoice();native?.diagnostic(generation,payload.key||payload.event||payload.kind||'unknown',String(error?.message||error).slice(0,240));
       decodingFailed=true;
     }finally{if(params===expected){parsing=Math.max(0,parsing-1);updateHealth();}}
   },
@@ -366,7 +379,7 @@ window.BDC = {
   notice(id,message){
     if(id===generation)$('notice').textContent=message;
   },
-  dispose(){cancelAnimationFrame(raf);clearTimeout(dockLayoutTimer);clearTimeout(slowTimer);dockResize.disconnect();renderer.destroy();},
+  dispose(){cancelAnimationFrame(raf);cancelAnimationFrame(chooseFrame);clearTimeout(dockLayoutTimer);clearTimeout(slowTimer);dockResize.disconnect();renderer.destroy();},
 };
 let statusCloseTimer;
 function closeStatus(){clearTimeout(statusCloseTimer);$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');}
@@ -394,11 +407,7 @@ $('resume').addEventListener('click',resumeFollow);
 for(const kind of ['translate','romanize'])$(kind).addEventListener('click',()=>native?.toggle(kind));
 $('earlier').addEventListener('click',()=>native?.offset(generation,-100));
 $('later').addEventListener('click',()=>native?.offset(generation,100));
-// Preserve extension scrolling; explicit gestures bypass only pending event suppression.
-$('scroll').addEventListener('scroll',()=>{if(performance.now()>=resumeScrollUntil)renderer.noteUserScroll();},{passive:true});
-function userScroll(){resumeScrollUntil=0;renderer.noteUserScroll(true);}
-for(const type of ['wheel','touchmove'])$('scroll').addEventListener(type,userScroll,{passive:true});
-$('scroll').addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' '].includes(event.key))userScroll();});
+$('scroll').addEventListener('scroll',()=>renderer.noteUserScroll(),{passive:true});
 
 document.addEventListener('visibilitychange',()=>{diagnostics.pause();frameBudget.reset(performance.now());renderer.noteVisibilityChange();if(!document.hidden)startClock();});
 dockResize.observe($('dock'));theme();startClock();native?.ready();

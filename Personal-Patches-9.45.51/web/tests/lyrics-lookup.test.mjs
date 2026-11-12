@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { lookupMessage } from '../src/lookup-status.js';
+import { unisonContributors } from '../src/unison-source.js';
 import { spicyContributors } from '../src/spicy-source.js';
 import { processStreamData } from '../src/upstream-providers.ts';
 
@@ -48,4 +49,14 @@ test('Spicy credits retain names and reject foreign, credentialed and insecure U
     assert.equal(credits[1].label, 'Uploaded by Uploader');
     assert.equal(credits[1].url, undefined);
   }
+});
+
+test('Unison credits link to the returned recording and contributor', () => {
+  const data = {videoId: 'aBcDeFgHiJ1', submitter: {displayName: ' Lyric Maker ', keyId: 'curator_3'}};
+  assert.deepEqual(unisonContributors(data), [
+    {label: 'Lyrics from Unison', url: 'https://unison.betterlyrics.org/song/aBcDeFgHiJ1'},
+    {label: 'Submitted by Lyric Maker', url: 'https://unison.betterlyrics.org/curator/curator_3'},
+  ]);
+  assert.equal(unisonContributors({...data, submitter: {displayName: 'Other', keyId: '../other'}}).length, 1);
+  assert.deepEqual(unisonContributors({...data, videoId: '../song'}), []);
 });

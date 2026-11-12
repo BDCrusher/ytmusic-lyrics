@@ -253,8 +253,12 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             handler.post(()->{
                 if(id!=generation||!attached||!currentRecording())return;
                 android.net.Uri url=android.net.Uri.parse(value);
-                if(!"https".equals(url.getScheme())||!"spicylyrics.org".equals(url.getHost())
-                        ||url.getUserInfo()!=null||url.getPort()!=-1&&url.getPort()!=443)return;
+                if(!"https".equals(url.getScheme())||url.getUserInfo()!=null||url.getPort()!=-1&&url.getPort()!=443)return;
+                String path=url.getEncodedPath();
+                boolean unison="unison.betterlyrics.org".equals(url.getHost())&&path!=null
+                        &&url.getQuery()==null&&url.getFragment()==null
+                        &&(path.matches("/song/[A-Za-z0-9_-]{11}")||path.matches("/curator/[A-Za-z0-9_-]{1,128}"));
+                if(!unison&&!"spicylyrics.org".equals(url.getHost()))return;
                 try{
                     getContext().startActivity(new android.content.Intent(android.content.Intent.ACTION_VIEW,url)
                             .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));

@@ -112,7 +112,7 @@ public final class LocalDownloadManager {
         Bitmap artwork = isPlayingTrack ? metadata.getCurrentArtwork() : null;
 
         Utils.submitOnBackgroundThread(() -> {
-            downloadBlocking(videoId, title, artist, album, duration, artwork, false, options, choice);
+            downloadBlocking(videoId, title, artist, album, duration, artwork, false, options, choice, null);
             return null;
         });
     }
@@ -155,7 +155,17 @@ public final class LocalDownloadManager {
     }
 
     static boolean downloadPlaylistTrack(String videoId, MediaOptions options, Choice choice) {
-        return downloadBlocking(videoId, null, null, null, 0, null, true, options, choice);
+        return downloadPlaylistTrack(videoId, options, choice, null);
+    }
+
+    static boolean downloadPlaylistTrack(String videoId, MediaOptions options, Choice choice,
+                                         @Nullable ItemProgress progress) {
+        return VIDEO_ID.matcher(videoId).matches()
+                && downloadBlocking(videoId, null, null, null, 0, null, true, options, choice, progress);
+    }
+
+    interface ItemProgress {
+        void update(String title, @Nullable Bitmap artwork, int percent);
     }
 
     /** Compatibility for explicitly resumed legacy batches. */
@@ -230,12 +240,14 @@ public final class LocalDownloadManager {
      */
     private static boolean downloadBlocking(String videoId, String title, String artist, String album,
                                             int duration, Bitmap artwork, boolean quiet,
-                                            @Nullable MediaOptions options, @Nullable Choice choice) {
+                                            @Nullable MediaOptions options, @Nullable Choice choice,
+                                            @Nullable ItemProgress batchProgress) {
         if (!ACTIVE_DOWNLOADS.add(videoId)) {
             if (!quiet) Utils.showToastShort(str("morphe_music_downloads_already_running"));
             return false;
         }
 
+        Bitmap notificationArtwork = null;
         try {
             File directory = getDownloadDirectory();
 
@@ -265,6 +277,19 @@ public final class LocalDownloadManager {
             artist = firstNotBlank(artist, stripTopic(details.getOwnerChannelName()), "");
             if (duration <= 0) duration = details.getLengthSeconds();
             if (artwork == null) artwork = resolveArtwork(videoId, details);
+            notificationArtwork = smallArtwork(artwork);
+            final Bitmap icon = notificationArtwork;
+            final String itemTitle = title;
+            ItemProgress progress = quiet ? batchProgress : (name, cover, percent) ->
+                    showDownloadNotification(videoId, name, percent, true,
+                            percent < 0 ? str("morphe_music_downloads_starting")
+                                    : str("morphe_music_downloads_progress", percent), cover);
+            if (!quiet) Utils.showToastShort(str("morphe_music_downloads_started"));
+            final int audioShare = video == null ? 100 : streamShare(format.getContentLength(), video.getContentLength());
+            if (progress != null) {
+                awaitNotificationSlot();
+                progress.update(itemTitle, icon, -1);
+            }
             if (!directory.isDirectory() && !directory.mkdirs()) {
                 throw new IllegalStateException("Could not create download directory");
             }
@@ -277,8 +302,8 @@ public final class LocalDownloadManager {
                 throw new IllegalStateException("Could not reset partial audio file");
             }
 
-            downloadWithResume(videoId, title, format.getUrl(), temporary,
-                    format.getContentLength(), quiet || video != null);
+            downloadWithResume(format.getUrl(), temporary, format.getContentLength(),
+                    percent -> { if (progress != null) progress.update(itemTitle, icon, percent * audioShare / 100); });
             requireMediaTrack(temporary, "audio/");
 
             // Before the audio file gets its final name, since the downloads screen reads each
@@ -298,16 +323,25 @@ public final class LocalDownloadManager {
             notifyTrackSaved();
             if (video != null) {
                 try {
-                    saveVideo(videoId, title, details, video, directory, quiet);
+                    saveVideo(videoId, details, video, directory, percent -> {
+                        if (progress != null) progress.update(itemTitle, icon,
+                                audioShare + percent * (100 - audioShare) / 100);
+                    });
                 } catch (Exception ex) {
                     Logger.printInfo(() -> "Video download failed; saved audio retained: " + videoId, ex);
-                    if (!quiet) Utils.showToastShort("Video unavailable. Audio was saved.");
+                    if (!quiet) {
+                        showDownloadNotification(videoId, title, 100, false, "Audio saved. Video unavailable.", icon);
+                        Utils.showToastShort("Video unavailable. Audio was saved.");
+                    }
                     return false;
                 }
             }
             app.bdcrusher.ytmusic.lyrics.LyricsPrefetch.enqueue(Utils.getContext(), videoId,
                     title, artist, duration, ignored -> {});
-            if (!quiet) Utils.showToastShort(str("morphe_music_downloads_complete"));
+            if (!quiet) {
+                showDownloadNotification(videoId, title, 100, false, str("morphe_music_downloads_complete"), icon);
+                Utils.showToastShort(str("morphe_music_downloads_complete"));
+            }
             return true;
         } catch (Exception ex) {
             if (quiet) {
@@ -318,7 +352,7 @@ public final class LocalDownloadManager {
             }
             Logger.printException(() -> "Local audio download failed: " + videoId, ex);
             awaitNotificationSlot();
-            showDownloadNotification(videoId, title, 0, false, str("morphe_music_downloads_failed"));
+            showDownloadNotification(videoId, title, 0, false, str("morphe_music_downloads_failed"), notificationArtwork);
             Utils.showToastShort(str("morphe_music_downloads_failed"));
             return false;
         } finally {
@@ -351,13 +385,13 @@ public final class LocalDownloadManager {
         }
     }
 
-    private static void saveVideo(String id, String title, VideoDetails details, Format video,
-                                  File directory, boolean quiet) throws Exception {
+    private static void saveVideo(String id, VideoDetails details, Format video,
+                                  File directory, java.util.function.IntConsumer progress) throws Exception {
         String extension = video.getMimeType().contains("webm") ? ".webm" : ".mp4";
         File destination = new File(directory, id + ".video" + extension);
         File temporary = new File(directory, destination.getName() + ".part");
         if (temporary.exists() && !temporary.delete()) throw new IOException("Could not reset video part");
-        downloadWithResume(id, title, video.getUrl(), temporary, video.getContentLength(), quiet);
+        downloadWithResume(video.getUrl(), temporary, video.getContentLength(), progress);
         requireMediaTrack(temporary, "video/");
         if (!temporary.renameTo(destination)) throw new IOException("Could not publish video file");
         app.bdcrusher.ytmusic.playlists.LocalPlayback.savedVideo(id, video, details, destination);
@@ -447,37 +481,38 @@ public final class LocalDownloadManager {
         }
     }
 
-    private static void downloadWithResume(String videoId, String title, String url,
-                                           File temporary, long expectedLength,
-                                           boolean quiet) throws Exception {
-        if (!quiet) {
-            Utils.showToastShort(str("morphe_music_downloads_started"));
-            awaitNotificationSlot();
-            showDownloadNotification(videoId, title, 0, true, str("morphe_music_downloads_starting"));
-        }
+    private static int streamShare(long audioBytes, long videoBytes) {
+        return audioBytes <= 0 || videoBytes <= 0 ? 50
+                : Math.max(1, Math.min(99, (int) Math.round(100.0 * audioBytes / (audioBytes + (double) videoBytes))));
+    }
 
+    private static Bitmap smallArtwork(@Nullable Bitmap artwork) {
+        if (artwork == null || artwork.isRecycled()) return null;
+        int dimension = Math.max(artwork.getWidth(), artwork.getHeight());
+        if (dimension <= 128) return artwork;
+        float scale = 128f / dimension;
+        return Bitmap.createScaledBitmap(artwork, Math.max(1, Math.round(artwork.getWidth() * scale)),
+                Math.max(1, Math.round(artwork.getHeight() * scale)), true);
+    }
+
+    private static void downloadWithResume(String url, File temporary, long expectedLength,
+                                           java.util.function.IntConsumer progress) throws Exception {
         if (expectedLength <= 0) expectedLength = probeContentLength(url);
         final long totalLength = expectedLength;
 
         if (totalLength <= 0) {
             downloadUnknownLength(url, temporary);
         } else {
-            downloadInParallel(videoId, title, url, temporary, totalLength, quiet);
+            downloadInParallel(url, temporary, totalLength, progress);
         }
-
         if (totalLength > 0 && temporary.length() != totalLength) {
             throw new IllegalStateException(
-                    "Incomplete audio file: " + temporary.length() + "/" + totalLength);
-        }
-        if (!quiet) {
-            awaitNotificationSlot();
-            showDownloadNotification(videoId, title, 100, false, str("morphe_music_downloads_complete"));
+                    "Incomplete media file: " + temporary.length() + "/" + totalLength);
         }
     }
 
-    private static void downloadInParallel(String videoId, String title, String url,
-                                           File temporary, long totalLength,
-                                           boolean quiet) throws Exception {
+    private static void downloadInParallel(String url, File temporary, long totalLength,
+                                           java.util.function.IntConsumer reportProgress) throws Exception {
         try (RandomAccessFile file = new RandomAccessFile(temporary, "rw")) {
             file.setLength(totalLength);
         }
@@ -498,10 +533,11 @@ public final class LocalDownloadManager {
 
                 futures.add(executor.submit(() -> {
                     downloadRange(url, temporary, start, end, downloaded, bytes -> {
-                        if (quiet || !canPostProgress()) return;
-                        int progress = (int) Math.min(99, bytes * 100 / totalLength);
-                        showDownloadNotification(videoId, title, progress, true,
-                                str("morphe_music_downloads_progress", progress));
+                        synchronized (downloaded) {
+                            if (!canPostProgress()) return;
+                            int percent = (int) Math.min(99, downloaded.get() * 100 / totalLength);
+                            reportProgress.accept(percent);
+                        }
                     });
                     return null;
                 }));
@@ -623,22 +659,32 @@ public final class LocalDownloadManager {
      */
     static void showDownloadNotification(String key, String title, int progress,
                                          boolean ongoing, String text) {
-        Utils.runOnMainThread(() -> postDownloadNotification(key, title, progress, ongoing, text));
+        showDownloadNotification(key, title, progress, ongoing, text, null);
+    }
+
+    static void showDownloadNotification(String key, String title, int progress,
+                                         boolean ongoing, String text, @Nullable Bitmap artwork) {
+        Utils.runOnMainThread(() -> postDownloadNotification(key, title, progress, ongoing, text, artwork));
     }
 
     @SuppressLint("NotificationPermission") // The patch declares POST_NOTIFICATIONS.
     private static void postDownloadNotification(String key, String title, int progress,
-                                                 boolean ongoing, String text) {
+                                                 boolean ongoing, String text, @Nullable Bitmap artwork) {
         NotificationManager manager = (NotificationManager)
                 Utils.getContext().getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
 
-        manager.notify(key.hashCode(), downloadNotification(manager, title, progress, ongoing, text));
+        manager.notify(key.hashCode(), downloadNotification(manager, title, progress, ongoing, text, artwork));
     }
 
     /** The channel is created on the way, which does nothing once it exists. */
     static Notification downloadNotification(NotificationManager manager, String title,
                                              int progress, boolean ongoing, String text) {
+        return downloadNotification(manager, title, progress, ongoing, text, null);
+    }
+
+    private static Notification downloadNotification(NotificationManager manager, String title,
+                                             int progress, boolean ongoing, String text, @Nullable Bitmap artwork) {
         manager.createNotificationChannel(new NotificationChannel(DOWNLOAD_CHANNEL,
                 str("morphe_music_downloads_notification_channel"),
                 NotificationManager.IMPORTANCE_LOW));
@@ -652,7 +698,20 @@ public final class LocalDownloadManager {
                 .setOngoing(ongoing)
                 .setOnlyAlertOnce(true);
 
-        if (ongoing) builder.setProgress(100, Math.max(0, progress), progress < 0);
+        if (artwork != null) builder.setLargeIcon(artwork);
+        android.util.TypedValue accent = new android.util.TypedValue();
+        Context themed = Utils.getActivity();
+        if (themed == null) themed = Utils.getContext();
+        if (themed.getTheme().resolveAttribute(android.R.attr.colorAccent, accent, true)
+                && accent.type >= android.util.TypedValue.TYPE_FIRST_COLOR_INT
+                && accent.type <= android.util.TypedValue.TYPE_LAST_COLOR_INT) builder.setColor(accent.data);
+        if (ongoing) {
+            if (android.os.Build.VERSION.SDK_INT >= 36) {
+                builder.setStyle(new Notification.ProgressStyle()
+                        .setProgress(Math.max(0, progress))
+                        .setProgressIndeterminate(progress < 0));
+            } else builder.setProgress(100, Math.max(0, progress), progress < 0);
+        }
         return builder.build();
     }
 

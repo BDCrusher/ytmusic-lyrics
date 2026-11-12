@@ -42,6 +42,7 @@ public final class ShaderRuntime {
     private static long lastLookup;
     private static WeakReference<View> lyricsBody=new WeakReference<>(null);
     private static WeakReference<View> lyricsSheet=new WeakReference<>(null);
+    private static WeakReference<Object> panelController=new WeakReference<>(null);
     private static WeakReference<Object> panelOwner=new WeakReference<>(null);
     private ShaderRuntime(){}
     static int generation(){return generation;}
@@ -94,20 +95,29 @@ public final class ShaderRuntime {
     static void refresh(){if(!watching)return;Object owner=panelOwner.get();if(owner!=null)attachLyrics(owner,0,panelEpoch);nativePoster();effectsActive=false;for(Binding binding:new ArrayList<>(surfaces.values())){binding.update();effectsActive|=binding.active;}if(effectsActive)retryArtwork();}
     static void mediaFailed(){ArtworkRepository.invalidate(Utils.getContext(),mediaKey);media=null;lastLookup=SystemClock.elapsedRealtime();refresh();int expected=generation;if(++failures<=3)main.postDelayed(()->{if(expected==generation&&active()){lastLookup=0;retryArtwork();}},3000);}
     static boolean requestProof(int id,JSONObject challenge){for(Binding binding:new ArrayList<>(surfaces.values()))if(binding.surface instanceof ShaderSurface background&&background.solve(id,challenge))return true;return false;}
-    public static void onNativePanel(Object panel){
+    public static void onNativePanel(Object controller,Object panel){
         main.post(()->{
-            if(panel==panelOwner.get()){if(panel!=null)attachLyrics(panel,0,panelEpoch);refresh();return;}panelOwner=new WeakReference<>(panel);
+            boolean lyrics=false;
+            try{if(panel!=null){String id=nativePanelId(panel);lyrics="music_watch_lyrics_panel".equals(id)||"music_offline_lyrics_panel".equals(id);}}
+            catch(Exception invalid){return;}
+            Object previousController=panelController.get();
+            if(!lyrics&&(previousController==null||previousController!=controller))return;
+            if(lyrics&&previousController!=controller&&visible(lyricsSheet.get()))return;
+            if(panel==panelOwner.get()){refresh();return;}
+            panelController=new WeakReference<>(lyrics?controller:null);
+            panelOwner=new WeakReference<>(lyrics?panel:null);
             int epoch=++panelEpoch;
             if(panelRetry!=null){main.removeCallbacks(panelRetry);panelRetry=null;}
             View previous=lyricsSheet.get();if(previous!=null){Binding old=surfaces.remove(previous);if(old!=null)old.close();}lyricsBody.clear();lyricsSheet.clear();
-            if(panel==null){refresh();return;}
-            try{String id=nativePanelId(panel);if(!"music_watch_lyrics_panel".equals(id)&&!"music_offline_lyrics_panel".equals(id)){refresh();return;}attachLyrics(panel,0,epoch);}
-            catch(Exception ignored){}
+            if(lyrics)attachLyrics(panel,0,epoch);
+            refresh();
         });
     }
     private static void attachLyrics(Object panel,int attempt,int epoch){
         if(epoch!=panelEpoch)return;
-        try{View root=nativePanelView(panel);if(root==null){retryPanel(panel,attempt,epoch);return;}if(!enabled(root.getContext()))return;if(!(root instanceof FrameLayout body))return;
+        try{String id=nativePanelId(panel);
+            if(!"music_watch_lyrics_panel".equals(id)&&!"music_offline_lyrics_panel".equals(id))return;
+            View root=nativePanelView(panel);if(root==null){retryPanel(panel,attempt,epoch);return;}if(!enabled(root.getContext()))return;if(!(root instanceof FrameLayout body))return;
             if(!root.isAttachedToWindow()){retryPanel(panel,attempt,epoch);return;}
             if(panelRetry!=null){main.removeCallbacks(panelRetry);panelRetry=null;}
             ViewGroup sheet=nativeSheet(body);if(sheet==null){FeatureDiagnostics.record("Shader-panel","Verified native sheet ancestor not ready");retryPanel(panel,attempt,epoch);return;}
@@ -123,7 +133,7 @@ public final class ShaderRuntime {
     private static int thumbnailId(){throw new IllegalStateException("Missing exact native artwork resource hook");}
     private static String nativePanelId(Object value){throw new IllegalStateException("Missing native panel identity hook");}
     private static View nativePanelView(Object value){throw new IllegalStateException("Missing native panel root hook");}
-    private static boolean visible(View view){return view!=null&&view.isShown()&&view.getWindowVisibility()==View.VISIBLE&&view.hasWindowFocus()&&view.getAlpha()>0&&view.getGlobalVisibleRect(new android.graphics.Rect());}
+    private static boolean visible(View view){return view!=null&&view.isShown()&&view.getWindowVisibility()==View.VISIBLE&&view.getAlpha()>0&&view.getGlobalVisibleRect(new android.graphics.Rect());}
     private static String name(View view){try{return view.getId()==View.NO_ID?"":view.getResources().getResourceEntryName(view.getId());}catch(Exception absent){return "";}}
     private static View findNamed(View view,String target,int depth,int[] budget){if(depth>10||++budget[0]>200||isEffectSurface(view))return null;if(target.equals(name(view)))return view;if(view instanceof ViewGroup group)for(int i=0;i<group.getChildCount();i++){View found=findNamed(group.getChildAt(i),target,depth+1,budget);if(found!=null)return found;}return null;}
     /** The APK's engagement_panel_layout owns both header and content, excluding the compact player. */
@@ -141,7 +151,7 @@ public final class ShaderRuntime {
         final ViewTreeObserver.OnGlobalLayoutListener layout=this::update;
         final ViewTreeObserver.OnWindowFocusChangeListener focus=this::focusChanged;
         void focusChanged(boolean focused){refresh();if(focused){retryArtwork();ArtworkToken.ensure(anchor.getContext());}}
-        final View.OnAttachStateChangeListener attachment=new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){update();}public void onViewDetachedFromWindow(View v){surfaces.remove(anchor);close();}};
+        final View.OnAttachStateChangeListener attachment=new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){update();}public void onViewDetachedFromWindow(View v){surfaces.remove(anchor,Binding.this);close();}};
         Binding(View a,ViewGroup p,boolean image){
             anchor=a;parent=p;cover=image;surface=image?new AnimatedCoverSurface(a.getContext()):new ShaderSurface(a.getContext());
             surface.setClipToOutline(true);
@@ -162,7 +172,7 @@ public final class ShaderRuntime {
             boolean shown=master&&foreground&&visible(backgroundSlot?parent:anchor);View panel=lyricsSheet.get();if(panel!=null&&panel!=anchor&&visible(panel)&&(!cover||!wantsAnimatedFrame()))shown=false;
             active=shown&&(cover?prefs.getBoolean("animatedCover",true):prefs.getBoolean("background",true));
             int visibility=active?View.VISIBLE:View.INVISIBLE;if(surface.getVisibility()!=visibility)surface.setVisibility(visibility);
-            surface.setAlpha(anchor==parent?1:anchor.getAlpha());
+            surface.setAlpha(anchor==parent||backgroundSlot?1:anchor.getAlpha());
             if(anchor==lyricsSheet.get())chrome(active&&surface instanceof ShaderSurface background&&!background.imageUrl().isEmpty());
             boolean reduced=prefs.getBoolean("reducedMotion",false)||SettingsMotion.reduced(anchor.getContext());
             if(surface instanceof AnimatedCoverSurface animation){animation.update(media,active,playing,reduced);return;}

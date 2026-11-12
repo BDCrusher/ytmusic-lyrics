@@ -44,6 +44,9 @@ import app.morphe.patches.shared.misc.settings.preference.IntentPreference
 import app.morphe.patches.shared.misc.settings.preference.ListPreference
 import app.morphe.patches.shared.misc.settings.preference.NonInteractivePreference
 import app.morphe.patches.shared.misc.settings.preference.PreferenceScreenPreference
+import app.morphe.patches.shared.misc.settings.preference.PreferenceCategory
+import app.morphe.patcher.xml.XmlElement
+import app.morphe.patches.util.resource.BaseResource
 import app.morphe.patches.shared.misc.settings.preference.PreferenceScreenPreference.Sorting
 import app.morphe.patches.shared.misc.settings.preference.SwitchPreference
 import app.morphe.patches.shared.misc.settings.preference.TextPreference
@@ -62,12 +65,24 @@ private val settingsResourcePatch = patch {
     dependsOn(
         settingsPatch(
             rootPreferences = listOf(
-                IntentPreference(
-                    key = SETTINGS_NAME_PREFERENCE_KEY,
+                object : PreferenceCategory(
                     titleKey = "morphe_settings_title",
-                    summaryKey = null,
-                    intent = newIntent(MORPHE_SETTINGS_INTENT),
-                ) to "settings_headers"
+                    sorting = Sorting.UNSORTED,
+                    preferences = setOf(
+                        IntentPreference(
+                            key = SETTINGS_NAME_PREFERENCE_KEY,
+                            titleKey = "morphe_music_settings_entry_title",
+                            summaryKey = null,
+                            icon = "@drawable/morphe_music_settings_entry",
+                            intent = newIntent(MORPHE_SETTINGS_INTENT),
+                        )
+                    )
+                ) {
+                    override fun serialize(parent: XmlElement, index: Int, resourceCallback: (BaseResource) -> Unit) =
+                        super.serialize(parent, index, resourceCallback).apply {
+                            children.single().setAttribute("app:allowDividerBelow", "true")
+                        }
+                } to "settings_headers"
             ),
             preferences = preferences
         )
@@ -103,6 +118,13 @@ private val settingsResourcePatch = patch {
                 "morphe_color_dot_widget.xml"
             )
         )
+
+        copyResources("settings/music", ResourceGroup("drawable", "morphe_music_settings_entry.xml"))
+        resourceXml("res/xml/settings_headers.xml").use { headers ->
+            headers.root.children.filter {
+                it.attribute("android:key") in setOf("pref_key_parent_tools", "settings_header_general")
+            }.forEach { it.setAttribute("app:allowDividerAbove", "true") }
+        }
 
         // Set the style for the Morphe settings to follow the style of the music settings,
         // namely: action bar height, menu item padding and remove horizontal dividers.

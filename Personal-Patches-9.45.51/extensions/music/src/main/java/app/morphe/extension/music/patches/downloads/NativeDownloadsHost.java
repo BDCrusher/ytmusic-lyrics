@@ -5,6 +5,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
 import android.view.View;
+import android.view.ViewTreeObserver;
+import java.lang.ref.WeakReference;
 import android.widget.FrameLayout;
 
 import app.bdcrusher.ytmusic.common.FeatureDiagnostics;
@@ -24,23 +26,32 @@ public final class NativeDownloadsHost {
     }
 
     private static final Map<Owner, Mounted> mounts = new WeakHashMap<>();
+    private static final Map<Owner, LayoutBinding> layouts = new WeakHashMap<>();
 
     private NativeDownloadsHost() {}
 
     public static void changed(Owner owner) {
         try {
             FrameLayout content = owner.bd_libraryDownloadsContent();
-            if (content == null || !content.isShown() || !owner.bd_libraryDownloadsSelected()
+            if (content == null || !owner.bd_libraryDownloadsSelected()
                     || Settings.DOWNLOAD_MODE.get() != DownloadMode.IN_APP) {
                 release(owner);
                 return;
             }
+            LayoutBinding binding = layouts.get(owner);
+            if (binding == null || binding.content != content) {
+                if (binding != null) binding.close();
+                layouts.put(owner, new LayoutBinding(owner, content));
+            }
+            if (!content.isShown() || !content.isAttachedToWindow()
+                    || content.getWidth() == 0 || content.getHeight() == 0) return;
+
             Mounted old = mounts.get(owner);
             if (old != null && old.content == content && old.catalogue.view().getParent() == content) {
                 old.coverStockContent();
                 return;
             }
-            release(owner);
+            unmount(owner);
             Activity activity = activity(content.getContext());
             if (activity == null || activity.isFinishing()) return;
             Mounted mount = new Mounted(content, new LocalDownloadsView(activity));
@@ -55,7 +66,22 @@ public final class NativeDownloadsHost {
         }
     }
 
+    public static boolean handleBack(Owner owner) {
+        Mounted mount = mounts.get(owner);
+        if (mount == null) return false;
+        if (mount.catalogue.handleBack()) return true;
+        release(owner);
+        // The existing Library back callback resets the native chip selection.
+        return false;
+    }
+
     public static void release(Owner owner) {
+        LayoutBinding binding = layouts.remove(owner);
+        if (binding != null) binding.close();
+        unmount(owner);
+    }
+
+    private static void unmount(Owner owner) {
         Mounted mount = mounts.remove(owner);
         if (mount == null) return;
         mount.catalogue.release();
@@ -77,6 +103,31 @@ public final class NativeDownloadsHost {
         return null;
     }
 
+    private static final class LayoutBinding implements ViewTreeObserver.OnGlobalLayoutListener {
+        final FrameLayout content;
+        final WeakReference<Owner> owner;
+        final ViewTreeObserver initialObserver;
+
+        LayoutBinding(Owner owner, FrameLayout content) {
+            this.owner = new WeakReference<>(owner);
+            this.content = content;
+            initialObserver = content.getViewTreeObserver();
+            initialObserver.addOnGlobalLayoutListener(this);
+        }
+
+        @Override public void onGlobalLayout() {
+            Owner current = owner.get();
+            if (current == null) close();
+            else changed(current);
+        }
+
+        void close() {
+            if (initialObserver.isAlive()) initialObserver.removeOnGlobalLayoutListener(this);
+            ViewTreeObserver observer = content.getViewTreeObserver();
+            if (observer != initialObserver && observer.isAlive()) observer.removeOnGlobalLayoutListener(this);
+        }
+    }
+
     private static final class Mounted {
         final FrameLayout content;
         final LocalDownloadsView catalogue;
@@ -93,7 +144,8 @@ public final class NativeDownloadsHost {
                 View child = content.getChildAt(index);
                 if (child == panel) continue;
                 accessibility.putIfAbsent(child, child.getImportantForAccessibility());
-                child.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+                if (child.getImportantForAccessibility() != View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS)
+                    child.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
             }
             if (content.getChildAt(content.getChildCount() - 1) != panel) panel.bringToFront();
         }

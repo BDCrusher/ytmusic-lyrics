@@ -419,11 +419,14 @@ final class LocalPlaylistPage {
         if (playlist != null && playlist.fromSource()) {
             for (int i = 0; i < playlist.sourceEntries().size(); i++) {
                 PlaylistTracksRequest.Entry entry = playlist.sourceEntries().get(i);
-                if (entry.available() && playlistManager.savedAudio(entry.id()) != null) {
+                if (entry.available() && playlistManager.savedAudio(entry.id()) != null
+                        && app.bdcrusher.ytmusic.playlists.NativePlayback.canOpen(entry.id(), playlist.queueId(), i)) {
                     playSource(playlist, entry, i);
                     return;
                 }
             }
+            Utils.showToastShort(str("morphe_music_downloads_playlist_no_tracks"));
+            return;
         }
         if (tracks.isEmpty()) {
             Utils.showToastShort(str("morphe_music_downloads_playlist_no_tracks"));

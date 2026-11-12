@@ -10,7 +10,7 @@ Better Lyrics comparison: 3.0.1 / 7a6a6a104d0667baac6df9f3e126385e3822f179.
 Provider decoder bodies retained from 272d7c16c9e882b28170277e3cbc876f11169995 match 3.0.1.
 The Spicy Lyrics broker adapter follows Better Lyrics 5721d210ab0439b8bb6613511798e4f02cbefa55 (GPL-3.0).
 Spicy Lyrics community sync credits are shown with the result; the app does not save these results to its lyric library.
-Braccato core1.16.11 and parsers0.4.0: MIT. Playback uses core highlighting; highlight0.3.2 is upstream's TTML editor.
+Braccato core 1.21.5, parsers 0.4.2 and types 1.1.0: MIT. Playback uses core highlighting; highlight0.3.2 is upstream's TTML editor.
 Shaders:1.5.1 / 88be3b81450b8d66bd8af445bf6062caac7d2747, GPL-3.0.
 Kawarp core1.3.1 and ALTCHA2.5.0: see original licenses below. Normal service verification is preserved.
 Satoshi by Indian Type Foundry: original Fontshare embedding terms below.

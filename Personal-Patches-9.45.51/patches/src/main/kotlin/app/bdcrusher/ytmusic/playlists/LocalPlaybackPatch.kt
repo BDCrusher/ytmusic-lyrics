@@ -112,7 +112,7 @@ val localPlaybackPatch=bytecodePatch {
         } ?: throw PatchException("Downloads: Music spoof configuration resolver signature changed")
         if(config.implementation!!.registerCount<=2)throw PatchException("Downloads: saved configuration guard has no scratch register")
         config.addInstructionsWithLabels(0,"""
-            invoke-static/range { p0 .. p0 }, $LOCAL->response(Ljava/lang/String;)[B
+            invoke-static/range { p0 .. p0 }, $LOCAL->streams(Ljava/lang/String;)[B
             move-result-object v0
             if-eqz v0, :network_configuration
             const/4 v0, 0x0

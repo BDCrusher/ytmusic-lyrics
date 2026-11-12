@@ -114,7 +114,8 @@ public final class LyricsEntryCoordinator implements LyricsManager.Listener {
     private void updateEntry() {
         Activity activity = Utils.getActivity();
         String id = VideoInformation.getVideoId();
-        if ((available||LyricsManager.getInstance().hasLyrics()) && Settings.LYRICS_ENABLED.get() && activity != null
+        if ((available||id!=null&&id.equals(LyricsManager.getInstance().getCommittedVideoId())
+                &&id.equals(LyricsManager.getInstance().getLyricsVideoId())&&LyricsManager.getInstance().hasLyrics()) && Settings.LYRICS_ENABLED.get() && activity != null
                 && id != null && LyricsRepository.current(id)) {
             entry.update(activity, identity);
         } else if(!definitelyNotFound&&Settings.LYRICS_ENABLED.get()&&activity!=null)entry.orderWhilePending(identity);

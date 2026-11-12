@@ -26,8 +26,7 @@ public final class LyricsSliderPreference extends Preference {
     @Override @android.annotation.SuppressLint("MissingSuperCall")
     protected View onCreateView(ViewGroup parent){
         Context c=getContext();int foreground=ThemeUtils.getAppForegroundColor();
-        LinearLayout root=new LinearLayout(c);root.setOrientation(LinearLayout.VERTICAL);root.setPadding(dp(16),dp(14),dp(16),dp(10));
-        android.graphics.drawable.GradientDrawable card=new android.graphics.drawable.GradientDrawable();card.setColor((foreground&0xffffff)|0x0b000000);card.setCornerRadius(dp(16));root.setBackground(card);
+        LinearLayout root=new LinearLayout(c);root.setOrientation(LinearLayout.VERTICAL);
         LinearLayout heading=new LinearLayout(c);heading.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView title=new TextView(c);title.setText(getTitle());title.setTextSize(16);title.setTextColor(foreground);
         heading.addView(title,new LinearLayout.LayoutParams(0,-2,1));
@@ -48,6 +47,6 @@ public final class LyricsSliderPreference extends Preference {
                 if(fromUser&&!bar.isPressed())save();
             }
         });
-        LinearLayout.LayoutParams row=new LinearLayout.LayoutParams(-1,dp(48));row.topMargin=dp(4);root.addView(slider,row);app.bdcrusher.ytmusic.common.FeaturePreferences.card(root,false);return root;
+        LinearLayout.LayoutParams row=new LinearLayout.LayoutParams(-1,dp(48));root.addView(slider,row);app.bdcrusher.ytmusic.common.FeaturePreferences.card(root,false);return root;
     }
 }

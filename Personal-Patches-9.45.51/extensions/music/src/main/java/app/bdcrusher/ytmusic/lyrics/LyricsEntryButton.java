@@ -21,7 +21,7 @@ public final class LyricsEntryButton {
         int mode;
         Presentation(Object value){owner=new WeakReference<>(value);}
     }
-    private volatile boolean available,pending,unavailable,restoring;
+    private volatile boolean available,pending,unavailable,restoring,panelReady;
     private volatile String identity="",videoId="";
     public LyricsEntryButton(){active=new WeakReference<>(this);}
     private static synchronized Presentation presentation(Object owner){
@@ -46,7 +46,7 @@ public final class LyricsEntryButton {
         if(p.replaying){p.currentModel=true;return;}
         if(bytes==null||bytes.length>2_000_000){p.currentModel=false;return;}
         String recording=NativeActionModel.recording(bytes);
-        p.modelVideo=recording==null?VideoInformation.getVideoId():recording;
+        p.modelVideo=recording==null?(p.video.isEmpty()?VideoInformation.getVideoId():p.video):recording;
         p.currentModel=p.modelVideo!=null&&p.modelVideo.equals(VideoInformation.getVideoId());p.mode=0;
         if(p.currentModel)p.original=original;
         else LyricsDiagnostics.record("Lyrics action model","Ignored native action row for a different recording");
@@ -55,9 +55,9 @@ public final class LyricsEntryButton {
     public static byte[] rewrite(Object owner,byte[] element){
         LyricsEntryButton entry=active.get();
         Presentation p=presentation(owner);
-        if(!Settings.LYRICS_ENABLED.get()||!p.currentModel||!p.video.equals(VideoInformation.getVideoId())||p.video.isEmpty()||entry!=null&&entry.restoring)return element;
-        boolean decided=entry!=null&&entry.isCurrent()&&entry.videoId.equals(p.video);
-        int mode=decided&&entry.available?2:decided&&entry.unavailable?3:1;
+        if(!Settings.LYRICS_ENABLED.get()||!p.currentModel||!matches(p,VideoInformation.getVideoId())||entry!=null&&entry.restoring)return element;
+        boolean decided=entry!=null&&entry.isCurrent()&&matches(p,entry.videoId);
+        int mode=decided?entry.mode():1;
         byte[] result=mode==2?NativeActionModel.enable(element):mode==3?NativeActionModel.orderUnavailable(element):NativeActionModel.orderWhilePending(element);
         p.mode=mode;
         return result;
@@ -66,18 +66,24 @@ public final class LyricsEntryButton {
         if(!key.equals(identity))trackChanged(key);
         if(!isCurrent())return;
         // Panel definitions can be registered after provider results arrive.
-        NativeLyricsHost.prepare(videoId);
+        preparePanel();
         pending=false;unavailable=false;available=true;refresh();
     }
-    void orderWhilePending(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=true;available=false;unavailable=false;refresh();}
+    void orderWhilePending(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=true;available=false;unavailable=false;preparePanel();refresh();}
     void notFound(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=false;available=false;unavailable=true;refresh();}
+    private void preparePanel(){if(!panelReady)panelReady=NativeLyricsHost.prepare(videoId);}
+    private int mode(){return available||pending&&panelReady?2:unavailable?3:pending?1:0;}
+    private static boolean matches(Presentation presentation,String id){
+        return id!=null&&!id.isEmpty()&&id.equals(presentation.modelVideo)
+                &&(presentation.video.isEmpty()||id.equals(presentation.video));
+    }
     private void refresh(){
         if(!videoId.equals(VideoInformation.getVideoId()))return;
         if((available||pending||unavailable)&&!isCurrent())return;
-        int desired=available?2:unavailable?3:pending?1:0;
+        int desired=mode();
         for(Presentation p:snapshot()){
             Object owner=p.owner.get();
-            if(owner==null||p.original==null||p.replaying||!videoId.equals(p.video))continue;
+            if(owner==null||p.original==null||p.replaying||!matches(p,videoId))continue;
             if(desired==p.mode)continue;
             try{p.replaying=true;refreshNative(owner);p.mode=desired;}
             catch(Exception ex){LyricsDiagnostics.record("Lyrics action model","Native model replay failed: "+ex.getClass().getSimpleName());}
@@ -88,7 +94,7 @@ public final class LyricsEntryButton {
         String id=VideoInformation.getVideoId();
         return Settings.LYRICS_ENABLED.get()&&id!=null&&LyricsRepository.current(id)&&identity.equals(id);
     }
-    void hideButton(){available=false;pending=false;unavailable=false;restoring=true;try{refresh();}finally{restoring=false;}}
+    void hideButton(){available=false;pending=false;unavailable=false;panelReady=false;restoring=true;try{refresh();}finally{restoring=false;}}
     void trackChanged(String key){hideButton();identity=key;String id=VideoInformation.getVideoId();videoId=id==null?"":id;}
     void clear(){hideButton();identity="";videoId="";}
     // Replays the remembered model through the presenter's own renderer at patch time.

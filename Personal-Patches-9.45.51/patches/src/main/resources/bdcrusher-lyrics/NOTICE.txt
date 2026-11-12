@@ -1,4 +1,4 @@
-BDCrusher YT-Music personal patches 0.9.0-beta.2
+BDCrusher YT-Music personal patches 0.9.0-beta.3
 Personal derivative; not an official Morphe, Better Lyrics or Shaders release.
 Android adapters: BDCrusher (2026), GPL-3.0.
 Morphe upstream: v2.2.0 / 44031c561ea048c8f196877f30a49c13bfd6afb6; original notices apply.
@@ -6,7 +6,7 @@ Better Lyrics comparison: 3.0.1 / 7a6a6a104d0667baac6df9f3e126385e3822f179.
 Provider decoder bodies retained from 272d7c16c9e882b28170277e3cbc876f11169995 match 3.0.1.
 The Spicy Lyrics broker adapter follows Better Lyrics 5721d210ab0439b8bb6613511798e4f02cbefa55 (GPL-3.0).
 Spicy Lyrics community sync credits are shown with the result; the app does not save these results to its lyric library.
-Braccato core1.16.11 and parsers0.4.0: MIT. Playback uses core highlighting; highlight0.3.2 is upstream's TTML editor.
+Braccato core 1.21.5, parsers 0.4.2 and types 1.1.0: MIT. Playback uses core highlighting; highlight0.3.2 is upstream's TTML editor.
 Shaders:1.5.1 / 88be3b81450b8d66bd8af445bf6062caac7d2747, GPL-3.0.
 Kawarp core1.3.1 and ALTCHA2.5.0: see original licenses below. Normal service verification is preserved.
 Satoshi by Indian Type Foundry: original Fontshare embedding terms below.
@@ -746,6 +746,30 @@ SOFTWARE.
 
 
 ===== @braccato_parsers-LICENSE =====
+MIT License
+
+Copyright (c) 2025 Better Lyrics
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+===== @braccato_types-LICENSE =====
 MIT License
 
 Copyright (c) 2025 Better Lyrics

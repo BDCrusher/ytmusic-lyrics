@@ -226,7 +226,14 @@ public final class PlaylistDownloader {
                         }
                     }
                 }
-                boolean trackSaved = LocalDownloadManager.downloadPlaylistTrack(videoId, options, choice);
+                final int completed = saved;
+                final String batchTitle = result.title().isBlank()
+                        ? str("morphe_music_downloads_playlist_download_title") : result.title();
+                LocalDownloadManager.ItemProgress trackProgress = (title, artwork, percent) ->
+                        LocalDownloadManager.showDownloadNotification(NOTIFICATION_KEY, batchTitle, percent, true,
+                                title + " · " + (percent < 0 ? "Starting" : percent + "%")
+                                        + " · " + completed + " of " + total + " saved", artwork);
+                boolean trackSaved = LocalDownloadManager.downloadPlaylistTrack(videoId, options, choice, trackProgress);
                 // A connection lost in the middle of a track fails it, so it is tried again
                 // once the network is back.
                 if (!trackSaved && !Utils.isNetworkConnected()) {
@@ -240,9 +247,9 @@ public final class PlaylistDownloader {
                         var video = renewed.formats().stream().filter(f -> f.getItag() == videoItag).findFirst().orElse(null);
                         trackSaved = audio != null && (videoItag == 0 || video != null)
                                 && LocalDownloadManager.downloadPlaylistTrack(videoId, renewed,
-                                new LocalDownloadManager.Choice(audio, video));
+                                new LocalDownloadManager.Choice(audio, video), trackProgress);
                     } else {
-                        trackSaved = LocalDownloadManager.downloadPlaylistTrack(videoId);
+                        trackSaved = LocalDownloadManager.downloadPlaylistTrack(videoId, null, null, trackProgress);
                     }
                 }
                 if (trackSaved) {

@@ -17,14 +17,16 @@ public final class NativePlayback {
         return id != null && (PlaylistHeaderModel.validId(id)
                 || id.matches("(?:OLAK5uy_|RD)[A-Za-z0-9_-]{8,120}"));
     }
+    public static boolean canOpen(String id,String playlist,int position){
+        if(!PlaylistBrowse.offline())return true;
+        String source=sourceId(playlist)?playlist:"";
+        return NativeMediaCache.ready(source,id,source.isEmpty()?0:Math.max(0,position));
+    }
     public static void open(String id,String playlist,int position){
         if(id==null||!id.matches("[A-Za-z0-9_-]{11}"))return;Activity activity=Utils.getActivity();if(activity==null)return;
-        if (PlaylistBrowse.offline()) {
-            String source = sourceId(playlist) ? playlist : "";
-            if (!NativeMediaCache.ready(source, id, source.isEmpty() ? 0 : Math.max(0, position))) {
-                Utils.showToastShort("This recording is unavailable offline");
-                return;
-            }
+        if (!canOpen(id, playlist, position)) {
+            Utils.showToastShort("This recording is unavailable offline");
+            return;
         }
         Uri.Builder uri=Uri.parse("https://music.youtube.com/watch").buildUpon().appendQueryParameter("v",id);
         if(sourceId(playlist)){uri.appendQueryParameter("list",playlist);if(position>=0)uri.appendQueryParameter("index",Integer.toString(position));}

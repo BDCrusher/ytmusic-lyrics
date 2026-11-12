@@ -1,39 +1,225 @@
 (() => {
-  // web/node_modules/@braccato/core/dist/constants.js
-  var LYRICS_CLASS = "blyrics-container";
-  var LINE_CLASS = "blyrics--line";
-  var WORD_CLASS = "blyrics--word";
-  var LETTER_CLASS = "blyrics--letter";
-  var FOOTER_CLASS = "blyrics-footer";
-  var CREDITS_CLASS = "blyrics-credits";
-  var CREDITS_TEXT_CLASS = "blyrics-credits__text";
-  var CREDITS_NAMES_CLASS = "blyrics-credits__names";
-  var CURRENT_LYRICS_CLASS = "blyrics--active";
-  var ANIMATING_CLASS = "blyrics--animating";
-  var PAUSED_CLASS = "blyrics--paused";
-  var ZERO_DURATION_ANIMATION_CLASS = "blyrics-zero-dur-animate";
-  var USER_SCROLLING_CLASS = "blyrics-user-scrolling";
-  var WORD_STATE_ATTR = "data-word-state";
-  var WORD_STATE_UPCOMING = "upcoming";
-  var WORD_STATE_ACTIVE = "active";
-  var WORD_STATE_PAST = "past";
-  var BACKGROUND_LYRIC_CLASS = "blyrics-background-lyric";
-  var EXPLICIT_WORD_CLASS = "blyrics-explicit";
-  var RTL_CLASS = "blyrics-rtl";
-  var TRANSLATED_LYRICS_CLASS = "blyrics--translated";
-  var ROMANIZED_LYRICS_CLASS = "blyrics--romanized";
-  var CONTENT_LINE_CLASS = "blyrics-content-line";
-  var LINE_MAIN_CLASS = "blyrics-line-main";
-  var BACKGROUND_LINE_CLASS = "blyrics-background-line";
-  var WORD_GROUP_CLASS = "blyrics-word-group";
-  var LONG_WORD_GROUP_CLASS = "blyrics-word-group-long";
-  var WORD_HIGHLIGHT_CLASS = "blyrics-word-highlight";
-  var WORD_HIGHLIGHT_LETTERED_CLASS = "blyrics-word-highlight--lettered";
-  var HIGHLIGHT_RUN_CLASS = "blyrics-highlight-run";
-  var LINE_SYNCED_WORD_CLASS = "blyrics-line-synced-word";
-  var BIDI_RUN_CLASS = "blyrics-bidi-run";
-  var BIDI_SENSITIVE_CLASS = "blyrics-bidi-sensitive";
-  var CUSTOM_THEME_STYLE_ID = "blyrics-custom-style";
+  // web/node_modules/@braccato/core/dist/util.js
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+  function positiveModulo(value, divisor) {
+    return (value % divisor + divisor) % divisor;
+  }
+  function isGecko() {
+    return typeof CSS !== "undefined" && CSS.supports("-moz-appearance", "none");
+  }
+  function roundedMs(value) {
+    return Math.round(value * 10) / 10;
+  }
+  function toMs(cssDuration) {
+    if (!cssDuration)
+      return 0;
+    if (cssDuration.endsWith("ms")) {
+      return parseFloat(cssDuration.slice(0, -2));
+    } else if (cssDuration.endsWith("s")) {
+      return parseFloat(cssDuration.slice(0, -1)) * 1e3;
+    }
+    return 0;
+  }
+  function getRelativeBounds(parent, child) {
+    const parentBound = parent.getBoundingClientRect();
+    const childBound = child.getBoundingClientRect();
+    return new DOMRect(childBound.x - parentBound.x, childBound.y - parentBound.y, childBound.width, childBound.height);
+  }
+  function getRelativeLayoutBounds(parent, child) {
+    let x = 0;
+    let y = 0;
+    let element = child;
+    while (element && element !== parent) {
+      x += element.offsetLeft;
+      y += element.offsetTop;
+      element = element.offsetParent;
+    }
+    if (element !== parent) {
+      return getRelativeBounds(parent, child);
+    }
+    return new DOMRect(x, y, Math.max(child.offsetWidth, child.scrollWidth), Math.max(child.offsetHeight, child.scrollHeight));
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/motionCurves.js
+  var TOLERANCE_PX = 0.1;
+  var LONGEST_STOP_SPAN_MS = 100;
+  var SHORTEST_STOP_SPAN_MS = 1;
+  function curveEndMs(curve) {
+    return curve.startMs + curve.durationMs;
+  }
+  function isRunningAt(curve, timeMs) {
+    return curve.startMs <= timeMs && timeMs < curveEndMs(curve);
+  }
+  function offsetAt(curves, timeMs, easingOf) {
+    return curves.filter((curve) => isRunningAt(curve, timeMs)).reduce((sum, curve) => sum + easedOffset(curve, easingOf(curve.easing), timeMs), 0);
+  }
+  function bakeMotion(curves, nowMs, easingOf) {
+    if (curves.length === 1)
+      return exactly(curves[0]);
+    const endsMs = [...new Set(curves.map(curveEndMs))].sort((a, b) => a - b);
+    const stops = [];
+    let fromMs = nowMs;
+    for (const toMs2 of endsMs) {
+      const running = curves.filter((curve) => curve.startMs <= fromMs && curveEndMs(curve) >= toMs2).map((curve) => ({ curve, easing: easingOf(curve.easing) }));
+      const path = (timeMs) => {
+        let offsetPx = 0;
+        for (const { curve, easing: easing2 } of running)
+          offsetPx += easedOffset(curve, easing2, timeMs);
+        return offsetPx;
+      };
+      const fromPx = path(fromMs);
+      if (stops.at(-1)?.offsetPx !== fromPx)
+        stops.push({ timeMs: fromMs, offsetPx: fromPx });
+      const spans = Math.ceil((toMs2 - fromMs) / LONGEST_STOP_SPAN_MS);
+      for (let span = 1; span <= spans; span++) {
+        const spanEndMs = fromMs + (toMs2 - fromMs) * span / spans;
+        appendStops(path, stops[stops.length - 1], { timeMs: spanEndMs, offsetPx: path(spanEndMs) }, stops);
+      }
+      fromMs = toMs2;
+    }
+    const durationMs = endsMs[endsMs.length - 1] - nowMs;
+    const fullScalePx = Math.max(...stops.map((stop) => Math.abs(stop.offsetPx))) || 1;
+    const easing = `linear(${stops.map(({ timeMs, offsetPx }) => `${rounded(offsetPx / fullScalePx)} ${rounded(100 * (timeMs - nowMs) / durationMs)}%`).join(", ")})`;
+    return {
+      keyframes: [
+        { translate: translateOf(0), easing },
+        { translate: translateOf(fullScalePx), easing: "linear" }
+      ],
+      startMs: nowMs,
+      durationMs
+    };
+  }
+  function appendStops(path, from, to, stops) {
+    const middleMs = (from.timeMs + to.timeMs) / 2;
+    const middle = { timeMs: middleMs, offsetPx: path(middleMs) };
+    const chordPx = (from.offsetPx + to.offsetPx) / 2;
+    if (Math.abs(middle.offsetPx - chordPx) <= TOLERANCE_PX || to.timeMs - from.timeMs <= SHORTEST_STOP_SPAN_MS) {
+      stops.push(to);
+      return;
+    }
+    appendStops(path, from, middle, stops);
+    appendStops(path, middle, to, stops);
+  }
+  function exactly(curve) {
+    return {
+      keyframes: [
+        { translate: translateOf(curve.fromPx), easing: curve.easing },
+        { translate: translateOf(curve.toPx), easing: curve.endEasing }
+      ],
+      startMs: curve.startMs,
+      durationMs: curve.durationMs
+    };
+  }
+  function easedOffset(curve, easing, timeMs) {
+    const progress = curve.durationMs > 0 ? Math.min(1, (timeMs - curve.startMs) / curve.durationMs) : 1;
+    return curve.fromPx + (curve.toPx - curve.fromPx) * easing(progress);
+  }
+  function translateOf(offsetPx) {
+    return `0px ${Math.round(offsetPx * 1e3) / 1e3}px`;
+  }
+  function rounded(value) {
+    return Math.round(value * 1e6) / 1e6;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/elementMotion.js
+  var EASING_TABLE_STEPS = 128;
+  function timelineNow(engine) {
+    const timelineTime = engine.document.timeline?.currentTime;
+    return typeof timelineTime === "number" ? timelineTime : Date.now();
+  }
+  function addElementCurve(engine, element, curve) {
+    const nowMs = timelineNow(engine);
+    playCurves(engine, element, [...runningCurves(engine, element, nowMs), curve], nowMs);
+  }
+  function removeElementCurves(engine, element, kind) {
+    const nowMs = timelineNow(engine);
+    const running = runningCurves(engine, element, nowMs);
+    if (!running.some((curve) => curve.kind === kind))
+      return;
+    playCurves(engine, element, running.filter((curve) => curve.kind !== kind), nowMs);
+  }
+  function stopElementMotion(engine, element) {
+    const motion = engine.elementMotions.get(element);
+    if (!motion)
+      return;
+    engine.elementMotions.delete(element);
+    motion.animation.cancel();
+    for (const curve of motion.curves)
+      curve.onEnd?.();
+  }
+  function stopAllElementMotion(engine) {
+    for (const element of [...engine.elementMotions.keys()])
+      stopElementMotion(engine, element);
+  }
+  function elementMotionOffsetPx(engine, element) {
+    const motion = engine.elementMotions.get(element);
+    return motion ? offsetAt(motion.curves, timelineNow(engine), easingLookup(engine)) : 0;
+  }
+  function runningCurves(engine, element, nowMs) {
+    return (engine.elementMotions.get(element)?.curves ?? []).filter((curve) => curveEndMs(curve) > nowMs);
+  }
+  function playCurves(engine, element, curves, nowMs) {
+    const previous = engine.elementMotions.get(element);
+    for (const curve of previous?.curves ?? [])
+      if (!curves.includes(curve))
+        curve.onEnd?.();
+    if (curves.length === 0) {
+      engine.elementMotions.delete(element);
+      previous?.animation.cancel();
+      return;
+    }
+    const baked = bakeMotion(curves, nowMs, easingLookup(engine));
+    const animation = element.animate(baked.keyframes, { duration: baked.durationMs, easing: "linear", fill: "none" });
+    animation.startTime = baked.startMs;
+    const motion = { animation, curves };
+    engine.elementMotions.set(element, motion);
+    previous?.animation.cancel();
+    const settle = () => {
+      if (engine.elementMotions.get(element) !== motion)
+        return;
+      engine.elementMotions.delete(element);
+      for (const curve of curves)
+        curve.onEnd?.();
+    };
+    animation.addEventListener("finish", settle, { once: true });
+    animation.addEventListener("cancel", settle, { once: true });
+  }
+  function easingLookup(engine) {
+    return (easing) => {
+      let table = engine.easingTables.get(easing);
+      if (!table) {
+        table = sampleEasing(engine, easing);
+        engine.easingTables.set(easing, table);
+      }
+      return tableEasing(table);
+    };
+  }
+  function tableEasing(table) {
+    return (progress) => {
+      const position = Math.min(Math.max(progress, 0), 1) * EASING_TABLE_STEPS;
+      const step = Math.min(Math.floor(position), EASING_TABLE_STEPS - 1);
+      return table[step] + (table[step + 1] - table[step]) * (position - step);
+    };
+  }
+  function sampleEasing(engine, easing) {
+    const table = Float64Array.from({ length: EASING_TABLE_STEPS + 1 }, (_, step) => step / EASING_TABLE_STEPS);
+    const { KeyframeEffect: Effect, Animation: Player } = engine.window;
+    if (typeof Effect !== "function" || typeof Player !== "function")
+      return table;
+    try {
+      const effect = new Effect(null, null, { duration: EASING_TABLE_STEPS, easing, fill: "both" });
+      const player = new Player(effect, null);
+      for (let step = 0; step <= EASING_TABLE_STEPS; step++) {
+        player.currentTime = step;
+        table[step] = effect.getComputedTiming().progress ?? table[step];
+      }
+    } catch (error) {
+      engine.host.log("Line motion easing could not be sampled, so it is treated as linear", easing, error);
+    }
+    return table;
+  }
 
   // web/node_modules/@braccato/core/dist/themeSettings.js
   var keyToSettingMap = /* @__PURE__ */ new Map();
@@ -125,49 +311,1358 @@
     }
     return needsLyricReload;
   }
+  function lyricBuildSettingsKey() {
+    const values = [];
+    for (const [key, setting] of keyToSettingMap) {
+      if (setting.requiresLyricReload)
+        values.push(`${key}=${String(setting.value)}`);
+    }
+    return values.join(";");
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/lineScrollStyle.js
+  var FALLBACK_DURATION_MS = 750;
+  var DEFAULT_TRAILING_DURATION = "calc(750ms + log(var(--blyrics-line-scroll-abs-relative-index) + 2, 2.71828) * 80ms + (var(--blyrics-line-scroll-abs-relative-index) + 1) * 20ms)";
+  function themeSetting(property, defaultValue) {
+    return [property, registerThemeSetting(property.slice(2), defaultValue)];
+  }
+  var THEME_SETTINGS = [
+    themeSetting("--blyrics-line-scroll-duration", DEFAULT_TRAILING_DURATION),
+    themeSetting("--blyrics-line-scroll-above-duration", "calc(750ms + min(var(--blyrics-line-scroll-abs-relative-index), 6) * 20ms)"),
+    themeSetting("--blyrics-line-scroll-active-duration", ""),
+    themeSetting("--blyrics-line-scroll-below-duration", DEFAULT_TRAILING_DURATION),
+    themeSetting("--blyrics-line-scroll-timing-function", "var(--blyrics-lyric-scroll-timing-function)"),
+    themeSetting("--blyrics-line-scroll-start-easing", "var(--blyrics-line-scroll-timing-function)"),
+    themeSetting("--blyrics-line-scroll-end-easing", "linear"),
+    themeSetting("--blyrics-line-scroll-above-start-easing", ""),
+    themeSetting("--blyrics-line-scroll-active-start-easing", ""),
+    themeSetting("--blyrics-line-scroll-below-start-easing", ""),
+    themeSetting("--blyrics-line-scroll-above-end-easing", ""),
+    themeSetting("--blyrics-line-scroll-active-end-easing", ""),
+    themeSetting("--blyrics-line-scroll-below-end-easing", ""),
+    themeSetting("--blyrics-line-scroll-translate-y-start", "var(--blyrics-line-scroll-delta-px)"),
+    themeSetting("--blyrics-line-scroll-translate-y-end", "0px"),
+    themeSetting("--blyrics-line-scroll-above-translate-y-start", ""),
+    themeSetting("--blyrics-line-scroll-active-translate-y-start", ""),
+    themeSetting("--blyrics-line-scroll-below-translate-y-start", ""),
+    themeSetting("--blyrics-line-scroll-above-translate-y-end", ""),
+    themeSetting("--blyrics-line-scroll-active-translate-y-end", ""),
+    themeSetting("--blyrics-line-scroll-below-translate-y-end", "")
+  ];
+  var TRANSLATE_SETTINGS = THEME_SETTINGS.filter(([property]) => property.includes("translate-y")).map(([, setting]) => setting);
+  var INDEX_PROPERTY = "--blyrics-line-scroll-index";
+  var ACTIVE_INDEX_PROPERTY = "--blyrics-line-scroll-active-index";
+  var RELATIVE_INDEX_PROPERTY = "--blyrics-line-scroll-relative-index";
+  var ABS_RELATIVE_INDEX_PROPERTY = "--blyrics-line-scroll-abs-relative-index";
+  var SIDE_PROPERTY = "--blyrics-line-scroll-side";
+  var DELTA_PROPERTY = "--blyrics-line-scroll-delta-px";
+  var DISTANCE_PROPERTY = "--blyrics-line-scroll-distance-px";
+  var INLINE_PROPERTIES = [
+    INDEX_PROPERTY,
+    ACTIVE_INDEX_PROPERTY,
+    RELATIVE_INDEX_PROPERTY,
+    ABS_RELATIVE_INDEX_PROPERTY,
+    SIDE_PROPERTY,
+    DELTA_PROPERTY,
+    DISTANCE_PROPERTY,
+    ...THEME_SETTINGS.map(([property]) => property)
+  ];
+  function themeOverridesScrollTranslate() {
+    return TRANSLATE_SETTINGS.some((setting) => setting.isManuallySet());
+  }
+  function writeScrollVariables(lineElement, variables) {
+    const style = lineElement.style;
+    style.setProperty(INDEX_PROPERTY, String(variables.index));
+    style.setProperty(ACTIVE_INDEX_PROPERTY, String(variables.activeIndex));
+    style.setProperty(RELATIVE_INDEX_PROPERTY, String(variables.relativeIndex));
+    style.setProperty(ABS_RELATIVE_INDEX_PROPERTY, String(Math.abs(variables.relativeIndex)));
+    style.setProperty(SIDE_PROPERTY, variables.side);
+    style.setProperty(DELTA_PROPERTY, `${variables.deltaPx}px`);
+    style.setProperty(DISTANCE_PROPERTY, `${Math.abs(variables.deltaPx)}px`);
+    for (const [property, setting] of THEME_SETTINGS) {
+      const value = setting.getStringValue().trim();
+      if (value)
+        style.setProperty(property, value);
+      else
+        style.removeProperty(property);
+    }
+  }
+  function clearScrollVariables(lineElement) {
+    for (const property of INLINE_PROPERTIES)
+      lineElement.style.removeProperty(property);
+  }
+  function scrollVariable(name, side, differential, fallback) {
+    const shared = `var(--blyrics-line-scroll-${name}, ${fallback})`;
+    return differential ? `var(--blyrics-line-scroll-${side}-${name}, ${shared})` : shared;
+  }
+  function resolveScrollTimings(engine, lines, { lineScroll }) {
+    const differential = lineScroll.differentialEffects;
+    const durations = batchProbeComputedStyle(engine, lines, "transition-duration", (line) => scrollVariable("duration", line.side, differential, `${FALLBACK_DURATION_MS}ms`), (style) => {
+      const durationMs = toMs(style.transitionDuration.split(",")[0].trim());
+      return durationMs > 0 ? durationMs : FALLBACK_DURATION_MS;
+    });
+    const easingsAt = (keyframe) => batchProbeComputedStyle(engine, lines, "transition-timing-function", (line) => scrollVariable(`${keyframe}-easing`, line.side, differential, `var(--blyrics-line-scroll-timing-function, ${lineScroll.easing})`), (style) => style.transitionTimingFunction.trim() || lineScroll.easing);
+    const startEasings = easingsAt("start");
+    const endEasings = easingsAt("end");
+    return lines.map((_, index) => ({
+      durationMs: durations[index],
+      startEasing: startEasings[index],
+      endEasing: endEasings[index]
+    }));
+  }
+  function resolveThemedTranslates(engine, lines, { lineScroll }) {
+    const translatesAt = (keyframe) => batchProbeComputedStyle(engine, lines, "translate", (line) => {
+      const fallback = keyframe === "start" ? "var(--blyrics-line-scroll-delta-px, 0px)" : "0px";
+      return `0 ${scrollVariable(`translate-y-${keyframe}`, line.side, lineScroll.differentialEffects, fallback)}`;
+    }, (style) => style.translate).map((translate, index) => translateYPx(translate, lines[index].heightPx));
+    return { start: translatesAt("start"), end: translatesAt("end") };
+  }
+  function translateYPx(translate, heightPx) {
+    const value = translate.trim();
+    if (value === "" || value === "none")
+      return 0;
+    const [, y = "0px"] = value.match(/calc\([^)]*\)|\S+/g) ?? [];
+    const terms = y.replace(/^calc\((.*)\)$/, "$1").replace(/\s+-\s+/g, " + -").split(/\s+\+\s+/);
+    let px = 0;
+    for (const term of terms) {
+      const length = term.trim().match(/^(-?[\d.]+(?:e-?\d+)?)(px|%)?$/);
+      if (!length || length[2] === void 0 && Number(length[1]) !== 0)
+        return null;
+      px += length[2] === "%" ? Number(length[1]) * heightPx / 100 : Number(length[1]);
+    }
+    return px;
+  }
+  function batchProbeComputedStyle(engine, lines, property, probeValue, readValue) {
+    const previous = lines.map(({ lineElement }) => ({
+      value: lineElement.style.getPropertyValue(property),
+      priority: lineElement.style.getPropertyPriority(property)
+    }));
+    for (const line of lines)
+      line.lineElement.style.setProperty(property, probeValue(line), "important");
+    const values = lines.map((line) => readValue(engine.window.getComputedStyle(line.lineElement)));
+    lines.forEach(({ lineElement }, index) => {
+      const { value, priority } = previous[index];
+      if (value)
+        lineElement.style.setProperty(property, value, priority);
+      else
+        lineElement.style.removeProperty(property);
+    });
+    return values;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/lineScroll.js
+  var SCROLL_PREPARE_LEAD_MS = 120;
+  var LINE_SCROLL_WILL_CHANGE_VALUE = "transform, translate";
+  var SAME_SCROLL_TOLERANCE_PX = 2;
+  function commitOrPrepareLineScroll(engine, request) {
+    const pending = engine.pendingLineScroll;
+    if (pending && pendingScrollMatches(pending, request)) {
+      engine.pendingLineScroll = null;
+      startLineScroll(engine, pending.plan);
+      return;
+    }
+    dropPendingLineScroll(engine);
+    const plan = planLineScroll(engine, request);
+    if (plan)
+      startLineScroll(engine, plan);
+  }
+  function prepareUpcomingLineScroll(engine, request) {
+    const pending = engine.pendingLineScroll;
+    if (pending && pendingScrollMatches(pending, request))
+      return;
+    dropPendingLineScroll(engine);
+    const plan = planLineScroll(engine, request);
+    if (!plan)
+      return;
+    const { activeLine, fromScrollTop, toScrollTop } = request;
+    engine.pendingLineScroll = { plan, activeLineElement: activeLine.lyricElement, fromScrollTop, toScrollTop };
+  }
+  function dropPendingLineScroll(engine) {
+    const pending = engine.pendingLineScroll;
+    if (!pending)
+      return;
+    for (const line of pending.plan)
+      releaseLine(engine, line.lineElement, line.token);
+    engine.pendingLineScroll = null;
+  }
+  function pendingScrollMatches(pending, request) {
+    return pending.activeLineElement === request.activeLine.lyricElement && Math.abs(pending.fromScrollTop - request.fromScrollTop) <= SAME_SCROLL_TOLERANCE_PX && Math.abs(pending.toScrollTop - request.toScrollTop) <= SAME_SCROLL_TOLERANCE_PX;
+  }
+  function planLineScroll(engine, request) {
+    const { lines, config: config2 } = request;
+    const activeIndex = lines.findIndex((line) => line.lyricElement === request.activeLine.lyricElement);
+    if (!config2.enabled.scroll || activeIndex < 0)
+      return null;
+    const deltaPx = request.toScrollTop - request.fromScrollTop;
+    const translateThemed = themeOverridesScrollTranslate();
+    const targets = [];
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index];
+      if (!isLineVisibleDuringScroll(line, request.fromScrollTop, request.toScrollTop, request.viewportHeight))
+        continue;
+      const lineElement = line.lyricElement;
+      const relativeIndex = index - activeIndex;
+      const side = scrollSide(relativeIndex, deltaPx);
+      const timingKey = `${side}|${Math.abs(relativeIndex)}`;
+      const cachedTiming = engine.cachedLineScrollTiming.get(timingKey);
+      targets.push({
+        lineElement,
+        side,
+        heightPx: line.height,
+        token: claimLine(engine, lineElement),
+        relativeIndex,
+        timingKey,
+        cachedTiming
+      });
+      if (translateThemed || !cachedTiming) {
+        writeScrollVariables(lineElement, { index, activeIndex, relativeIndex, side, deltaPx });
+      }
+    }
+    const timings = getOrResolveScrollTimings(engine, targets, config2);
+    const translates = translateThemed ? resolveThemedTranslates(engine, targets, config2) : null;
+    const staggerScale = staggerScaleKeepingLinesApart(lines, activeIndex, Math.abs(deltaPx), request.continuesEngineScroll);
+    const activeDurationMs = timings[targets.findIndex((target) => target.relativeIndex === 0)]?.durationMs;
+    return targets.map(({ lineElement, side, token }, index) => {
+      const timing = timings[index];
+      return {
+        lineElement,
+        side,
+        token,
+        durationMs: activeDurationMs === void 0 ? timing.durationMs : activeDurationMs + (timing.durationMs - activeDurationMs) * staggerScale,
+        startEasing: timing.startEasing,
+        endEasing: timing.endEasing,
+        startPx: translates?.start[index] ?? deltaPx,
+        endPx: translates?.end[index] ?? 0
+      };
+    });
+  }
+  function scrollSide(relativeIndex, deltaPx) {
+    const scrollsUp = deltaPx < 0;
+    if (relativeIndex < 0)
+      return scrollsUp ? "below" : "above";
+    if (relativeIndex > 0)
+      return scrollsUp ? "above" : "below";
+    return "active";
+  }
+  function getOrResolveScrollTimings(engine, targets, config2) {
+    const misses = targets.filter((target) => target.cachedTiming === void 0);
+    const resolved = /* @__PURE__ */ new Map();
+    if (misses.length > 0) {
+      resolveScrollTimings(engine, misses, config2).forEach((timing, index) => {
+        engine.cachedLineScrollTiming.set(misses[index].timingKey, timing);
+        resolved.set(misses[index], timing);
+      });
+    }
+    return targets.map((target) => target.cachedTiming ?? resolved.get(target));
+  }
+  function staggerScaleKeepingLinesApart(lines, activeIndex, distancePx, continuesEngineScroll) {
+    if (continuesEngineScroll)
+      return 1;
+    const active2 = lines[activeIndex];
+    const neighbourSteps = [lines[activeIndex - 1], lines[activeIndex + 1]].filter((neighbour) => neighbour !== void 0).map((neighbour) => Math.abs(active2.position - neighbour.position));
+    const stepPx = neighbourSteps.length > 0 ? Math.min(...neighbourSteps) : active2.height;
+    return Math.min(1, stepPx / distancePx);
+  }
+  function startLineScroll(engine, plan) {
+    const startMs = timelineNow(engine);
+    for (const line of plan) {
+      if (!line.lineElement.isConnected || !ownsLine(engine, line.lineElement, line.token))
+        continue;
+      const scroll = { lineElement: line.lineElement, token: line.token, durationMs: line.durationMs };
+      engine.runningLineScrolls.push(scroll);
+      addElementCurve(engine, line.lineElement, {
+        kind: "scroll",
+        startMs,
+        durationMs: line.durationMs,
+        fromPx: line.startPx,
+        toPx: line.endPx,
+        easing: line.startEasing,
+        endEasing: line.endEasing,
+        onEnd: () => endLineScroll(engine, scroll)
+      });
+    }
+  }
+  function claimLine(engine, lineElement) {
+    const token = ++engine.lineScrollAnimationToken;
+    engine.lineScrollElementTokens.set(lineElement, token);
+    return token;
+  }
+  function ownsLine(engine, lineElement, token) {
+    return engine.lineScrollElementTokens.get(lineElement) === token;
+  }
+  function releaseLine(engine, lineElement, token) {
+    if (!ownsLine(engine, lineElement, token))
+      return;
+    clearScrollVariables(lineElement);
+    engine.lineScrollElementTokens.delete(lineElement);
+  }
+  function endLineScroll(engine, scroll) {
+    const index = engine.runningLineScrolls.indexOf(scroll);
+    if (index !== -1)
+      engine.runningLineScrolls.splice(index, 1);
+    releaseLine(engine, scroll.lineElement, scroll.token);
+  }
+  function clearLineScrolls(engine) {
+    const scrolledElements = new Set(engine.runningLineScrolls.map((scroll) => scroll.lineElement));
+    for (const element of scrolledElements)
+      removeElementCurves(engine, element, "scroll");
+    for (const scroll of [...engine.runningLineScrolls])
+      endLineScroll(engine, scroll);
+  }
+  function isLineVisibleDuringScroll(line, fromScrollTop, toScrollTop, viewportHeight) {
+    const visibleTop = Math.min(fromScrollTop, toScrollTop);
+    const visibleBottom = Math.max(fromScrollTop, toScrollTop) + viewportHeight;
+    return line.position + line.height >= visibleTop && line.position <= visibleBottom;
+  }
+  function getLineScrollItems(engine, lines) {
+    const trailing = [engine.cachedCreditsItem, engine.cachedFooterItem].filter((item) => item !== null);
+    return trailing.length > 0 ? [...lines, ...trailing] : lines;
+  }
+  function measureTrailingItem(lyricsElement, className) {
+    const element = lyricsElement.querySelector(`:scope > .${className}`);
+    if (!element)
+      return null;
+    const bounds = getRelativeLayoutBounds(lyricsElement, element);
+    return { lyricElement: element, position: bounds.y, height: bounds.height };
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/cssValues.js
+  function clearStyleCaches(engine) {
+    dropPendingLineScroll(engine);
+    engine.cachedDurations.clear();
+    engine.cachedCSSValues.clear();
+    engine.cachedAnimationSettings = null;
+    engine.cachedLineScrollTiming.clear();
+  }
+  function getCSSValue(engine, lyricsElement, property, fallback) {
+    let value = engine.cachedCSSValues.get(property);
+    if (value === void 0) {
+      value = engine.window.getComputedStyle(lyricsElement).getPropertyValue(property).trim() || fallback;
+      engine.cachedCSSValues.set(property, value);
+    }
+    return value;
+  }
+  function getCSSDurationInMs(engine, lyricsElement, property) {
+    let duration = engine.cachedDurations.get(property);
+    if (duration === void 0) {
+      duration = toMs(getCSSValue(engine, lyricsElement, property, "0ms"));
+      engine.cachedDurations.set(property, duration);
+    }
+    return duration;
+  }
+  function getCSSNumber(engine, lyricsElement, property, fallback) {
+    const value = Number.parseFloat(getCSSValue(engine, lyricsElement, property, `${fallback}`));
+    return Number.isFinite(value) ? value : fallback;
+  }
+  function createThemeReader(engine, lyricsElement) {
+    const string = (property, fallback) => getCSSValue(engine, lyricsElement, property, fallback);
+    const number = (property, fallback) => getCSSNumber(engine, lyricsElement, property, fallback);
+    return {
+      string,
+      number,
+      durationMs: (property, fallback) => Math.max(toMs(string(property, fallback)), 1),
+      fraction: (property, fallback) => clamp(number(property, fallback), 0, 1),
+      flag: (property, fallback) => {
+        const value = string(property, fallback ? "1" : "0").toLowerCase();
+        if (value === "false" || value === "off" || value === "none")
+          return false;
+        const numeric = Number.parseFloat(value);
+        return Number.isFinite(numeric) ? numeric > 0 : fallback;
+      }
+    };
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/clock.js
+  var SMOOTH_PLAYBACK_CLOCK = isGecko();
+  var CLOCK_RESYNC_THRESHOLD_S = 0.06;
+  var CLOCK_SLEW_PER_S = 0.1;
+  var NO_PLAYER_SNAPSHOT = -1;
+  var playbackClock = {
+    lastTime: 0,
+    lastPlayState: false,
+    lastEventCreationTime: NO_PLAYER_SNAPSHOT,
+    smoothedTime: 0,
+    smoothedAt: NO_PLAYER_SNAPSHOT
+  };
+  function resetPlaybackClock() {
+    playbackClock.lastTime = 0;
+    playbackClock.lastPlayState = false;
+    playbackClock.lastEventCreationTime = NO_PLAYER_SNAPSHOT;
+    playbackClock.smoothedAt = NO_PLAYER_SNAPSHOT;
+  }
+  function smoothedPlaybackTime(previousTime, previousAt, rawTime, now, playbackRate) {
+    if (previousAt === NO_PLAYER_SNAPSHOT)
+      return rawTime;
+    const elapsedS = Math.max(0, now - previousAt) / 1e3;
+    const predictedTime = previousTime + elapsedS * playbackRate;
+    const errorS = rawTime - predictedTime;
+    if (errorS >= 0 || Math.abs(errorS) >= CLOCK_RESYNC_THRESHOLD_S)
+      return rawTime;
+    return predictedTime + errorS * Math.min(1, elapsedS * CLOCK_SLEW_PER_S);
+  }
+  var TIME_JUMP_THRESHOLD_S = 0.5;
+  function advancePlaybackClock(reportedTimeS, { isPlaying, eventCreationTime, followPausedSeeks }, playbackRate, now) {
+    const snapshotGapS = (eventCreationTime - playbackClock.lastEventCreationTime) / 1e3;
+    const jumped = Math.abs(reportedTimeS - playbackClock.lastTime - snapshotGapS) > TIME_JUMP_THRESHOLD_S;
+    const readsMediaClockDirectly = eventCreationTime === NO_PLAYER_SNAPSHOT;
+    const mediaClockRanBackwards = readsMediaClockDirectly && isPlaying && reportedTimeS < playbackClock.lastTime - CLOCK_RESYNC_THRESHOLD_S;
+    const seekedWhilePaused = followPausedSeeks && !isPlaying && !playbackClock.lastPlayState && reportedTimeS !== playbackClock.lastTime;
+    playbackClock.lastTime = reportedTimeS;
+    playbackClock.lastPlayState = isPlaying;
+    playbackClock.lastEventCreationTime = eventCreationTime;
+    const snapshotAgeS = isPlaying && !readsMediaClockDirectly ? (now - eventCreationTime) / 1e3 : 0;
+    let timeS = reportedTimeS + snapshotAgeS;
+    if (SMOOTH_PLAYBACK_CLOCK) {
+      if (isPlaying && !jumped) {
+        timeS = smoothedPlaybackTime(playbackClock.smoothedTime, playbackClock.smoothedAt, timeS, now, playbackRate);
+      }
+      playbackClock.smoothedTime = timeS;
+      playbackClock.smoothedAt = isPlaying ? now : NO_PLAYER_SNAPSHOT;
+    }
+    return { timeS, isPlaying, jumped, mediaClockRanBackwards, seekedWhilePaused };
+  }
+  function lyricClockShiftS(engine, lyricsElement, options) {
+    const syncTypeShiftS = engine.syncType === "richsync" ? getCSSDurationInMs(engine, lyricsElement, "--blyrics-richsync-timing-offset") / 1e3 - options.richsyncOffsetTrim : getCSSDurationInMs(engine, lyricsElement, "--blyrics-timing-offset") / 1e3 - options.lineOffsetTrim;
+    return syncTypeShiftS - options.globalLyricOffset - options.lyricOffset;
+  }
+  function playerTimeForLyricTime(engine, lyricTimeS) {
+    const options = engine.lastTickOptions;
+    const lyricsElement = engine.lyricsContainer;
+    if (!options || !lyricsElement)
+      return lyricTimeS;
+    return Math.max(0, lyricTimeS - lyricClockShiftS(engine, lyricsElement, options));
+  }
+
+  // web/node_modules/@braccato/core/dist/constants.js
+  var LYRICS_CLASS = "blyrics-container";
+  var LINE_CLASS = "blyrics--line";
+  var WORD_CLASS = "blyrics--word";
+  var LETTER_CLASS = "blyrics--letter";
+  var FOOTER_CLASS = "blyrics-footer";
+  var CREDITS_CLASS = "blyrics-credits";
+  var CREDITS_TEXT_CLASS = "blyrics-credits__text";
+  var CREDITS_NAMES_CLASS = "blyrics-credits__names";
+  var CURRENT_LYRICS_CLASS = "blyrics--active";
+  var ANIMATING_CLASS = "blyrics--animating";
+  var PAUSED_CLASS = "blyrics--paused";
+  var ZERO_DURATION_ANIMATION_CLASS = "blyrics-zero-dur-animate";
+  var USER_SCROLLING_CLASS = "blyrics-user-scrolling";
+  var WORD_STATE_ATTR = "data-word-state";
+  var WORD_STATE_UPCOMING = "upcoming";
+  var WORD_STATE_ACTIVE = "active";
+  var WORD_STATE_PAST = "past";
+  var BACKGROUND_LYRIC_CLASS = "blyrics-background-lyric";
+  var EXPLICIT_WORD_CLASS = "blyrics-explicit";
+  var RTL_CLASS = "blyrics-rtl";
+  var TRANSLATED_LYRICS_CLASS = "blyrics--translated";
+  var ROMANIZED_LYRICS_CLASS = "blyrics--romanized";
+  var CONTENT_LINE_CLASS = "blyrics-content-line";
+  var LINE_MAIN_CLASS = "blyrics-line-main";
+  var BACKGROUND_LINE_CLASS = "blyrics-background-line";
+  var WORD_GROUP_CLASS = "blyrics-word-group";
+  var LONG_WORD_GROUP_CLASS = "blyrics-word-group-long";
+  var WORD_HIGHLIGHT_CLASS = "blyrics-word-highlight";
+  var WORD_HIGHLIGHT_LETTERED_CLASS = "blyrics-word-highlight--lettered";
+  var WORD_HIGHLIGHT_SWEEP_CLASS = "blyrics-word-highlight--sweep";
+  var WORD_HIGHLIGHT_CONTEXT_CLASS = "blyrics-word-highlight--context";
+  var SWEEP_CELL_CLASS = "blyrics-sweep-cell";
+  var SWEEP_CONTEXT_CLASS = "blyrics-sweep-context";
+  var SWEEP_WINDOW_CLASS = "blyrics-sweep-window";
+  var SWEEP_CLONE_CLASS = "blyrics-sweep-clone";
+  var SWEEP_TARGET_CLASS = "blyrics-sweep-target";
+  var SWEEP_MASK_CLASS = "blyrics-sweep-mask";
+  var SWEEP_TEXT_CLASS = "blyrics-sweep-text";
+  var SWEEP_GLOW_CLASS = "blyrics-sweep-glow";
+  var HIGHLIGHT_RUN_CLASS = "blyrics-highlight-run";
+  var LINE_SYNCED_WORD_CLASS = "blyrics-line-synced-word";
+  var BIDI_RUN_CLASS = "blyrics-bidi-run";
+  var BIDI_SENSITIVE_CLASS = "blyrics-bidi-sensitive";
+  var CUSTOM_THEME_STYLE_ID = "blyrics-custom-style";
+
+  // web/node_modules/@braccato/core/dist/engine/liveViews.js
+  var liveEngines = /* @__PURE__ */ new Set();
+
+  // web/node_modules/@braccato/core/dist/engine/passiveScroll.js
+  var PASSIVE_SCROLL_ENABLED = registerThemeSetting("blyrics-passive-scroll-enabled", true);
+  var SECONDS_PER_LINE = registerThemeSetting("blyrics-passive-scroll-seconds-per-line", 3.5);
+  var BOTTOM_PAUSE_S = registerThemeSetting("blyrics-passive-scroll-bottom-pause-s", 1.5);
+  var RESET_DURATION_S = registerThemeSetting("blyrics-passive-scroll-reset-duration-s", 0.6);
+  var TOP_PAUSE_S = registerThemeSetting("blyrics-passive-scroll-top-pause-s", 0.8);
+  var MAX_FRAME_STEP_S = 0.5;
+  var DRIFT_SCROLL_TOLERANCE_PX = 1;
+  function hasNoLyricsPlaceholder(engine) {
+    return engine.lyricsContainer?.dataset.noLyrics === "true";
+  }
+  function hasUnsyncedLyrics(engine) {
+    return engine.lyricsContainer !== null && engine.syncType === "none" && !hasNoLyricsPlaceholder(engine);
+  }
+  function startPassiveScrollLoop(engine) {
+    if (engine.passiveRAFId !== null)
+      return;
+    engine.passiveRAFId = engine.window.requestAnimationFrame(() => passiveScrollFrame(engine));
+  }
+  function stopPassiveScrollLoop(engine) {
+    if (engine.passiveRAFId === null)
+      return;
+    engine.window.cancelAnimationFrame(engine.passiveRAFId);
+    engine.passiveRAFId = null;
+  }
+  function passiveScrollFrame(engine) {
+    engine.passiveRAFId = null;
+    if (!engine.passiveScrollEnabled || !PASSIVE_SCROLL_ENABLED.getBooleanValue() || !hasUnsyncedLyrics(engine))
+      return;
+    advancePassiveScroll(engine, playbackClock.lastPlayState);
+    engine.passiveRAFId = engine.window.requestAnimationFrame(() => passiveScrollFrame(engine));
+  }
+  function advancePassiveScroll(engine, isPlaying) {
+    if (!engine.host.isViewVisible() || engine.host.isLoaderActive())
+      return;
+    const scroller = engine.host.getScrollElement();
+    if (!scroller)
+      return;
+    const now = Date.now();
+    if (engine.passiveLastWallTime > 0 && isPlaying) {
+      engine.passiveScrollAccumulatedTime += Math.min((now - engine.passiveLastWallTime) / 1e3, MAX_FRAME_STEP_S);
+    }
+    engine.passiveLastWallTime = now;
+    if (engine.scrollResumeTime > now)
+      return;
+    if (engine.wasUserScrolling)
+      resumeFromUserScroll(engine, scroller);
+    const scrollDurationS = engine.lines.length * SECONDS_PER_LINE.getNumberValue();
+    const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+    if (engine.lines.length === 0 || maxScrollTop <= 0)
+      return;
+    const scrollTop = passiveCycleScrollTop(engine.passiveScrollAccumulatedTime, scrollDurationS, maxScrollTop);
+    scroller.scrollTop = scrollTop;
+    engine.passiveScrollTop = scroller.scrollTop;
+  }
+  function isPassiveDriftScroll(engine) {
+    const scrollTop = engine.host.getScrollElement()?.scrollTop;
+    return engine.passiveScrollTop !== null && scrollTop !== void 0 && Math.abs(scrollTop - engine.passiveScrollTop) < DRIFT_SCROLL_TOLERANCE_PX;
+  }
+  function resumeFromUserScroll(engine, scroller) {
+    engine.host.setResumeAffordanceVisible(false);
+    engine.lyricsContainer?.classList.remove(USER_SCROLLING_CLASS);
+    engine.wasUserScrolling = false;
+    const maxScrollTop = scroller.scrollHeight - scroller.clientHeight;
+    if (maxScrollTop <= 0)
+      return;
+    const scrollDurationS = engine.lines.length * SECONDS_PER_LINE.getNumberValue();
+    engine.passiveScrollAccumulatedTime = scroller.scrollTop / maxScrollTop * scrollDurationS;
+  }
+  function passiveCycleScrollTop(playedS, scrollDurationS, maxScrollTop) {
+    const reachesBottomS = scrollDurationS;
+    const leavesBottomS = reachesBottomS + BOTTOM_PAUSE_S.getNumberValue();
+    const resetDurationS = RESET_DURATION_S.getNumberValue();
+    const reachesTopS = leavesBottomS + resetDurationS;
+    const cycleS = playedS % (reachesTopS + TOP_PAUSE_S.getNumberValue());
+    if (cycleS < reachesBottomS)
+      return cycleS / scrollDurationS * maxScrollTop;
+    if (cycleS < leavesBottomS)
+      return maxScrollTop;
+    if (cycleS < reachesTopS) {
+      const remaining = 1 - (cycleS - leavesBottomS) / resetDurationS;
+      return maxScrollTop * remaining * remaining;
+    }
+    return 0;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/userScroll.js
+  var PAUSING_LYRICS_SCROLL_LOG = "Pausing Lyrics Autoscroll Due to User Scroll";
+  var USER_SCROLL_RESUME_DELAY_MS = 25e3;
+  var UNSYNCED_USER_SCROLL_RESUME_DELAY_MS = 5e3;
+  var ENGINE_SCROLL_EVENT_WINDOW_MS = 2e3;
+  function resetScrollResume(engine) {
+    engine.scrollResumeTime = 0;
+  }
+  function noteUserScroll(engine, lyricsAreUnsynced) {
+    if (lyricsAreUnsynced) {
+      if (isPassiveDriftScroll(engine))
+        return;
+    } else if (engine.skipScrolls > 0) {
+      engine.skipScrolls--;
+      engine.skipScrollsDecayTimes.shift();
+      return;
+    }
+    dropPendingLineScroll(engine);
+    if (engine.host.isLoaderActive())
+      return;
+    const now = Date.now();
+    if (engine.scrollResumeTime < now)
+      engine.host.log(PAUSING_LYRICS_SCROLL_LOG);
+    engine.scrollResumeTime = now + (lyricsAreUnsynced ? UNSYNCED_USER_SCROLL_RESUME_DELAY_MS : USER_SCROLL_RESUME_DELAY_MS);
+    engine.wasUserScrolling = true;
+    engine.host.setResumeAffordanceVisible(true);
+    engine.lyricsContainer?.classList.add(USER_SCROLLING_CLASS);
+  }
+  function hasContainerResized(engine, width, height) {
+    return width !== engine.lyricWidth || height !== engine.lyricHeight;
+  }
+  function writeEngineScrollTop(engine, scroller, scrollTop, now) {
+    engine.scrollPos = scrollTop;
+    const scrollTopBeforeWrite = scroller.scrollTop;
+    scroller.scrollTop = scrollTop;
+    if (scroller.scrollTop !== scrollTopBeforeWrite)
+      noteEngineScrollEvent(engine, now);
+  }
+  function noteEngineScrollEvent(engine, now) {
+    engine.skipScrolls += 1;
+    engine.skipScrollsDecayTimes.push(now + ENGINE_SCROLL_EVENT_WINDOW_MS);
+  }
+  function requestRescroll(engine) {
+    engine.wasUserScrolling = true;
+  }
+  function decaySkipScrolls(engine, now, keepsReserve) {
+    const firstLive = engine.skipScrollsDecayTimes.findIndex((time) => time > now);
+    const expiredCount = firstLive === -1 ? engine.skipScrollsDecayTimes.length : firstLive;
+    engine.skipScrollsDecayTimes = engine.skipScrollsDecayTimes.slice(expiredCount);
+    engine.skipScrolls = Math.max(keepsReserve ? 1 : 0, engine.skipScrolls - expiredCount);
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/wavePool.js
+  var waveAnimationPools = /* @__PURE__ */ new WeakMap();
+  var pooledWaveKeyframeSignatures = /* @__PURE__ */ new WeakMap();
+  function acquireWaveAnimation(engine, letterElement, keyframes, keyframeSignature, timing) {
+    const pool = engine.waveAnimationPool;
+    const pooled = pool[pool.length - 1];
+    const effect = pooled?.effect;
+    if (pooled && effect && typeof effect.setKeyframes === "function") {
+      pool.pop();
+      effect.target = letterElement;
+      if (pooledWaveKeyframeSignatures.get(pooled) !== keyframeSignature) {
+        effect.setKeyframes(keyframes);
+        pooledWaveKeyframeSignatures.set(pooled, keyframeSignature);
+      }
+      effect.updateTiming(timing);
+      pooled.play();
+      return pooled;
+    }
+    const animation = letterElement.animate(keyframes, timing);
+    waveAnimationPools.set(animation, pool);
+    pooledWaveKeyframeSignatures.set(animation, keyframeSignature);
+    return animation;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/lineAnimationState.js
+  function releasePart(part) {
+    resetPartAnimations(part);
+    togglePartClass(part, PAUSED_CLASS, false);
+    togglePartClass(part, ANIMATING_CLASS, false);
+    part.wordState = WORD_STATE_UPCOMING;
+    part.lyricElement.setAttribute(WORD_STATE_ATTR, WORD_STATE_UPCOMING);
+    part.highlightElement.setAttribute(WORD_STATE_ATTR, WORD_STATE_UPCOMING);
+  }
+  function resetPartAnimations(part) {
+    for (const animation of part.animations) {
+      animation.cancel();
+      const pool = waveAnimationPools.get(animation);
+      if (pool)
+        pool.push(animation);
+    }
+    part.animations = [];
+  }
+  function resetLineAnimations(lineData) {
+    resetPartAnimations(lineData);
+    for (const part of lineData.parts)
+      resetPartAnimations(part);
+  }
+  function hasLineAnimations(lineData) {
+    return lineData.animations.length > 0 || lineData.parts.some((part) => part.animations.length > 0);
+  }
+  function markLineAnimationsStopped(lineData) {
+    lineData.isAnimating = false;
+    lineData.isAnimationPlayStatePlaying = false;
+    lineData.accumulatedOffsetMs = 0;
+  }
+  function resetLineAnimationState(lineData) {
+    resetLineAnimations(lineData);
+    markLineAnimationsStopped(lineData);
+  }
+  function togglePartClass(part, className, force) {
+    part.lyricElement.classList.toggle(className, force);
+    if ("highlightElement" in part) {
+      part.highlightElement.classList.toggle(className, force);
+    }
+  }
+  function setAnimationsPlayState(lineData, isPlaying) {
+    const children = [lineData, ...lineData.parts];
+    for (const part of children) {
+      togglePartClass(part, PAUSED_CLASS, !isPlaying);
+      for (const animation of part.animations) {
+        if (isPlaying) {
+          animation.play();
+        } else {
+          animation.pause();
+        }
+      }
+    }
+  }
+  function clearLineStateClasses(lineData) {
+    lineData.lyricElement.classList.remove(ANIMATING_CLASS);
+    for (const part of [lineData, ...lineData.parts]) {
+      togglePartClass(part, PAUSED_CLASS, false);
+    }
+  }
+  function updateWordStates(lineData, currentTime) {
+    const parts = lineData.parts;
+    const lineEndTime = lineData.time + lineData.duration;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      const endTime = part.duration > 0 ? part.time + part.duration : parts[i + 1]?.time ?? lineEndTime;
+      let state = WORD_STATE_PAST;
+      if (currentTime < part.time) {
+        state = WORD_STATE_UPCOMING;
+      } else if (currentTime < endTime) {
+        state = WORD_STATE_ACTIVE;
+      }
+      if (part.wordState === state)
+        continue;
+      part.wordState = state;
+      part.lyricElement.setAttribute(WORD_STATE_ATTR, state);
+      part.highlightElement.setAttribute(WORD_STATE_ATTR, state);
+    }
+  }
+
+  // web/node_modules/@braccato/core/dist/language.js
+  function normalizeLanguage(language) {
+    if (!language || language === "auto" || language === "und")
+      return "";
+    try {
+      return Intl.getCanonicalLocales(language.trim().replaceAll("_", "-"))[0] ?? "";
+    } catch {
+      return "";
+    }
+  }
+  function detectCjkLanguage(text) {
+    if (/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text))
+      return "ja";
+    if (new RegExp("\\p{Script=Hangul}", "u").test(text))
+      return "ko";
+    return null;
+  }
+  function isCjkLanguage(language) {
+    return /^(ja|ko|zh|yue)(-|$)|-(Hans|Hant)(-|$)/i.test(language);
+  }
+  function resolveLyricLanguages(lyrics, sourceLanguage) {
+    const language = normalizeLanguage(sourceLanguage);
+    const hints = lyrics.map((line) => line.isInstrumental ? null : detectCjkLanguage(line.words));
+    const songHints = new Set(hints.filter((hint) => hint !== null));
+    const songHint = songHints.size === 1 ? [...songHints][0] : "";
+    const fallback = isCjkLanguage(language) ? language : songHint || language;
+    return lyrics.map((line, index) => {
+      if (line.isInstrumental)
+        return "";
+      const hint = hints[index];
+      if (hint && fallback.split("-")[0] !== hint)
+        return hint;
+      if (new RegExp("\\p{Script=Han}", "u").test(line.words) && !isCjkLanguage(fallback))
+        return "";
+      return fallback;
+    });
+  }
+  function applyLyricLanguage(element, language) {
+    const normalized = normalizeLanguage(language);
+    element.lang = normalized;
+    const romanization = element.querySelector(`.${ROMANIZED_LYRICS_CLASS}`);
+    if (romanization)
+      romanization.lang = `${normalized ? new Intl.Locale(normalized).language : "und"}-Latn`;
+  }
+
+  // web/node_modules/@braccato/core/dist/letters.js
+  var graphemeSegmenter = new Intl.Segmenter(void 0, { granularity: "grapheme" });
+  var CONJUNCT_VIRAMA_REGEX = /(?:[\u{94D}\u{9CD}\u{A4D}\u{ACD}\u{B4D}\u{C4D}\u{CCD}\u{D4D}\u{1039}\u{17D2}\u{1A60}\u{1B44}\u{1BAB}\u{2D7F}\u{A9C0}\u{AAF6}\u{10A3F}\u{11046}\u{1107F}\u{110B9}\u{11133}\u{111C0}\u{11235}\u{1134D}\u{113D0}\u{11442}\u{114C2}\u{115BF}\u{1163F}\u{116B6}\u{11839}\u{1193E}\u{119E0}\u{11A47}\u{11A99}\u{11C3F}\u{11D45}\u{11D97}\u{11F42}]\u200D?|\u200D\u0DCA|\u0DCA\u200D)$/u;
+  var LETTER_START_REGEX = new RegExp("^\\p{L}", "u");
+  var MARK_START_REGEX = new RegExp("^\\p{M}", "u");
+  var joinsTamilLigature = (previous, next) => previous.endsWith("\u0B95\u0BCD") && next.startsWith("\u0BB7") || previous.endsWith("\u0BB8\u0BCD") && next.startsWith("\u0BB0\u0BC0");
+  function letterClusters(text) {
+    return joinLetterSegments(Array.from(graphemeSegmenter.segment(text), ({ segment }) => segment));
+  }
+  function joinLetterSegments(segments) {
+    const clusters = [];
+    let previous = "";
+    for (const segment of segments) {
+      const joins = clusters.length > 0 && (MARK_START_REGEX.test(segment) || LETTER_START_REGEX.test(segment) && (CONJUNCT_VIRAMA_REGEX.test(previous) || joinsTamilLigature(previous, segment)));
+      if (joins)
+        clusters[clusters.length - 1] += segment;
+      else
+        clusters.push(segment);
+      previous = segment;
+    }
+    return clusters;
+  }
+
+  // web/node_modules/@braccato/core/dist/seek.js
+  function getSeekTimeFromClick(event, lyricElement) {
+    const target = event.target;
+    const container = lyricElement.closest(`.${LYRICS_CLASS}`);
+    const isRichsync = container?.dataset.sync === "richsync";
+    if (!isRichsync || !event.altKey) {
+      return parseFloat(lyricElement.dataset.time || "0");
+    }
+    let wordElement = target.closest(`.${WORD_CLASS}`);
+    if (!wordElement) {
+      const words = lyricElement.querySelectorAll(`.${WORD_CLASS}`);
+      let closestDist = Infinity;
+      words.forEach((word) => {
+        const rect = word.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const dist = Math.hypot(event.clientX - centerX, event.clientY - centerY);
+        if (dist < closestDist) {
+          closestDist = dist;
+          wordElement = word;
+        }
+      });
+    }
+    if (!wordElement)
+      return null;
+    return parseFloat(wordElement.dataset.time || "0");
+  }
+
+  // web/node_modules/@braccato/core/dist/text.js
+  var testRtl = (text) => /[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Adlam}\p{Script=Mandaic}\p{Script=Hanifi_Rohingya}\p{Script=Samaritan}\p{Script=Yezidi}\p{Script=Mende_Kikakui}\p{Script=Old_Hungarian}]/u.test(text);
+  var testJoiningScript = (text) => /[\p{Script_Extensions=Arabic}\p{Script_Extensions=Syriac}\p{Script_Extensions=Nko}\p{Script_Extensions=Mongolian}\p{Script_Extensions=Adlam}\p{Script_Extensions=Mandaic}\p{Script_Extensions=Hanifi_Rohingya}]/u.test(text);
+  var SCRIPT_TO_LANG = [
+    [new RegExp("\\p{Script=Hiragana}|\\p{Script=Katakana}", "u"), "ja"],
+    [new RegExp("\\p{Script=Hangul}", "u"), "ko"],
+    [new RegExp("\\p{Script=Han}", "u"), "zh"],
+    [new RegExp("\\p{Script=Cyrillic}", "u"), "ru"],
+    [new RegExp("\\p{Script=Devanagari}", "u"), "hi"],
+    [new RegExp("\\p{Script=Arabic}", "u"), "ar"],
+    [new RegExp("\\p{Script=Thai}", "u"), "th"],
+    [new RegExp("\\p{Script=Greek}", "u"), "el"],
+    [new RegExp("\\p{Script=Hebrew}", "u"), "he"],
+    [new RegExp("\\p{Script=Bengali}", "u"), "bn"],
+    [new RegExp("\\p{Script=Tamil}", "u"), "ta"],
+    [new RegExp("\\p{Script=Telugu}", "u"), "te"],
+    [new RegExp("\\p{Script=Malayalam}", "u"), "ml"],
+    [new RegExp("\\p{Script=Kannada}", "u"), "kn"],
+    [new RegExp("\\p{Script=Gujarati}", "u"), "gu"],
+    [new RegExp("\\p{Script=Gurmukhi}", "u"), "pa"],
+    [new RegExp("\\p{Script=Sinhala}", "u"), "si"],
+    [new RegExp("\\p{Script=Myanmar}", "u"), "my"],
+    [new RegExp("\\p{Script=Georgian}", "u"), "ka"],
+    [new RegExp("\\p{Script=Khmer}", "u"), "km"],
+    [new RegExp("\\p{Script=Lao}", "u"), "lo"]
+  ];
+  var comparable = (text) => text.toLowerCase().replaceAll(new RegExp("\\p{P}", "gu"), "").trim();
+  var isSameText = (a, b) => comparable(a) === comparable(b);
+
+  // web/node_modules/@braccato/core/dist/inject.js
+  var disableRichsync = registerThemeSetting("blyrics-disable-richsync", false, true);
+  var lineSyncedAnimationDelay = registerThemeSetting("blyrics-line-synced-animation-delay", 50, true);
+  var longWordThreshold = registerThemeSetting("blyrics-long-word-threshold", 1500, true);
+  var longWordWrapThreshold = registerThemeSetting("blyrics-long-word-wrap-threshold", 10, true);
+  var letterWave = registerThemeSetting("blyrics-letter-wave", true, true);
+  var hideCredits = registerThemeSetting("blyrics-hide-credits", false, true);
+  var LTR_SCRIPT_REGEX = /[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}]/u;
+  var SPACE_REGEX = /^\s+$/u;
+  function findNearestAgent(lyrics, fromIndex) {
+    for (let i = fromIndex + 1; i < lyrics.length; i++) {
+      if (!lyrics[i].isInstrumental && lyrics[i].agent) {
+        return lyrics[i].agent;
+      }
+    }
+    for (let i = fromIndex - 1; i >= 0; i--) {
+      if (!lyrics[i].isInstrumental && lyrics[i].agent) {
+        return lyrics[i].agent;
+      }
+    }
+    return void 0;
+  }
+  function isNearestLyricRtl(lyrics, fromIndex) {
+    for (let i = fromIndex + 1; i < lyrics.length; i++) {
+      if (!lyrics[i].isInstrumental && lyrics[i].words?.trim()) {
+        return testRtl(lyrics[i].words);
+      }
+    }
+    for (let i = fromIndex - 1; i >= 0; i--) {
+      if (!lyrics[i].isInstrumental && lyrics[i].words?.trim()) {
+        return testRtl(lyrics[i].words);
+      }
+    }
+    return false;
+  }
+  function deriveSyncType(lyrics) {
+    const hasTimedParts = !disableRichsync.getBooleanValue() && lyrics.some((item) => !item.isInstrumental && item.parts?.some((part) => part.durationMs !== 0) === true);
+    if (hasTimedParts)
+      return "richsync";
+    return lyrics.every((item) => item.startTimeMs === 0) ? "none" : "synced";
+  }
+  function newPartData(part, span, highlight, wobbleElements, letterElements, highlightLetterElements, sweep) {
+    return {
+      time: part.startTimeMs / 1e3,
+      duration: part.durationMs / 1e3,
+      lyricElement: span,
+      highlightElement: highlight,
+      sweep,
+      sweepContext: highlight.classList.contains(WORD_HIGHLIGHT_CONTEXT_CLASS) ? {} : void 0,
+      letterElements,
+      highlightLetterElements,
+      wobbleElements,
+      animations: [],
+      wordState: WORD_STATE_UPCOMING
+    };
+  }
+  function newLineData(lyricElement, startTimeMs, durationMs) {
+    return {
+      lyricElement,
+      time: startTimeMs / 1e3,
+      duration: durationMs / 1e3,
+      parts: [],
+      isScrolled: false,
+      isAnimationPlayStatePlaying: false,
+      accumulatedOffsetMs: 0,
+      isAnimating: false,
+      lastAnimSetupAt: 0,
+      isSelected: false,
+      height: -1,
+      position: -1,
+      decorations: /* @__PURE__ */ new Map(),
+      animations: []
+    };
+  }
+  function detectDirection(text) {
+    for (const char of text) {
+      if (testRtl(char))
+        return "rtl";
+      if (LTR_SCRIPT_REGEX.test(char))
+        return "ltr";
+    }
+    return "auto";
+  }
+  function applyDirection(element, text) {
+    const direction = detectDirection(text);
+    element.dir = "auto";
+    if (direction === "rtl") {
+      element.classList.add(RTL_CLASS);
+      element.dataset.direction = "rtl";
+    } else if (direction === "ltr") {
+      element.dataset.direction = "ltr";
+    }
+  }
+  function applyBidiSensitivity(element, text) {
+    if (testRtl(text)) {
+      element.classList.add(BIDI_SENSITIVE_CLASS);
+    }
+  }
+  function splitPartIntoTokens(part) {
+    const chunks = part.words.match(/\s+|\S+/gu) ?? [];
+    if (chunks.length === 0)
+      return [];
+    const tokens = [];
+    let spaceChars = 0;
+    for (const chunk of chunks) {
+      if (SPACE_REGEX.test(chunk)) {
+        tokens.push({ kind: "space", text: chunk });
+        spaceChars += chunk.length;
+        continue;
+      }
+      tokens.push({
+        kind: "part",
+        text: chunk,
+        part: {
+          words: chunk,
+          isBackground: part.isBackground,
+          backgroundGroup: part.backgroundGroup,
+          explicit: part.explicit
+        }
+      });
+    }
+    const nonWhiteSpaceChars = part.words.length - spaceChars;
+    let cursor = 0;
+    return tokens.map((t2) => {
+      if (t2.kind === "part") {
+        const startTimeMs = part.startTimeMs + Math.round(part.durationMs * cursor / nonWhiteSpaceChars);
+        const endTimeMs = part.startTimeMs + Math.round(part.durationMs * (cursor + t2.text.length) / nonWhiteSpaceChars);
+        cursor += t2.text.length;
+        return {
+          ...t2,
+          part: {
+            ...t2.part,
+            startTimeMs,
+            durationMs: endTimeMs - startTimeMs
+          }
+        };
+      }
+      return t2;
+    });
+  }
+  function normalizeParts(parts) {
+    return parts.flatMap(splitPartIntoTokens);
+  }
+  function groupTokensByWord(tokens, splitBackgroundGroups) {
+    const groups = [];
+    let current = null;
+    const flush = () => {
+      if (current && current.tokens.length > 0) {
+        groups.push(current);
+      }
+      current = null;
+    };
+    for (const token of tokens) {
+      if (token.kind === "space") {
+        flush();
+        groups.push(token);
+        continue;
+      }
+      const isBackground = token.part?.isBackground === true;
+      const backgroundGroup = splitBackgroundGroups ? token.part?.backgroundGroup : void 0;
+      if (!current || current.isBackground !== isBackground || current.backgroundGroup !== backgroundGroup) {
+        flush();
+        current = { text: "", isBackground, backgroundGroup, tokens: [] };
+      }
+      current.text += token.text;
+      current.tokens.push(token);
+    }
+    flush();
+    return groups;
+  }
+  function appendLongWordBreaks(doc, span, clusters, threshold) {
+    if (clusters.length <= threshold) {
+      span.textContent = clusters.join("");
+      return false;
+    }
+    for (let i = 0; i < clusters.length; i += threshold) {
+      span.appendChild(doc.createTextNode(clusters.slice(i, i + threshold).join("")));
+      if (i + threshold < clusters.length) {
+        span.appendChild(doc.createElement("wbr"));
+      }
+    }
+    return true;
+  }
+  function appendLetters(doc, wordElement, chars) {
+    wordElement.style.setProperty("--letters", String(chars.length));
+    return chars.map((char) => {
+      const letter = doc.createElement("span");
+      letter.classList.add(LETTER_CLASS);
+      letter.textContent = char;
+      wordElement.appendChild(letter);
+      return letter;
+    });
+  }
+  function fillWordText(doc, host, clusters, wrapThreshold, perLetter, preserveJoining) {
+    if (perLetter)
+      return appendLetters(doc, host, clusters);
+    if (preserveJoining)
+      host.textContent = clusters.join("");
+    else
+      appendLongWordBreaks(doc, host, clusters, wrapThreshold);
+    return void 0;
+  }
+  var SWEEP_GLOW_RADII = ["wide", "tight"];
+  function createSweepCell(doc, host, fill) {
+    const mask = doc.createElement("span");
+    mask.classList.add(SWEEP_MASK_CLASS);
+    const text = doc.createElement("span");
+    text.classList.add(SWEEP_TEXT_CLASS);
+    mask.appendChild(text);
+    const letters = fill(text);
+    const glows = SWEEP_GLOW_RADII.map((radius) => {
+      const glow2 = doc.createElement("span");
+      glow2.classList.add(SWEEP_GLOW_CLASS, `${SWEEP_GLOW_CLASS}--${radius}`);
+      const glowLetters = fill(glow2);
+      text.appendChild(glow2);
+      return { glow: glow2, letters: glowLetters };
+    });
+    host.classList.add(SWEEP_CELL_CLASS);
+    host.appendChild(mask);
+    return { mask, text, letters, glows };
+  }
+  function createLetterSweepCells(doc, letters) {
+    return letters.map((letter) => {
+      const text = letter.textContent ?? "";
+      letter.textContent = "";
+      return createSweepCell(doc, letter, (into) => {
+        into.appendChild(doc.createTextNode(text));
+        return void 0;
+      });
+    });
+  }
+  function createTimedWordSpan(doc, part, wrapThreshold, perLetter, preserveJoining, atomic) {
+    const span = doc.createElement("span");
+    const highlight = doc.createElement("span");
+    highlight.classList.add(WORD_HIGHLIGHT_CLASS);
+    let sweep;
+    let letters;
+    let highlightLetters;
+    const clusters = perLetter || !preserveJoining && part.words.length > wrapThreshold ? letterClusters(part.words) : [part.words];
+    for (const wordElement of [span, highlight]) {
+      wordElement.classList.add(WORD_CLASS);
+      wordElement.dir = "auto";
+      if (part.durationMs === 0) {
+        wordElement.classList.add(ZERO_DURATION_ANIMATION_CLASS);
+        wordElement.classList.add(LINE_SYNCED_WORD_CLASS);
+      }
+      if (testRtl(part.words))
+        wordElement.classList.add(RTL_CLASS);
+      if (part.durationMs > longWordThreshold.getNumberValue())
+        wordElement.dataset.longWord = "true";
+      if (part.isBackground)
+        wordElement.classList.add(BACKGROUND_LYRIC_CLASS);
+      if (part.explicit)
+        wordElement.classList.add(EXPLICIT_WORD_CLASS);
+      if (perLetter) {
+        wordElement.classList.add("blyrics-word--lettered");
+        if (wordElement === highlight)
+          wordElement.classList.add(WORD_HIGHLIGHT_LETTERED_CLASS);
+      }
+      if (wordElement === highlight && atomic) {
+        const cell = createSweepCell(doc, highlight, (into) => fillWordText(doc, into, clusters, wrapThreshold, perLetter, preserveJoining));
+        sweep = [cell];
+        highlightLetters = cell.letters;
+      } else {
+        const collected = fillWordText(doc, wordElement, clusters, wrapThreshold, perLetter, preserveJoining);
+        if (wordElement === span)
+          letters = collected;
+        else
+          highlightLetters = collected;
+        if (wordElement === highlight && collected)
+          sweep = createLetterSweepCells(doc, collected);
+      }
+      if (wordElement === highlight && sweep)
+        highlight.classList.add(WORD_HIGHLIGHT_SWEEP_CLASS);
+      else if (wordElement === highlight)
+        highlight.classList.add(WORD_HIGHLIGHT_CONTEXT_CLASS);
+      wordElement.dataset.time = String(part.startTimeMs / 1e3);
+      wordElement.dataset.duration = String(part.durationMs / 1e3);
+      wordElement.dataset.content = part.words;
+      wordElement.setAttribute(WORD_STATE_ATTR, WORD_STATE_UPCOMING);
+      wordElement.style.setProperty("--blyrics-duration", part.durationMs + "ms");
+    }
+    return { span, highlight, letters, highlightLetters, sweep };
+  }
+  function createWordGroup(doc, group, lineData, wordsFlowInline) {
+    const wrapThreshold = Math.max(1, longWordWrapThreshold.getNumberValue());
+    const mixedDirection = testRtl(group.text) && [...group.text].some((char) => /[\p{Letter}\p{Number}]/u.test(char) && !testRtl(char));
+    const preserveJoining = testJoiningScript(group.text);
+    const perLetter = letterWave.getBooleanValue() && !preserveJoining && !mixedDirection;
+    const isLongGroup = group.text.length > wrapThreshold * 2 && letterClusters(group.text).length > wrapThreshold * 2;
+    const lyricGroup = doc.createElement("span");
+    const highlightGroup = doc.createElement("span");
+    const atomic = !wordsFlowInline && !isLongGroup;
+    for (const groupElement of [lyricGroup, highlightGroup]) {
+      groupElement.classList.add(WORD_GROUP_CLASS);
+      groupElement.dir = "auto";
+      groupElement.dataset.content = group.text;
+      if (isLongGroup) {
+        groupElement.classList.add(LONG_WORD_GROUP_CLASS);
+      }
+      if (group.isBackground) {
+        groupElement.classList.add(BACKGROUND_LYRIC_CLASS);
+      }
+    }
+    for (const token of group.tokens) {
+      if (token.kind === "space")
+        continue;
+      const { span, highlight, letters, highlightLetters, sweep } = createTimedWordSpan(doc, token.part, wrapThreshold, perLetter, preserveJoining, atomic);
+      const wobbleElements = lyricGroup.childNodes.length === 0 ? [lyricGroup, highlightGroup] : [];
+      lineData.parts.push(newPartData(token.part, span, highlight, wobbleElements, letters, highlightLetters, sweep));
+      lyricGroup.appendChild(span);
+      highlightGroup.appendChild(highlight);
+    }
+    return { lyricGroup, highlightGroup };
+  }
+  function createContentLine(doc, className, text) {
+    const line = doc.createElement("div");
+    line.classList.add(className);
+    applyDirection(line, text);
+    applyBidiSensitivity(line, text);
+    return line;
+  }
+  function createBidiRun(doc, text) {
+    const run = doc.createElement("span");
+    run.classList.add(BIDI_RUN_CLASS);
+    applyDirection(run, text);
+    return run;
+  }
+  function createHighlightRun(doc, text) {
+    const run = createBidiRun(doc, text);
+    run.classList.add(HIGHLIGHT_RUN_CLASS);
+    run.setAttribute("aria-hidden", "true");
+    return run;
+  }
+  function createSpaceNode(doc, text, isBackground) {
+    if (!isBackground)
+      return doc.createTextNode(text);
+    const span = doc.createElement("span");
+    span.classList.add(BACKGROUND_LYRIC_CLASS);
+    span.textContent = text;
+    return span;
+  }
+  function createLyricsLine(doc, parts, line, lyricElement, options = { splitBackgroundLine: true }) {
+    const lineText = parts.map((part) => part.words).join("");
+    const mainText = options.splitBackgroundLine ? parts.filter((part) => part.isBackground !== true).map((part) => part.words).join("") : lineText;
+    const backgroundTextOf = (group) => parts.filter((part) => part.isBackground === true && (part.backgroundGroup ?? 0) === group).map((part) => part.words).join("");
+    const main = createContentLine(doc, LINE_MAIN_CLASS, mainText);
+    const mainRun = createBidiRun(doc, mainText);
+    const mainHighlightRun = createHighlightRun(doc, mainText);
+    const groupedTokens = groupTokensByWord(normalizeParts(parts), options.splitBackgroundLine);
+    const backgroundRows = /* @__PURE__ */ new Map();
+    const backgroundRowOf = (group) => {
+      let row = backgroundRows.get(group);
+      if (!row) {
+        const text = backgroundTextOf(group);
+        row = {
+          line: createContentLine(doc, BACKGROUND_LINE_CLASS, text),
+          run: createBidiRun(doc, text),
+          highlightRun: createHighlightRun(doc, text),
+          used: false
+        };
+        row.line.appendChild(row.highlightRun);
+        row.line.appendChild(row.run);
+        backgroundRows.set(group, row);
+      }
+      return row;
+    };
+    backgroundRowOf(0);
+    let pendingForegroundSpace = "";
+    let pendingBackgroundSpace = "";
+    main.appendChild(mainHighlightRun);
+    main.appendChild(mainRun);
+    for (const item of groupedTokens) {
+      if ("kind" in item) {
+        pendingForegroundSpace += item.text;
+        pendingBackgroundSpace += item.text;
+      } else {
+        const shouldUseBackgroundLine = options.splitBackgroundLine && item.isBackground;
+        const backgroundRow = shouldUseBackgroundLine ? backgroundRowOf(item.backgroundGroup ?? 0) : null;
+        const target = backgroundRow ? backgroundRow.run : mainRun;
+        const highlightRun = backgroundRow ? backgroundRow.highlightRun : mainHighlightRun;
+        const pendingSpace = shouldUseBackgroundLine ? pendingBackgroundSpace : pendingForegroundSpace;
+        if (target.childNodes.length > 0 && pendingSpace.length > 0) {
+          target.appendChild(createSpaceNode(doc, pendingSpace, shouldUseBackgroundLine));
+          highlightRun.appendChild(createSpaceNode(doc, pendingSpace, shouldUseBackgroundLine));
+        }
+        const contentLine = backgroundRow ? backgroundRow.line : main;
+        const { lyricGroup, highlightGroup } = createWordGroup(doc, item, line, contentLine.classList.contains(BIDI_SENSITIVE_CLASS));
+        target.appendChild(lyricGroup);
+        highlightRun.appendChild(highlightGroup);
+        if (backgroundRow) {
+          backgroundRow.used = true;
+          pendingBackgroundSpace = "";
+        } else {
+          pendingForegroundSpace = "";
+        }
+      }
+    }
+    const usedBackgroundRows = [...backgroundRows].filter(([, row]) => row.used).sort(([a], [b]) => a - b).map(([, row]) => row);
+    lyricElement.appendChild(main);
+    for (const row of usedBackgroundRows)
+      lyricElement.appendChild(row.line);
+    return main;
+  }
+  function buildLineSyncedParts(item) {
+    const parts = [];
+    const tokens = item.words.match(/\s+|\S+/gu) ?? [];
+    let wordIndex = 0;
+    for (const token of tokens) {
+      const isSpace = SPACE_REGEX.test(token);
+      const startTimeMs = item.startTimeMs + wordIndex * lineSyncedAnimationDelay.getNumberValue();
+      parts.push({
+        startTimeMs,
+        words: token,
+        durationMs: 0
+      });
+      if (!isSpace) {
+        wordIndex += 1;
+      }
+    }
+    return parts;
+  }
+  function addSeekHandler(seek, lyricElement, allZero) {
+    if (allZero) {
+      lyricElement.style.cursor = "unset";
+      return;
+    }
+    lyricElement.addEventListener("click", (event) => {
+      const seekTime = getSeekTimeFromClick(event, lyricElement);
+      if (seekTime === null)
+        return;
+      seek(seekTime);
+    });
+  }
+  function repeatsLine(lyricElement, text) {
+    const mainRun = [
+      ...lyricElement.querySelector(`:scope > .${LINE_MAIN_CLASS}`)?.querySelectorAll(`:scope > .${BIDI_RUN_CLASS}`) ?? []
+    ].find((run) => !run.classList.contains(HIGHLIGHT_RUN_CLASS));
+    return mainRun?.textContent != null && isSameText(mainRun.textContent, text);
+  }
+  var decorationSources = /* @__PURE__ */ new WeakMap();
+  function rearmLineAnimations(lineData) {
+    lineData.isAnimating = false;
+  }
+  function removeDecoration(lineData, decoration) {
+    lineData.parts = lineData.parts.filter((part) => {
+      if (!decoration.contains(part.lyricElement))
+        return true;
+      releasePart(part);
+      return false;
+    });
+    decoration.remove();
+  }
+  function moveDecorations(from, to) {
+    const decorations = Array.from(from.lyricElement.childNodes).filter((node) => node.classList?.contains(ROMANIZED_LYRICS_CLASS) === true || node.classList?.contains(TRANSLATED_LYRICS_CLASS) === true);
+    for (const decoration of decorations) {
+      from.parts = from.parts.filter((part) => {
+        if (!decoration.contains(part.lyricElement))
+          return true;
+        releasePart(part);
+        to.parts.push(part);
+        return false;
+      });
+      to.lyricElement.appendChild(decoration);
+    }
+  }
+  function injectRomanization(doc, lyricElement, lineData, text, timedRomanization = null) {
+    const source = JSON.stringify([text, timedRomanization ?? null]);
+    const existing = lyricElement.querySelector(`:scope > .${ROMANIZED_LYRICS_CLASS}`);
+    if (existing !== null) {
+      if (decorationSources.get(existing) === source)
+        return;
+      removeDecoration(lineData, existing);
+    }
+    if (repeatsLine(lyricElement, text))
+      return;
+    const romanizedLine = doc.createElement("div");
+    romanizedLine.classList.add(ROMANIZED_LYRICS_CLASS, CONTENT_LINE_CLASS);
+    romanizedLine.dir = "auto";
+    const language = normalizeLanguage(lyricElement.lang);
+    romanizedLine.lang = `${language ? new Intl.Locale(language).language : "und"}-Latn`;
+    applyDirection(romanizedLine, text);
+    if (timedRomanization && timedRomanization.length > 0 && !disableRichsync.getBooleanValue()) {
+      createLyricsLine(doc, timedRomanization, lineData, romanizedLine, { splitBackgroundLine: false });
+      rearmLineAnimations(lineData);
+    } else {
+      romanizedLine.textContent = text;
+    }
+    decorationSources.set(romanizedLine, source);
+    const translation = lyricElement.querySelector(`.${TRANSLATED_LYRICS_CLASS}`);
+    lyricElement.insertBefore(romanizedLine, translation);
+  }
+  function injectTranslation(doc, lyricElement, text, language) {
+    const source = JSON.stringify([text, normalizeLanguage(language)]);
+    const existing = lyricElement.querySelector(`:scope > .${TRANSLATED_LYRICS_CLASS}`);
+    if (existing !== null) {
+      if (decorationSources.get(existing) === source)
+        return;
+      existing.remove();
+    }
+    if (repeatsLine(lyricElement, text))
+      return;
+    const translatedLine = doc.createElement("div");
+    translatedLine.classList.add(TRANSLATED_LYRICS_CLASS, CONTENT_LINE_CLASS);
+    translatedLine.dir = "auto";
+    translatedLine.lang = normalizeLanguage(language);
+    applyDirection(translatedLine, text);
+    translatedLine.textContent = text;
+    decorationSources.set(translatedLine, source);
+    lyricElement.appendChild(translatedLine);
+  }
 
   // web/node_modules/@braccato/core/dist/imageHighlights.js
   var imageHighlights = registerThemeSetting("blyrics-image-highlights", false, true);
-  function wrapImageHighlight(highlight) {
-    if (!imageHighlights.getBooleanValue())
-      return;
-    const doc = highlight.ownerDocument;
-    const paint = doc.createElement("span");
-    paint.classList.add("blyrics-image-fill");
-    while (highlight.firstChild)
-      paint.appendChild(highlight.firstChild);
-    const glow = doc.createElement("span");
-    glow.classList.add("blyrics-image-glow");
-    glow.setAttribute("aria-hidden", "true");
-    glow.appendChild(paint.cloneNode(true));
-    highlight.classList.add("blyrics-image-highlight");
-    highlight.appendChild(glow);
-    highlight.appendChild(paint);
-    return { glow, glowLetters: Array.from(glow.querySelectorAll(".blyrics--letter")) };
-  }
-  function alignImageGlowRun(run, parts) {
-    if (!imageHighlights.getBooleanValue())
-      return;
-    if (!run.parentElement?.classList.contains("blyrics-bidi-sensitive") && !run.querySelector(".blyrics-word-group-long"))
-      return;
-    const originals = Array.from(run.querySelectorAll(".blyrics-word-highlight"));
-    const byHighlight = new Map(parts.map((part) => [part.highlightElement, part]));
-    const glowRun = run.cloneNode(true);
-    glowRun.classList.add("blyrics-image-glow-run");
-    const copies = glowRun.querySelectorAll(".blyrics-word-highlight");
-    originals.forEach((original, index) => {
-      const part = byHighlight.get(original);
-      if (!part?.imageLayers)
-        return;
-      const copy = copies[index];
-      copy.replaceChildren(part.imageLayers.glow);
-      part.imageLayers.highlight = copy;
-      const group = original.parentElement;
-      if (group && part.wobbleElements.includes(group) && copy.parentElement)
-        part.wobbleElements.push(copy.parentElement);
-    });
-    run.parentElement.insertBefore(glowRun, run);
-  }
   function imageURL(value) {
     const match = /^url\(\s*(?:"([^"]*)"|'([^']*)'|([^\s'"()]+))\s*\)$/i.exec(value.trim());
     return match ? match[1] ?? match[2] ?? match[3] : null;
@@ -195,108 +1690,326 @@
     }
   }
 
-  // web/node_modules/@braccato/core/dist/instrumental.js
-  var INSTRUMENTAL_WAVE_PATH_HIGH = "M -4 3 Q 1 2 5 3 Q 10 4 14 3 Q 18 2 22 3 Q 26 4 30 3 L 30 4 L -4 4 Z";
-  var INSTRUMENTAL_WAVE_PATH_LOW = "M -4 3 Q 1 4 5 3 Q 10 2 14 3 Q 18 4 22 3 Q 26 2 30 3 L 30 4 L -4 4 Z";
-  var nextInstrumentalId = 0;
-  function createInstrumentalElement(doc, container, durationMs) {
-    container.classList.add("blyrics--instrumental");
-    container.style.setProperty("--blyrics-duration", `${durationMs}ms`);
-    const svgNS = "http://www.w3.org/2000/svg";
-    const svg = doc.createElementNS(svgNS, "svg");
-    svg.classList.add("blyrics--instrumental-icon");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    const defs = doc.createElementNS(svgNS, "defs");
-    const idSuffix = nextInstrumentalId++;
-    const filterId = `blyrics-glow-${idSuffix}`;
-    const clipId = `blyrics-wave-clip-${idSuffix}`;
-    const filter = doc.createElementNS(svgNS, "filter");
-    filter.setAttribute("id", filterId);
-    filter.setAttribute("x", "-100%");
-    filter.setAttribute("y", "-100%");
-    filter.setAttribute("width", "300%");
-    filter.setAttribute("height", "300%");
-    const feGaussianBlur = doc.createElementNS(svgNS, "feGaussianBlur");
-    feGaussianBlur.setAttribute("in", "SourceGraphic");
-    feGaussianBlur.setAttribute("stdDeviation", "5");
-    feGaussianBlur.setAttribute("result", "blur");
-    filter.appendChild(feGaussianBlur);
-    const feColorMatrix = doc.createElementNS(svgNS, "feColorMatrix");
-    feColorMatrix.setAttribute("in", "blur");
-    feColorMatrix.setAttribute("type", "matrix");
-    feColorMatrix.setAttribute("values", "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0");
-    feColorMatrix.setAttribute("result", "fadedBlur");
-    filter.appendChild(feColorMatrix);
-    const feMerge = doc.createElementNS(svgNS, "feMerge");
-    const feMergeNode1 = doc.createElementNS(svgNS, "feMergeNode");
-    feMergeNode1.setAttribute("in", "fadedBlur");
-    feMerge.appendChild(feMergeNode1);
-    const feMergeNode2 = doc.createElementNS(svgNS, "feMergeNode");
-    feMergeNode2.setAttribute("in", "SourceGraphic");
-    feMerge.appendChild(feMergeNode2);
-    filter.appendChild(feMerge);
-    defs.appendChild(filter);
-    const clipPath = doc.createElementNS(svgNS, "clipPath");
-    clipPath.setAttribute("id", clipId);
-    clipPath.classList.add("blyrics--wave-clip");
-    const waveRect = doc.createElementNS(svgNS, "path");
-    waveRect.classList.add("blyrics--wave-rect");
-    waveRect.setAttribute("d", "M -4 3.9 L 30 3.9 L 30 30 L -4 30 Z");
-    clipPath.appendChild(waveRect);
-    const wavePath = doc.createElementNS(svgNS, "path");
-    wavePath.classList.add("blyrics--wave-path");
-    wavePath.setAttribute("d", INSTRUMENTAL_WAVE_PATH_HIGH);
-    clipPath.appendChild(wavePath);
-    defs.appendChild(clipPath);
-    svg.appendChild(defs);
-    const bgPath = doc.createElementNS(svgNS, "path");
-    bgPath.classList.add("blyrics--instrumental-bg");
-    bgPath.setAttribute("d", "M10 21q-1.65 0-2.825-1.175T6 17t1.175-2.825T10 13q.575 0 1.063.138t.937.412V4q0-.425.288-.712T13 3h4q.425 0 .713.288T18 4v2q0 .425-.288.713T17 7h-3v10q0 1.65-1.175 2.825T10 21");
-    svg.appendChild(bgPath);
-    const g = doc.createElementNS(svgNS, "g");
-    g.setAttribute("filter", `url(#${filterId})`);
-    const fillPath = doc.createElementNS(svgNS, "path");
-    fillPath.classList.add("blyrics--instrumental-fill");
-    fillPath.setAttribute("clip-path", `url(#${clipId})`);
-    fillPath.setAttribute("d", "M10 21q-1.65 0-2.825-1.175T6 17t1.175-2.825T10 13q.575 0 1.063.138t.937.412V4q0-.425.288-.712T13 3h4q.425 0 .713.288T18 4v2q0 .425-.288.713T17 7h-3v10q0 1.65-1.175 2.825T10 21");
-    if (imageHighlights.getBooleanValue()) {
-      fillPath.classList.remove("blyrics--instrumental-fill");
-      fillPath.classList.add("blyrics-instrumental-color");
-      const fill = doc.createElementNS(svgNS, "g");
-      fill.classList.add("blyrics--instrumental-fill");
-      fill.appendChild(fillPath);
-      const shapeId = `${clipId}-image-shape`;
-      const shape = doc.createElementNS(svgNS, "clipPath");
-      shape.setAttribute("id", shapeId);
-      const shapePath = doc.createElementNS(svgNS, "path");
-      shapePath.setAttribute("d", fillPath.getAttribute("d"));
-      shape.appendChild(shapePath);
-      defs.appendChild(shape);
-      const silhouette = doc.createElementNS(svgNS, "g");
-      silhouette.setAttribute("clip-path", `url(#${shapeId})`);
-      const wave = doc.createElementNS(svgNS, "g");
-      wave.setAttribute("clip-path", `url(#${clipId})`);
-      const image = doc.createElementNS(svgNS, "image");
-      image.classList.add("blyrics-instrumental-image");
-      image.setAttribute("x", "0");
-      image.setAttribute("y", "0");
-      image.setAttribute("width", "24");
-      image.setAttribute("height", "24");
-      image.setAttribute("preserveAspectRatio", "none");
-      wave.appendChild(image);
-      silhouette.appendChild(wave);
-      fill.appendChild(silhouette);
-      g.appendChild(fill);
-      filter.setAttribute("color-interpolation-filters", "sRGB");
-      feGaussianBlur.setAttribute("stdDeviation", "1");
-      filter.removeChild(feColorMatrix);
-      feMergeNode1.setAttribute("in", "blur");
-    } else {
-      g.appendChild(fillPath);
+  // web/node_modules/@braccato/core/dist/engine/letterPlans.js
+  var LETTER_WAVE_CREST_OFFSET = 0.4;
+  var GECKO_REDRAW = isGecko();
+  var GECKO_REDRAW_KEYFRAMES = [{ opacity: 0 }, { opacity: -2e-3 }, { opacity: 0 }];
+  var GECKO_REDRAW_PERIOD_MS = 200;
+  function swipeRamp({ highlight }) {
+    return {
+      easing: highlight.swipeEasing,
+      startFrom: highlight.swipeStartFrom,
+      startTo: highlight.swipeStartTo,
+      endFrom: highlight.swipeEndFrom,
+      endTo: highlight.swipeEndTo
+    };
+  }
+  function linearForwardSwipeWindows(swipe2, letterCount, swipeDurationMs) {
+    if (swipe2.easing !== "linear" || swipeDurationMs <= 0 || letterCount <= 0)
+      return null;
+    const startFrom = Number.parseFloat(swipe2.startFrom);
+    const startTo = Number.parseFloat(swipe2.startTo);
+    const endFrom = Number.parseFloat(swipe2.endFrom);
+    const endTo = Number.parseFloat(swipe2.endTo);
+    const finite = [startFrom, startTo, endFrom, endTo].every(Number.isFinite);
+    if (!finite || startTo <= startFrom || endTo <= endFrom)
+      return null;
+    const startAt = (timeMs) => startFrom + (startTo - startFrom) * timeMs / swipeDurationMs;
+    const endAt = (timeMs) => endFrom + (endTo - endFrom) * timeMs / swipeDurationMs;
+    const timeWhenEndReaches = (value) => swipeDurationMs * (value - endFrom) / (endTo - endFrom);
+    const timeWhenStartReaches = (value) => swipeDurationMs * (value - startFrom) / (startTo - startFrom);
+    const windows = [];
+    for (let index = 0; index < letterCount; index++) {
+      const beginMs = clamp(timeWhenEndReaches(index / letterCount), 0, swipeDurationMs);
+      const finishMs = clamp(timeWhenStartReaches((index + 1) / letterCount), 0, swipeDurationMs);
+      windows.push({
+        delayMs: beginMs,
+        durationMs: Math.max(finishMs - beginMs, 1),
+        from: { start: startAt(beginMs), end: endAt(beginMs) },
+        to: { start: startAt(finishMs), end: endAt(finishMs) }
+      });
     }
-    svg.appendChild(g);
-    container.appendChild(svg);
-    return container;
+    return windows;
+  }
+  function planLetterWave(swipe2, letterCount, wordDurationMs, swipeDurationMs, swipeLeadMs, floatDurationMs) {
+    const windows = linearForwardSwipeWindows({ ...swipe2, easing: "linear" }, letterCount, swipeDurationMs);
+    if (!windows)
+      return evenlySpreadWaves(letterCount, wordDurationMs, floatDurationMs);
+    const riseMs = floatDurationMs * LETTER_WAVE_CREST_OFFSET;
+    return windows.map((window2) => {
+      const touchedMs = window2.delayMs - swipeLeadMs;
+      const lightingMs = window2.durationMs;
+      if (lightingMs > riseMs)
+        return { delayMs: touchedMs, durationMs: lightingMs / LETTER_WAVE_CREST_OFFSET };
+      return { delayMs: touchedMs + lightingMs - riseMs, durationMs: floatDurationMs };
+    });
+  }
+  function evenlySpreadWaves(letterCount, wordDurationMs, floatDurationMs) {
+    return Array.from({ length: letterCount }, (_, index) => ({
+      delayMs: wordDurationMs * index / letterCount,
+      durationMs: floatDurationMs
+    }));
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/sweepPlans.js
+  function swipeStops(swipe2) {
+    const startFrom = Number.parseFloat(swipe2.startFrom);
+    const startTo = Number.parseFloat(swipe2.startTo);
+    const fade = Number.parseFloat(swipe2.endTo) - startTo;
+    if (![startFrom, startTo, fade].every(Number.isFinite) || startTo <= startFrom)
+      return null;
+    return { startFrom, startTo, fade: Math.max(fade, 0) };
+  }
+  var SWEEP_REST = 1.5;
+  function cellFade(swipe2, span) {
+    const stops = swipeStops(swipe2);
+    return stops && span.width > 0 ? stops.fade / span.width : 0;
+  }
+  function cellReachedAt(swipe2, span) {
+    return startStopReaches(swipe2, span.start);
+  }
+  function cellLitAt(swipe2, span) {
+    return startStopReaches(swipe2, span.start + span.width);
+  }
+  function startStopReaches(swipe2, position) {
+    const stops = swipeStops(swipe2);
+    return stops ? clamp((position - stops.startFrom) / (stops.startTo - stops.startFrom), 0, 1) : 0;
+  }
+  function planCellSweep(swipe2, span, rtl) {
+    const stops = swipeStops(swipe2);
+    if (!stops || span.width <= 0)
+      return null;
+    const fade = stops.fade / span.width;
+    const maskWidths = 3 + fade;
+    const sign = rtl ? -1 : 1;
+    const startAt = (progress) => (stops.startFrom + (stops.startTo - stops.startFrom) * progress - span.start) / span.width;
+    const progressAt = (start) => (start * span.width + span.start - stops.startFrom) / (stops.startTo - stops.startFrom);
+    const offsets = [0, progressAt(-fade), progressAt(SWEEP_REST), 1].map((offset) => clamp(offset, 0, 1));
+    const unique = offsets.filter((offset, position) => offsets.indexOf(offset) === position);
+    const mask = [];
+    const text = [];
+    for (const offset of unique) {
+      const behind = sign * (clamp(startAt(offset), -fade, SWEEP_REST) - SWEEP_REST);
+      mask.push({ offset, translate: `${behind * 100 / maskWidths}% 0` });
+      text.push({ offset, translate: `${-behind * 100}% 0` });
+    }
+    return { mask, text };
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/contextSweep.js
+  function placeContextSweeps(line, config2) {
+    for (const part of line.parts)
+      if (part.sweepContext)
+        part.sweepContext.unplaced = true;
+    const placements = line.parts.flatMap((part) => part.sweepContext ? [measure(part)] : []);
+    for (const placement of placements)
+      if (placement)
+        place(placement, config2);
+  }
+  var WORD_COLORS = ["--blyrics-lyric-active-color", "--blyrics-glow-color"];
+  function measure(part) {
+    const word = part.lyricElement;
+    const run = word.closest(`.${BIDI_RUN_CLASS}:not(.${HIGHLIGHT_RUN_CLASS})`);
+    const contentLine = run?.parentElement;
+    if (!run || !contentLine || !part.sweepContext || typeof word.getClientRects !== "function")
+      return null;
+    const lineRect = contentLine.getBoundingClientRect();
+    const scale = contentLine.offsetWidth > 0 ? lineRect.width / contentLine.offsetWidth : 1;
+    const local = (rect) => ({
+      x: (rect.left - lineRect.left) / scale,
+      y: (rect.top - lineRect.top) / scale,
+      width: rect.width / scale,
+      height: rect.height / scale
+    });
+    const runBox = local(run.getBoundingClientRect());
+    const fragments = Array.from(word.getClientRects(), local).filter((box) => box.width > 0);
+    if (fragments.length === 0)
+      return null;
+    const style = word.ownerDocument.defaultView?.getComputedStyle(part.highlightElement);
+    const colors = WORD_COLORS.map((name) => [name, style?.getPropertyValue(name).trim() ?? ""]);
+    const key = JSON.stringify([[runBox, fragments].flat().map((box) => Object.values(box).map(Math.round)), colors]);
+    return { part, context: part.sweepContext, contentLine, run, runBox, fragments, colors, key };
+  }
+  function hasUnplacedContextSweeps(line) {
+    return line.isAnimating && line.parts.some((part) => part.sweepContext?.unplaced);
+  }
+  function place({ part, context, contentLine, run, runBox, fragments, colors, key }, config2) {
+    const placedAt = key + JSON.stringify(swipeRamp(config2));
+    if (context.placedAt === placedAt && context.host?.isConnected) {
+      context.unplaced = false;
+      return;
+    }
+    context.host?.remove();
+    const doc = contentLine.ownerDocument;
+    const host = doc.createElement("span");
+    host.classList.add(SWEEP_CONTEXT_CLASS);
+    host.setAttribute("aria-hidden", "true");
+    for (const [name, value] of colors)
+      if (value)
+        host.style.setProperty(name, value);
+    const wordIndex = Array.from(run.querySelectorAll(`.${WORD_CLASS}`)).indexOf(part.lyricElement);
+    const lineCopy = run.cloneNode(true);
+    lineCopy.classList.add(SWEEP_CLONE_CLASS);
+    lineCopy.querySelectorAll(`.${WORD_CLASS}`)[wordIndex]?.classList.add(SWEEP_TARGET_CLASS);
+    const wordWidth = fragments.reduce((sum, box) => sum + box.width, 0);
+    const direction = part.lyricElement.classList.contains(RTL_CLASS) ? "rtl" : "ltr";
+    let start = 0;
+    const cells = fragments.map((box) => {
+      const window2 = doc.createElement("span");
+      window2.classList.add(SWEEP_WINDOW_CLASS);
+      window2.dir = direction;
+      Object.assign(window2.style, {
+        left: `${box.x}px`,
+        top: `${box.y}px`,
+        width: `${box.width}px`,
+        height: `${box.height}px`
+      });
+      const span = { start: start / wordWidth, width: box.width / wordWidth };
+      start += box.width;
+      window2.style.setProperty("--blyrics-sweep-fade", String(cellFade(swipeRamp(config2), span)));
+      const cell = createSweepCell(doc, window2, (into) => {
+        const copy = lineCopy.cloneNode(true);
+        Object.assign(copy.style, {
+          left: `${runBox.x - box.x}px`,
+          top: `${runBox.y - box.y}px`,
+          width: `${runBox.width}px`
+        });
+        into.appendChild(copy);
+        return void 0;
+      });
+      host.appendChild(window2);
+      return { ...cell, span };
+    });
+    contentLine.appendChild(host);
+    context.host = host;
+    context.placedAt = placedAt;
+    context.unplaced = false;
+    part.sweep = cells.length > 0 ? cells : void 0;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/culling.js
+  var ONE_VIEWPORT_OVERSCAN = "100% 0px 100% 0px";
+  function setupLineCullObserver(engine) {
+    engine.lineCullObserver?.disconnect();
+    engine.lineCullObserver = null;
+    clearOffscreenLineCulling(engine);
+    const Observer = engine.window.IntersectionObserver;
+    if (engine.layout === "stage" || typeof Observer !== "function" || engine.lines.length === 0)
+      return;
+    engine.host.getScrollElement()?.style.setProperty("overflow-anchor", "none");
+    pinCulledLineHeights(engine);
+    const observer = new Observer((entries) => {
+      for (const entry of entries) {
+        const element = entry.target;
+        if (entry.isIntersecting) {
+          if (engine.culledLineElements.delete(element))
+            uncullLine(element);
+          restartUnplacedLine(engine, element);
+        } else if (!engine.culledLineElements.has(element)) {
+          cullLine(element);
+          engine.culledLineElements.add(element);
+        }
+      }
+    }, { root: null, rootMargin: ONE_VIEWPORT_OVERSCAN, threshold: 0 });
+    for (const line of engine.lines)
+      observer.observe(line.lyricElement);
+    engine.lineCullObserver = observer;
+  }
+  function restartUnplacedLine(engine, element) {
+    const line = engine.lines.find((candidate) => candidate.lyricElement === element);
+    if (line && hasUnplacedContextSweeps(line))
+      resetLineAnimationState(line);
+  }
+  function clearOffscreenLineCulling(engine) {
+    for (const element of engine.culledLineElements)
+      uncullLine(element);
+    engine.culledLineElements = /* @__PURE__ */ new Set();
+  }
+  function pinCulledLineHeights(engine) {
+    const renderedHeights = engine.lines.map((line) => line.lyricElement.offsetHeight);
+    engine.lines.forEach((line, index) => {
+      line.lyricElement.style.setProperty("contain-intrinsic-block-size", `auto ${renderedHeights[index]}px`);
+    });
+  }
+  function cullLine(element) {
+    element.style.setProperty("content-visibility", "auto");
+  }
+  function uncullLine(element) {
+    element.style.removeProperty("content-visibility");
+  }
+  function updateVisibleLyricWillChange(engine, lines, fromScrollTop, toScrollTop, viewportHeight) {
+    const visibleElements = /* @__PURE__ */ new Set();
+    for (const line of lines) {
+      if (!isLineVisibleDuringScroll(line, fromScrollTop, toScrollTop, viewportHeight))
+        continue;
+      line.lyricElement.style.setProperty("will-change", LINE_SCROLL_WILL_CHANGE_VALUE);
+      visibleElements.add(line.lyricElement);
+    }
+    for (const element of engine.visibleWillChangeElements) {
+      if (!visibleElements.has(element))
+        element.style.removeProperty("will-change");
+    }
+    engine.visibleWillChangeElements = visibleElements;
+  }
+  function clearVisibleLyricWillChange(engine) {
+    for (const element of engine.visibleWillChangeElements)
+      element.style.removeProperty("will-change");
+    engine.visibleWillChangeElements = /* @__PURE__ */ new Set();
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/motionPreference.js
+  var REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+  // web/node_modules/@braccato/core/dist/engine/decorationSlides.js
+  var DECORATION_SLIDE_MS = 350;
+  var DECORATION_SLIDE_EASING = "cubic-bezier(0.25, 1, 0.5, 1)";
+  var DECORATION_MIN_SHIFT_PX = 0.5;
+  function slideElementBy(engine, element, dy) {
+    addElementCurve(engine, element, {
+      kind: "slide",
+      startMs: timelineNow(engine),
+      durationMs: DECORATION_SLIDE_MS,
+      fromPx: dy,
+      toPx: 0,
+      easing: DECORATION_SLIDE_EASING,
+      endEasing: "linear"
+    });
+  }
+  function decorationSlideAllowed(engine, container) {
+    if (engine.window.matchMedia(REDUCED_MOTION_QUERY).matches)
+      return false;
+    return engine.window.getComputedStyle(container).getPropertyValue("--blyrics-animate-decoration-entry").trim() !== "0";
+  }
+  function lineDecorators(lineElement) {
+    return [
+      ...lineElement.querySelectorAll(`.${ROMANIZED_LYRICS_CLASS}`),
+      ...lineElement.querySelectorAll(`.${TRANSLATED_LYRICS_CLASS}`)
+    ];
+  }
+  function captureDecorationSlide(engine) {
+    const container = engine.lyricsContainer;
+    if (!container || engine.layout === "stage" || !decorationSlideAllowed(engine, container))
+      return null;
+    const before = engine.lines.map((line) => ({
+      line,
+      position: line.position,
+      decorations: new Map(line.decorations)
+    }));
+    return () => {
+      for (const { line, position, decorations } of before) {
+        const lineShift = position - line.position;
+        if (Math.abs(lineShift) >= DECORATION_MIN_SHIFT_PX)
+          slideElementBy(engine, line.lyricElement, lineShift);
+        for (const [element, was] of decorations) {
+          const now = line.decorations.get(element);
+          if (now === void 0)
+            continue;
+          const ownShift = was - now - lineShift;
+          if (Math.abs(ownShift) >= DECORATION_MIN_SHIFT_PX)
+            slideElementBy(engine, element, ownShift);
+        }
+      }
+    };
   }
 
   // web/node_modules/@braccato/core/dist/stage.js
@@ -412,114 +2125,1847 @@
     return { placements, box };
   }
 
-  // web/node_modules/@braccato/core/dist/util.js
-  function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-  }
-  function positiveModulo(value, divisor) {
-    return (value % divisor + divisor) % divisor;
-  }
-  function isGecko() {
-    return typeof CSS !== "undefined" && CSS.supports("-moz-appearance", "none");
-  }
-  function roundedMs(value) {
-    return Math.round(value * 10) / 10;
-  }
-  function toMs(cssDuration) {
-    if (!cssDuration)
-      return 0;
-    if (cssDuration.endsWith("ms")) {
-      return parseFloat(cssDuration.slice(0, -2));
-    } else if (cssDuration.endsWith("s")) {
-      return parseFloat(cssDuration.slice(0, -1)) * 1e3;
+  // web/node_modules/@braccato/core/dist/engine/stageMotion.js
+  var STAGE_MOTION = { durationMs: 380, easing: "cubic-bezier(0.2, 0, 0, 1)" };
+  var STAGE_OPACITY_PROPERTY = "--blyrics-stage-opacity";
+  var STAGE_FADE_IN_MS = 300;
+  var STAGE_FADE_IN_DELAY_MS = 70;
+  var STAGE_FADE_OUT_MS = 220;
+  var HANDOFF_BLUR = "blur(3px)";
+  var STAGE_GAP_EM = 0.32;
+  var ELEMENT_NODE = 1;
+  var TEXT_NODE = 3;
+  var UNMEASURED = { height: 0, left: 0, width: 0, originX: 0 };
+  var stageOpacityRegistrations = /* @__PURE__ */ new WeakSet();
+  function applyStage(engine, timeS, instant) {
+    const container = engine.lyricsContainer;
+    if (!container)
+      return;
+    registerStageOpacity(engine);
+    const { elements, items } = stageElements(engine);
+    const roles = planStage(items, timeS);
+    const key = roles.join(",");
+    if (key === engine.stageKey && !instant)
+      return;
+    engine.stageKey = key;
+    const remeasured = engine.stageRemeasured;
+    engine.stageRemeasured = false;
+    const metrics = elements.map((element) => engine.stageMetrics.get(element) ?? UNMEASURED);
+    const geometry = {
+      stageHeight: container.clientHeight,
+      gap: engine.stageFontSize * STAGE_GAP_EM,
+      activeScale: getCSSNumber(engine, container, "--blyrics-active-scale", 1)
+    };
+    const floorShift = remeasured && engine.stageHeight > 0 ? geometry.stageHeight - engine.stageHeight : 0;
+    engine.stageHeight = geometry.stageHeight;
+    const previousYs = elements.map((element) => {
+      const y = engine.stageY.get(element);
+      return y === void 0 ? null : y + floorShift;
+    });
+    const { placements, box } = layoutStage(roles, items, metrics, previousYs, geometry);
+    const moves = prepareStageMoves(engine, elements, roles, placements, metrics, geometry, { remeasured, instant });
+    const reduced = engine.window.matchMedia(REDUCED_MOTION_QUERY).matches;
+    elements.forEach((element, index) => {
+      if (element.dataset.stageRole !== roles[index])
+        element.dataset.stageRole = roles[index];
+    });
+    for (const move of moves)
+      placeStageElement(engine, move, instant, reduced);
+    if (!sameBox(box, engine.stageBox)) {
+      engine.stageBox = box;
+      engine.host.onStageLayout?.(box);
     }
+  }
+  function prepareStageMoves(engine, elements, roles, placements, metrics, geometry, { remeasured, instant }) {
+    const moves = [];
+    elements.forEach((element, index) => {
+      const placement = placements[index];
+      const role = element.dataset.stageRole;
+      const previousY = engine.stageY.get(element);
+      const wasVisible = role !== void 0 && isStageRoleVisible(role);
+      const onScreen = placement.visible || element.dataset.stageVisible !== void 0;
+      if (remeasured && !instant && onScreen && role === roles[index]) {
+        if (previousY !== placement.y)
+          snapStageElement(engine, element, placement.y);
+        return;
+      }
+      const unchanged = previousY !== void 0 && wasVisible === placement.visible && (!placement.visible || previousY === placement.y);
+      if (unchanged && !instant)
+        return;
+      const risesFromBelowFloor = role === "queued" && placement.visible;
+      moves.push({
+        element,
+        placement,
+        wasVisible,
+        fromY: risesFromBelowFloor ? queuedStageY(geometry.stageHeight, metrics[index].height, geometry.gap) : currentTranslateY(engine, element, previousY ?? placement.y),
+        fromOpacity: Number(engine.window.getComputedStyle(element).opacity) || 0
+      });
+    });
+    return moves;
+  }
+  function placeStageElement(engine, { element, placement, wasVisible, fromY, fromOpacity }, instant, reduced) {
+    engine.stageMoves.get(element)?.cancel();
+    engine.stageFades.get(element)?.cancel();
+    engine.stageMoves.set(element, element.animate([{ translate: `0 ${fromY}px` }, { translate: `0 ${placement.y}px` }], {
+      duration: instant || reduced ? 0 : STAGE_MOTION.durationMs,
+      easing: STAGE_MOTION.easing,
+      fill: "forwards"
+    }));
+    const showing = placement.visible;
+    const fadeMs = instant ? 0 : showing ? STAGE_FADE_IN_MS : STAGE_FADE_OUT_MS;
+    const delayMs = showing && !instant ? STAGE_FADE_IN_DELAY_MS : 0;
+    if (showing)
+      element.dataset.stageVisible = "";
+    else if (fadeMs === 0)
+      delete element.dataset.stageVisible;
+    const fade = element.animate([{ [STAGE_OPACITY_PROPERTY]: fromOpacity }, { [STAGE_OPACITY_PROPERTY]: showing ? 1 : 0 }], {
+      duration: fadeMs,
+      delay: delayMs,
+      easing: showing ? "ease-out" : "ease",
+      // Backwards fill preserves the sampled opacity during the replacement fade's delay.
+      fill: "both"
+    });
+    if (!showing && fadeMs > 0) {
+      fade.onfinish = () => {
+        if (engine.stageFades.get(element) === fade)
+          delete element.dataset.stageVisible;
+      };
+    }
+    engine.stageFades.set(element, fade);
+    engine.stageY.set(element, placement.y);
+    engine.stageBlurs.get(element)?.cancel();
+    engine.stageBlurs.delete(element);
+    if (fadeMs === 0 || reduced || wasVisible === showing)
+      return;
+    const blurs = showing ? [HANDOFF_BLUR, "none"] : ["none", HANDOFF_BLUR];
+    engine.stageBlurs.set(element, element.animate(blurs.map((filter) => ({ filter })), {
+      duration: fadeMs,
+      delay: showing ? STAGE_FADE_IN_DELAY_MS : 0,
+      easing: showing ? "ease-out" : "ease",
+      // Add to the theme's filter; release the blur once focused.
+      composite: "add",
+      fill: showing ? "backwards" : "forwards"
+    }));
+  }
+  function snapStageElement(engine, element, y) {
+    engine.stageMoves.get(element)?.cancel();
+    engine.stageMoves.set(element, element.animate([{ translate: `0 ${y}px` }], { duration: 0, fill: "forwards" }));
+    engine.stageY.set(element, y);
+  }
+  function registerStageOpacity(engine) {
+    const css = engine.window.CSS;
+    if (stageOpacityRegistrations.has(engine.window) || typeof css?.registerProperty !== "function")
+      return;
+    stageOpacityRegistrations.add(engine.window);
+    try {
+      css.registerProperty({ name: STAGE_OPACITY_PROPERTY, syntax: "<number>", inherits: false, initialValue: "0" });
+    } catch (error) {
+      engine.host.log("Stage opacity property was already registered", error);
+    }
+  }
+  function measureStage(engine) {
+    engine.stageMetrics.clear();
+    const container = engine.lyricsContainer;
+    if (!container)
+      return;
+    engine.stageFontSize = Number.parseFloat(engine.window.getComputedStyle(container).fontSize) || 16;
+    const range = engine.document.createRange();
+    for (const element of stageElements(engine).elements) {
+      const style = engine.window.getComputedStyle(element);
+      const originX = originXOf(style.textAlign);
+      const padding = {
+        left: Number.parseFloat(style.paddingLeft) || 0,
+        right: Number.parseFloat(style.paddingRight) || 0
+      };
+      const contentRects = collectContentRects(engine, range, element, contentWidthOf(element, style), []);
+      const span = stageTextSpan(element.offsetLeft, element.offsetWidth, element.getBoundingClientRect(), contentRects, padding, originX);
+      engine.stageMetrics.set(element, { height: element.offsetHeight, left: span.left, width: span.width, originX });
+    }
+    forceStageReplan(engine);
+    engine.stageRemeasured = true;
+  }
+  function replaceStageElements(engine, dropped, previousOf) {
+    for (const [line, previous] of previousOf)
+      carryStageState(engine, previous.lyricElement, line.lyricElement);
+    for (const line of dropped)
+      forgetStageElement(engine, line.lyricElement);
+    forceStageReplan(engine);
+  }
+  function carryStageState(engine, from, to) {
+    const role = from.dataset.stageRole;
+    const y = engine.stageY.get(from);
+    if (role === void 0 || y === void 0)
+      return;
+    to.dataset.stageRole = role;
+    if (from.dataset.stageVisible !== void 0)
+      to.dataset.stageVisible = "";
+    const move = continueAnimation(engine.stageMoves.get(from), to);
+    if (move === null) {
+      snapStageElement(engine, to, y);
+    } else {
+      engine.stageMoves.set(to, move);
+      engine.stageY.set(to, y);
+    }
+    const visible = isStageRoleVisible(role);
+    const fade = continueAnimation(engine.stageFades.get(from), to) ?? to.animate([{ [STAGE_OPACITY_PROPERTY]: visible ? 1 : 0 }], { duration: 0, fill: "forwards" });
+    if (!visible) {
+      fade.onfinish = () => {
+        if (engine.stageFades.get(to) === fade)
+          delete to.dataset.stageVisible;
+      };
+    }
+    engine.stageFades.set(to, fade);
+    const blur = continueAnimation(engine.stageBlurs.get(from), to);
+    if (blur !== null)
+      engine.stageBlurs.set(to, blur);
+  }
+  function forgetStageElement(engine, element) {
+    for (const animations of [engine.stageMoves, engine.stageFades, engine.stageBlurs]) {
+      animations.get(element)?.cancel();
+      animations.delete(element);
+    }
+    engine.stageY.delete(element);
+    engine.stageMetrics.delete(element);
+  }
+  function resetStage(engine) {
+    for (const animations of [engine.stageMoves, engine.stageFades, engine.stageBlurs]) {
+      for (const animation of animations.values())
+        animation.cancel();
+      animations.clear();
+    }
+    engine.stageMetrics.clear();
+    engine.stageY.clear();
+    forceStageReplan(engine);
+    engine.stageHeight = 0;
+    if (engine.stageBox !== null) {
+      engine.stageBox = null;
+      engine.host.onStageLayout?.(null);
+    }
+  }
+  function currentTranslateY(engine, element, fallback) {
+    const y = Number.parseFloat(engine.window.getComputedStyle(element).translate.split(" ")[1] ?? "");
+    return Number.isFinite(y) ? y : fallback;
+  }
+  function forceStageReplan(engine) {
+    engine.stageKey = "";
+  }
+  function continueAnimation(animation, element) {
+    const effect = animation?.effect;
+    if (!animation || typeof effect?.getKeyframes !== "function")
+      return null;
+    if (animation.playState === "finished" || animation.playState === "idle")
+      return null;
+    const continued = element.animate(effect.getKeyframes(), { ...effect.getTiming(), composite: effect.composite });
+    continued.playbackRate = animation.playbackRate;
+    continued.currentTime = animation.currentTime;
+    if (animation.playState === "paused")
+      continued.pause();
+    return continued;
+  }
+  function stageElements(engine) {
+    const elements = [];
+    const items = [];
+    let lastEnd = 0;
+    for (const line of engine.lines) {
+      const end = line.time + line.duration;
+      lastEnd = Math.max(lastEnd, end);
+      elements.push(line.lyricElement);
+      items.push({ kind: stageItemKind(line.lyricElement), start: line.time, end });
+    }
+    const credits = engine.lyricsContainer?.querySelector(`:scope > .${CREDITS_CLASS}`);
+    if (credits) {
+      elements.push(credits);
+      items.push({ kind: "credits", start: lastEnd, end: Number.POSITIVE_INFINITY });
+    }
+    return { elements, items };
+  }
+  function stageItemKind(element) {
+    if (element.dataset.instrumental === "true")
+      return "instrumental";
+    if (element.dataset.blank === "true")
+      return "blank";
+    return "line";
+  }
+  function isStageRoleVisible(role) {
+    return role !== "queued" && role !== "gone";
+  }
+  function sameBox(a, b) {
+    if (a === null || b === null)
+      return a === b;
+    return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+  }
+  function originXOf(align) {
+    if (align === "center")
+      return 0.5;
+    if (align === "right" || align === "end")
+      return 1;
     return 0;
   }
-  function getRelativeBounds(parent, child) {
-    const parentBound = parent.getBoundingClientRect();
-    const childBound = child.getBoundingClientRect();
-    return new DOMRect(childBound.x - parentBound.x, childBound.y - parentBound.y, childBound.width, childBound.height);
+  function contentWidthOf(element, style) {
+    const padding = (Number.parseFloat(style.paddingLeft) || 0) + (Number.parseFloat(style.paddingRight) || 0);
+    return element.clientWidth - padding;
   }
-  function getRelativeLayoutBounds(parent, child) {
-    let x = 0;
-    let y = 0;
-    let element = child;
-    while (element && element !== parent) {
-      x += element.offsetLeft;
-      y += element.offsetTop;
-      element = element.offsetParent;
+  function fillsWidth(element, contentWidth) {
+    return element.offsetWidth >= contentWidth - 1;
+  }
+  function collectContentRects(engine, range, node, contentWidth, rects) {
+    for (const child of node.childNodes) {
+      if (child.nodeType === TEXT_NODE) {
+        range.selectNodeContents(child);
+        rects.push(...range.getClientRects());
+        continue;
+      }
+      if (child.nodeType !== ELEMENT_NODE)
+        continue;
+      const element = child;
+      const style = engine.window.getComputedStyle(element);
+      if (style.display === "none")
+        continue;
+      if (style.display === "contents")
+        collectContentRects(engine, range, element, contentWidth, rects);
+      else if (style.display.startsWith("inline"))
+        rects.push(...element.getClientRects());
+      else if (!fillsWidth(element, contentWidth))
+        rects.push(element.getBoundingClientRect());
+      else
+        collectContentRects(engine, range, element, contentWidthOf(element, style), rects);
     }
-    if (element !== parent) {
-      return getRelativeBounds(parent, child);
-    }
-    return new DOMRect(x, y, Math.max(child.offsetWidth, child.scrollWidth), Math.max(child.offsetHeight, child.scrollHeight));
+    return rects;
   }
 
-  // web/node_modules/@braccato/core/dist/engine.js
-  var NO_LYRICS_ELEMENT_LOG = "No lyrics element found on the page, skipping lyrics injection";
-  var LYRICS_CHECK_INTERVAL_ERROR = "Error in lyrics check interval:";
-  var PAUSING_LYRICS_SCROLL_LOG = "Pausing Lyrics Autoscroll Due to User Scroll";
-  var USER_SCROLL_RESUME_DELAY_MS = 25e3;
-  var PASSIVE_USER_SCROLL_RESUME_DELAY_MS = 5e3;
-  var LYRIC_ENDING_THRESHOLD_S = registerThemeSetting("blyrics-lyric-ending-threshold-s", 0.5);
+  // web/node_modules/@braccato/core/dist/engine/renderedLines.js
+  function clearOnScreenLyrics(engine) {
+    if (!engine.lyricsContainer)
+      return false;
+    engine.lyricsContainer.replaceChildren();
+    resetStage(engine);
+    return true;
+  }
+  function getRenderedLines(engine) {
+    return engine.lines;
+  }
+  function getRenderedSyncType(engine) {
+    return engine.syncType;
+  }
+  function clearLyrics(engine) {
+    engine.scrollPos = -1;
+    dropPendingLineScroll(engine);
+    stopAllElementMotion(engine);
+    clearVisibleLyricWillChange(engine);
+    engine.lineCullObserver?.disconnect();
+    engine.lineCullObserver = null;
+    clearOffscreenLineCulling(engine);
+    for (const line of engine.lines) {
+      resetLineAnimationState(line);
+      line.isSelected = false;
+    }
+    engine.skipScrollsDecayTimes = [];
+    engine.lastScrollElements = [];
+    engine.pinnedScrollLine = null;
+    engine.lastScrollDebugContext.activeElms = [];
+    engine.lastScrollDebugContext.centers = [];
+    engine.passiveScrollAccumulatedTime = 0;
+    engine.passiveLastWallTime = 0;
+    engine.passiveScrollTop = null;
+    stopPassiveScrollLoop(engine);
+    engine.lines = [];
+    engine.cachedFooterItem = null;
+    engine.cachedCreditsItem = null;
+    engine.creditsFocused = false;
+    engine.lyricsContainer = null;
+    engine.waveAnimationPool.length = 0;
+    resetStage(engine);
+  }
+  function replaceRenderedLines(engine, lines, dropped, previousOf) {
+    for (const [line, previous] of previousOf)
+      carrySelection(line, previous);
+    dropPendingLineScroll(engine);
+    const droppedElements = new Set(dropped.map((line) => line.lyricElement));
+    for (const element of droppedElements)
+      stopElementMotion(engine, element);
+    for (const line of dropped) {
+      resetLineAnimationState(line);
+      line.isSelected = false;
+      engine.visibleWillChangeElements.delete(line.lyricElement);
+      engine.culledLineElements.delete(line.lyricElement);
+    }
+    const successorOf = /* @__PURE__ */ new Map();
+    for (const [line, previous] of previousOf)
+      successorOf.set(previous, line);
+    const carry = (line) => successorOf.get(line) ?? (droppedElements.has(line.lyricElement) ? null : line);
+    const carryAll = (from) => from.map(carry).filter((line) => line !== null);
+    engine.lastScrollElements = carryAll(engine.lastScrollElements);
+    engine.lastScrollDebugContext.activeElms = carryAll(engine.lastScrollDebugContext.activeElms);
+    engine.pinnedScrollLine = engine.pinnedScrollLine === null ? null : carry(engine.pinnedScrollLine);
+    engine.lines = lines;
+    if (engine.layout === "stage")
+      replaceStageElements(engine, dropped, previousOf);
+  }
+  function carrySelection(line, previous) {
+    line.isScrolled = previous.isScrolled;
+    line.isSelected = previous.isSelected;
+    togglePartClass(line, CURRENT_LYRICS_CLASS, previous.lyricElement.classList.contains(CURRENT_LYRICS_CLASS));
+    togglePartClass(line, ANIMATING_CLASS, previous.lyricElement.classList.contains(ANIMATING_CLASS));
+  }
+  function settleSwappedLines(engine, before, scrollTopBefore) {
+    const container = engine.lyricsContainer;
+    const scroller = engine.host.getScrollElement();
+    if (container === null || scroller === null || engine.layout === "stage")
+      return;
+    const now = Date.now();
+    const followed = followedLine(engine, before, scrollTopBefore, now);
+    const followedWas = followed === void 0 ? void 0 : before.get(followed)?.position;
+    if (followed !== void 0 && followedWas !== void 0 && isMeasured(followedWas) && isMeasured(followed.position)) {
+      const moved = followed.position - followedWas;
+      if (Math.abs(moved) >= DECORATION_MIN_SHIFT_PX)
+        scroller.scrollTop = scrollTopBefore + moved;
+    }
+    const appliedShift = scroller.scrollTop - scrollTopBefore;
+    if (appliedShift !== 0) {
+      noteEngineScrollEvent(engine, now);
+      if (engine.scrollPos >= 0)
+        engine.scrollPos += appliedShift;
+    }
+    if (!decorationSlideAllowed(engine, container))
+      return;
+    for (const line of engine.lines) {
+      const was = before.get(line);
+      if (was === void 0 || !isMeasured(was.position) || !isMeasured(line.position))
+        continue;
+      const onScreenShift = was.position + was.motionOffset - line.position + appliedShift;
+      if (Math.abs(onScreenShift) >= DECORATION_MIN_SHIFT_PX)
+        slideElementBy(engine, line.lyricElement, onScreenShift);
+    }
+  }
+  function followedLine(engine, before, scrollTopBefore, now) {
+    const readerOwnsScroll = engine.scrollResumeTime > now;
+    if (readerOwnsScroll) {
+      return engine.lines.find((line) => {
+        const was = before.get(line);
+        return was !== void 0 && was.position + was.height > scrollTopBefore;
+      });
+    }
+    return engine.lastScrollElements.findLast((line) => before.has(line)) ?? engine.lines.find((line) => before.has(line) && line.isScrolled);
+  }
+  function isMeasured(position) {
+    return position >= 0;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/scrollViewport.js
+  var TARGET_SCROLL_POSITION_RATIO = registerThemeSetting("blyrics-target-scroll-pos-ratio", 0.37);
+  var NO_SCROLL_INSETS = { top: 0, bottom: 0 };
+  function getTargetScrollRatio(engine, lyricsElement) {
+    const themed = Number.parseFloat(getCSSValue(engine, lyricsElement, "--blyrics-target-scroll-pos-ratio", ""));
+    return Number.isFinite(themed) ? clamp(themed, 0, 1) : TARGET_SCROLL_POSITION_RATIO.getNumberValue();
+  }
+  function setupTabRendererObserver(engine, element) {
+    engine.tabRendererResizeObserver?.disconnect();
+    engine.tabRendererResizeObserver = new engine.window.ResizeObserver(() => {
+      dropPendingLineScroll(engine);
+      if (element.isConnected)
+        measureScrollViewport(engine, element);
+    });
+    engine.tabRendererResizeObserver.observe(element);
+    engine.observedTabRenderer = element;
+    measureScrollViewport(engine, element);
+  }
+  function measureScrollViewport(engine, element) {
+    const height = element.getBoundingClientRect().height;
+    const { scrollPaddingTop, scrollPaddingBottom } = engine.window.getComputedStyle(element);
+    engine.cachedTabRendererHeight = height;
+    engine.cachedScrollInsets = resolveScrollInsets(scrollPaddingTop, scrollPaddingBottom, height);
+  }
+  function resolveScrollInsets(scrollPaddingTop, scrollPaddingBottom, viewportHeight) {
+    const top = resolveScrollInset(scrollPaddingTop, viewportHeight);
+    const bottom = resolveScrollInset(scrollPaddingBottom, viewportHeight);
+    const leavesABand = top + bottom < viewportHeight;
+    return leavesABand ? { top, bottom } : NO_SCROLL_INSETS;
+  }
+  function resolveScrollInset(value, viewportHeight) {
+    const amount = Number.parseFloat(value);
+    if (!Number.isFinite(amount) || amount <= 0)
+      return 0;
+    return value.trim().endsWith("%") ? viewportHeight * amount / 100 : amount;
+  }
+  function findScrollAnchor(sungLines, scrollTime) {
+    const latestRunning = sungLines.findLast((line) => line.time <= scrollTime && scrollTime < line.time + line.duration);
+    return latestRunning ?? sungLines.findLast((line) => line.time <= scrollTime) ?? sungLines[0];
+  }
+  function computeActiveLinesScrollTop(sungLines, anchor, viewportHeight, insets, targetOffset) {
+    const first = sungLines[0];
+    const last = sungLines[sungLines.length - 1];
+    const visibleBottom = viewportHeight - insets.bottom;
+    const clampToLineBounds = (scrollTop, line) => Math.min(Math.max(scrollTop, line.position + line.height - visibleBottom), line.position - insets.top);
+    const averageCentre = sungLines.reduce((total, line) => total + line.position + line.height / 2, 0) / sungLines.length;
+    const showingLast = clampToLineBounds(averageCentre - targetOffset, last);
+    const showingFirstTop = Math.min(showingLast, first.position - insets.top);
+    return {
+      scrollTop: clampToLineBounds(showingFirstTop, anchor),
+      overflowsBand: last.position + last.height - first.position > visibleBottom - insets.top
+    };
+  }
+  function computeScrollPadding(measurements) {
+    const { viewportHeight, targetScrollRatio, lastLineCentre } = measurements;
+    const contentHeight = measurements.contentHeightWithoutBottomPadding;
+    const belowTarget = viewportHeight * (1 - targetScrollRatio);
+    const top = Math.max(0, viewportHeight * targetScrollRatio - measurements.firstLineHeight / 2);
+    const lastLineAtTarget = (lastLineCentre === null ? viewportHeight : lastLineCentre + belowTarget) - contentHeight;
+    const fillsViewport = viewportHeight - contentHeight;
+    const unrenderedFloor = belowTarget - (measurements.footerHeight + measurements.lastLineHeight / 2);
+    const bottom = Math.max(lastLineAtTarget, fillsViewport, unrenderedFloor, 0);
+    return { top, bottom: Math.ceil(bottom) };
+  }
+  function applyScrollPadding(engine) {
+    const lyricsElement = engine.lyricsContainer;
+    const scroller = engine.host.getScrollElement();
+    if (!lyricsElement || !scroller)
+      return;
+    if (hasNoLyricsPlaceholder(engine)) {
+      setScrollPadding(engine, lyricsElement, { top: 0, bottom: 0 });
+      return;
+    }
+    const bounds = (element) => element ? getRelativeLayoutBounds(lyricsElement, element) : null;
+    const child = (className) => lyricsElement.querySelector(`:scope > .${className}`);
+    const lines = lyricsElement.querySelectorAll(`:scope > .${LINE_CLASS}`);
+    const creditsBounds = bounds(child(CREDITS_CLASS));
+    const lastTargetBounds = creditsBounds && creditsBounds.height > 0 ? creditsBounds : bounds(lines[lines.length - 1] ?? null);
+    const currentBottomPadding = Number.parseFloat(engine.window.getComputedStyle(lyricsElement).paddingBottom) || 0;
+    setScrollPadding(engine, lyricsElement, computeScrollPadding({
+      viewportHeight: scroller.getBoundingClientRect().height,
+      targetScrollRatio: getTargetScrollRatio(engine, lyricsElement),
+      contentHeightWithoutBottomPadding: Math.max(0, lyricsElement.scrollHeight - currentBottomPadding),
+      firstLineHeight: bounds(lines[0] ?? null)?.height ?? 0,
+      lastLineCentre: lastTargetBounds ? lastTargetBounds.y + lastTargetBounds.height / 2 : null,
+      lastLineHeight: lastTargetBounds?.height ?? 0,
+      footerHeight: bounds(child(FOOTER_CLASS))?.height ?? 0
+    }));
+  }
+  function setScrollPadding(engine, lyricsElement, { top, bottom }) {
+    const rootStyle = engine.document.documentElement.style;
+    rootStyle.setProperty("--blyrics-padding-top", `${top}px`);
+    rootStyle.setProperty("--blyrics-padding-bottom", `${bottom}px`);
+    lyricsElement.style.setProperty("padding-bottom", `${bottom}px`);
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/glow.js
+  var HALF_8BIT_ALPHA_STEP = 0.5 / 255;
+  function resolveGlowFilter(engine, lyricsElement, end, defaultRadius) {
+    const override = getCSSValue(engine, lyricsElement, `--blyrics-highlight-glow-filter-${end}`, "");
+    if (override)
+      return override;
+    const radius = getCSSValue(engine, lyricsElement, `--blyrics-highlight-glow-radius-${end}`, defaultRadius);
+    return `drop-shadow(0 0 ${radius} var(--blyrics-glow-color))`;
+  }
+  function isGlowRestingInvisible(glowTo) {
+    const value = glowTo.trim();
+    if (value === "" || value === "none")
+      return true;
+    const engineDropShadow = value.match(/^drop-shadow\(\s*0\s+0\s+(\S+)\s+var\(--blyrics-glow-color\)\)$/);
+    return engineDropShadow ? Number.parseFloat(engineDropShadow[1]) === 0 : false;
+  }
+  function suppressInvisibleWordGlows(engine, line, config2) {
+    const containerGlowShows = config2.highlight.glowContainerAlpha >= HALF_8BIT_ALPHA_STEP;
+    if (containerGlowShows) {
+      for (const part of line.parts)
+        part.glowSuppressed = false;
+      return;
+    }
+    for (const part of line.parts) {
+      const color = engine.window.getComputedStyle(part.highlightElement).getPropertyValue("--blyrics-glow-color");
+      const alpha = parseColorAlpha(color) ?? 1;
+      part.glowSuppressed = alpha < HALF_8BIT_ALPHA_STEP;
+    }
+  }
+  function parseColorAlpha(value) {
+    const color = value.trim().toLowerCase();
+    if (color === "")
+      return null;
+    if (color === "transparent")
+      return 0;
+    const slashAlpha = color.match(/\/\s*([0-9]*\.?[0-9]+%?)\s*\)\s*$/);
+    if (slashAlpha)
+      return alphaToken(slashAlpha[1]);
+    const commaAlpha = color.match(/^(?:rgba|hsla)\([^)]*,\s*([0-9]*\.?[0-9]+%?)\s*\)$/);
+    if (commaAlpha)
+      return alphaToken(commaAlpha[1]);
+    const hexWithAlpha = color.match(/^#([0-9a-f]{4}|[0-9a-f]{8})$/);
+    if (hexWithAlpha) {
+      const digits = hexWithAlpha[1];
+      const alphaHex = digits.length === 8 ? digits.slice(6) : digits.slice(3).repeat(2);
+      return Number.parseInt(alphaHex, 16) / 255;
+    }
+    const opaqueFunction = /^(?:rgb|hsl|hwb|lab|lch|oklab|oklch|color)\(/.test(color);
+    const opaqueHex = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/.test(color);
+    const namedColor = /^[a-z]+$/.test(color);
+    return opaqueFunction || opaqueHex || namedColor ? 1 : null;
+  }
+  function alphaToken(token) {
+    const value = token.endsWith("%") ? Number.parseFloat(token) / 100 : Number.parseFloat(token);
+    return clamp(value, 0, 1);
+  }
+
+  // web/node_modules/@braccato/core/dist/instrumental.js
+  var INSTRUMENTAL_WAVE_PATH_HIGH = "M -4 3 Q 1 2 5 3 Q 10 4 14 3 Q 18 2 22 3 Q 26 4 30 3 L 30 4 L -4 4 Z";
+  var INSTRUMENTAL_WAVE_PATH_LOW = "M -4 3 Q 1 4 5 3 Q 10 2 14 3 Q 18 4 22 3 Q 26 2 30 3 L 30 4 L -4 4 Z";
+  var nextInstrumentalId = 0;
+  function createInstrumentalElement(doc, container, durationMs) {
+    container.classList.add("blyrics--instrumental");
+    container.style.setProperty("--blyrics-duration", `${durationMs}ms`);
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = doc.createElementNS(svgNS, "svg");
+    svg.classList.add("blyrics--instrumental-icon");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    const defs = doc.createElementNS(svgNS, "defs");
+    const idSuffix = nextInstrumentalId++;
+    const filterId = `blyrics-glow-${idSuffix}`;
+    const clipId = `blyrics-wave-clip-${idSuffix}`;
+    const filter = doc.createElementNS(svgNS, "filter");
+    filter.setAttribute("id", filterId);
+    filter.setAttribute("x", "-100%");
+    filter.setAttribute("y", "-100%");
+    filter.setAttribute("width", "300%");
+    filter.setAttribute("height", "300%");
+    const feGaussianBlur = doc.createElementNS(svgNS, "feGaussianBlur");
+    feGaussianBlur.setAttribute("in", "SourceGraphic");
+    feGaussianBlur.setAttribute("stdDeviation", "5");
+    feGaussianBlur.setAttribute("result", "blur");
+    filter.appendChild(feGaussianBlur);
+    const feColorMatrix = doc.createElementNS(svgNS, "feColorMatrix");
+    feColorMatrix.setAttribute("in", "blur");
+    feColorMatrix.setAttribute("type", "matrix");
+    feColorMatrix.setAttribute("values", "1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 0.6 0");
+    feColorMatrix.setAttribute("result", "fadedBlur");
+    filter.appendChild(feColorMatrix);
+    const feMerge = doc.createElementNS(svgNS, "feMerge");
+    const feMergeNode1 = doc.createElementNS(svgNS, "feMergeNode");
+    feMergeNode1.setAttribute("in", "fadedBlur");
+    feMerge.appendChild(feMergeNode1);
+    const feMergeNode2 = doc.createElementNS(svgNS, "feMergeNode");
+    feMergeNode2.setAttribute("in", "SourceGraphic");
+    feMerge.appendChild(feMergeNode2);
+    filter.appendChild(feMerge);
+    defs.appendChild(filter);
+    const clipPath = doc.createElementNS(svgNS, "clipPath");
+    clipPath.setAttribute("id", clipId);
+    clipPath.classList.add("blyrics--wave-clip");
+    const waveRect = doc.createElementNS(svgNS, "path");
+    waveRect.classList.add("blyrics--wave-rect");
+    waveRect.setAttribute("d", "M -4 3.9 L 30 3.9 L 30 30 L -4 30 Z");
+    clipPath.appendChild(waveRect);
+    const wavePath = doc.createElementNS(svgNS, "path");
+    wavePath.classList.add("blyrics--wave-path");
+    wavePath.setAttribute("d", INSTRUMENTAL_WAVE_PATH_HIGH);
+    clipPath.appendChild(wavePath);
+    defs.appendChild(clipPath);
+    svg.appendChild(defs);
+    const bgPath = doc.createElementNS(svgNS, "path");
+    bgPath.classList.add("blyrics--instrumental-bg");
+    bgPath.setAttribute("d", "M10 21q-1.65 0-2.825-1.175T6 17t1.175-2.825T10 13q.575 0 1.063.138t.937.412V4q0-.425.288-.712T13 3h4q.425 0 .713.288T18 4v2q0 .425-.288.713T17 7h-3v10q0 1.65-1.175 2.825T10 21");
+    svg.appendChild(bgPath);
+    const g = doc.createElementNS(svgNS, "g");
+    g.setAttribute("filter", `url(#${filterId})`);
+    const fillPath = doc.createElementNS(svgNS, "path");
+    fillPath.classList.add("blyrics--instrumental-fill");
+    fillPath.setAttribute("clip-path", `url(#${clipId})`);
+    fillPath.setAttribute("d", "M10 21q-1.65 0-2.825-1.175T6 17t1.175-2.825T10 13q.575 0 1.063.138t.937.412V4q0-.425.288-.712T13 3h4q.425 0 .713.288T18 4v2q0 .425-.288.713T17 7h-3v10q0 1.65-1.175 2.825T10 21");
+    if (imageHighlights.getBooleanValue()) {
+      fillPath.classList.remove("blyrics--instrumental-fill");
+      fillPath.classList.add("blyrics-instrumental-color");
+      const fill = doc.createElementNS(svgNS, "g");
+      fill.classList.add("blyrics--instrumental-fill");
+      fill.appendChild(fillPath);
+      const shapeId = `${clipId}-image-shape`;
+      const shape = doc.createElementNS(svgNS, "clipPath");
+      shape.setAttribute("id", shapeId);
+      const shapePath = doc.createElementNS(svgNS, "path");
+      shapePath.setAttribute("d", fillPath.getAttribute("d"));
+      shape.appendChild(shapePath);
+      defs.appendChild(shape);
+      const silhouette = doc.createElementNS(svgNS, "g");
+      silhouette.setAttribute("clip-path", `url(#${shapeId})`);
+      const wave = doc.createElementNS(svgNS, "g");
+      wave.setAttribute("clip-path", `url(#${clipId})`);
+      const image = doc.createElementNS(svgNS, "image");
+      image.classList.add("blyrics-instrumental-image");
+      image.setAttribute("x", "0");
+      image.setAttribute("y", "0");
+      image.setAttribute("width", "24");
+      image.setAttribute("height", "24");
+      image.setAttribute("preserveAspectRatio", "none");
+      wave.appendChild(image);
+      silhouette.appendChild(wave);
+      fill.appendChild(silhouette);
+      g.appendChild(fill);
+      filter.setAttribute("color-interpolation-filters", "sRGB");
+      feGaussianBlur.setAttribute("stdDeviation", "1");
+      filter.removeChild(feColorMatrix);
+      feMergeNode1.setAttribute("in", "blur");
+    } else {
+      g.appendChild(fillPath);
+    }
+    svg.appendChild(g);
+    container.appendChild(svg);
+    return container;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/animationTiming.js
+  var songClockTracks = /* @__PURE__ */ new WeakMap();
+  function followSongClock(engine, animation, track) {
+    songClockTracks.set(animation, {
+      ...track,
+      appliedTimingOffsetMs: track.appliedTimingOffsetMs ?? engine.learnedAnimationTimingOffsetMs
+    });
+    animation.playbackRate = engine.playbackRate;
+    return animation;
+  }
+  function mirrorHighlightAnimations(part, animations) {
+    const target = part.sweepContext?.host;
+    if (!target)
+      return [];
+    const mirrors = [];
+    for (const animation of animations) {
+      const effect = animation.effect;
+      if (!effect || effect.target !== part.highlightElement)
+        continue;
+      const mirror = target.animate(effect.getKeyframes(), effect.getTiming());
+      mirror.playbackRate = animation.playbackRate;
+      mirror.currentTime = animation.currentTime;
+      const track = songClockTracks.get(animation);
+      if (track)
+        songClockTracks.set(mirror, { ...track, skipDriftSample: true });
+      mirrors.push(mirror);
+    }
+    return mirrors;
+  }
+  function applyPlaybackRateToRunningAnimations(engine) {
+    const followRate = (animations) => {
+      for (const animation of animations) {
+        if (songClockTracks.has(animation))
+          animation.playbackRate = engine.playbackRate;
+      }
+    };
+    for (const line of engine.lines) {
+      followRate(line.animations);
+      for (const part of line.parts)
+        followRate(part.animations);
+    }
+  }
+  function correctedAnimationTimeMs(targetTimeMs, appliedTimingOffsetMs, maxTimeMs) {
+    const scheduledTimeMs2 = targetTimeMs - appliedTimingOffsetMs;
+    return maxTimeMs === void 0 ? scheduledTimeMs2 : Math.min(scheduledTimeMs2, maxTimeMs);
+  }
+  function correctedWrappedAnimationTimeMs(targetTimeMs, appliedTimingOffsetMs, wrapDurationMs) {
+    return positiveModulo(targetTimeMs - appliedTimingOffsetMs, wrapDurationMs);
+  }
+  function correctedScrollTimeS(engine, lyricTimeS) {
+    return lyricTimeS - engine.learnedAnimationTimingOffsetMs / 1e3;
+  }
+  function largestDriftSample(line, lyricTimeS) {
+    let largest = accumulateLargestDriftSample(line, lyricTimeS, null);
+    for (const part of line.parts)
+      largest = accumulateLargestDriftSample(part, lyricTimeS, largest);
+    return largest;
+  }
+  function accumulateLargestDriftSample(part, lyricTimeS, largest) {
+    for (const animation of part.animations) {
+      const sample = driftSample(part, animation, lyricTimeS);
+      if (sample && (!largest || Math.abs(sample.offsetMs) > Math.abs(largest.offsetMs)))
+        largest = sample;
+    }
+    return largest;
+  }
+  function driftSample(part, animation, lyricTimeS) {
+    const track = songClockTracks.get(animation);
+    if (!track || track.skipDriftSample || animation.playState === "idle")
+      return null;
+    const rawActualTimeMs = timingValueToMs(animation.currentTime);
+    if (rawActualTimeMs === null)
+      return null;
+    const expectedTimeMs = normalizedTimeMs(animation, (lyricTimeS - part.time) * 1e3 + track.offsetMs, track);
+    const actualTimeMs = normalizedTimeMs(animation, rawActualTimeMs, track);
+    if (expectedTimeMs === null || actualTimeMs === null)
+      return null;
+    const wrapDurationMs = track.wrapDurationMs ?? 0;
+    const offsetMs = wrapDurationMs > 0 ? wrappedOffsetMs(actualTimeMs, expectedTimeMs, wrapDurationMs) : actualTimeMs - expectedTimeMs;
+    return {
+      actualTimeMs,
+      appliedTimingOffsetMs: track.appliedTimingOffsetMs,
+      biasOffsetMs: offsetMs + track.appliedTimingOffsetMs,
+      expectedTimeMs,
+      offsetMs,
+      playState: animation.playState
+    };
+  }
+  function normalizedTimeMs(animation, timeMs, track) {
+    if (!Number.isFinite(timeMs) || timeMs < 0)
+      return null;
+    if (track.wrapDurationMs && track.wrapDurationMs > 0)
+      return positiveModulo(timeMs, track.wrapDurationMs);
+    const endTimeMs = timingValueToMs(animation.effect?.getComputedTiming().endTime);
+    return endTimeMs !== null && Number.isFinite(endTimeMs) ? Math.min(timeMs, endTimeMs) : timeMs;
+  }
+  function wrappedOffsetMs(actualTimeMs, expectedTimeMs, wrapDurationMs) {
+    return positiveModulo(actualTimeMs - expectedTimeMs + wrapDurationMs / 2, wrapDurationMs) - wrapDurationMs / 2;
+  }
+  function timingValueToMs(value) {
+    if (typeof value === "number")
+      return Number.isFinite(value) || value === Number.POSITIVE_INFINITY ? value : null;
+    if (typeof value === "string") {
+      const durationMs = toMs(value);
+      return durationMs > 0 ? durationMs : null;
+    }
+    const numeric = value;
+    if (typeof numeric?.to !== "function")
+      return null;
+    try {
+      const ms = numeric.to("ms").value;
+      return typeof ms === "number" && Number.isFinite(ms) ? ms : null;
+    } catch {
+      return null;
+    }
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/instrumentalAnimations.js
+  var FILL_SELECTOR = ".blyrics--instrumental-fill";
+  var WAVE_CLIP_SELECTOR = ".blyrics--wave-clip";
+  var WAVE_PATH_SELECTOR = ".blyrics--wave-path";
+  var INSTANT_MS = 1;
+  var INSTRUMENTAL_WAVE_PATH_HIGH_FALLBACK = `path("${INSTRUMENTAL_WAVE_PATH_HIGH}")`;
+  var INSTRUMENTAL_WAVE_PATH_LOW_FALLBACK = `path("${INSTRUMENTAL_WAVE_PATH_LOW}")`;
+  function startInstrumentalAnimations(engine, line, config2, lyricTimeS, appliedTimingOffsetMs) {
+    const elapsedMs = (lyricTimeS - line.time) * 1e3;
+    const lineDurationMs = Math.max(line.duration * 1e3, 1);
+    const enabled = config2.enabled.instrumental;
+    const { instrumental } = config2;
+    const followSong2 = (animation, currentTimeMs, wrapDurationMs) => {
+      if (!animation)
+        return;
+      followSongClock(engine, animation, { appliedTimingOffsetMs, offsetMs: 0, wrapDurationMs });
+      animation.currentTime = currentTimeMs;
+    };
+    const scheduled = (durationMs) => correctedAnimationTimeMs(elapsedMs, appliedTimingOffsetMs, durationMs);
+    const fillFadeMs = enabled ? instrumental.fillFadeDurationMs : INSTANT_MS;
+    const fillFade = animateChild(line, FILL_SELECTOR, [{ opacity: 0 }, { opacity: 1 }], {
+      duration: fillFadeMs,
+      easing: enabled ? instrumental.fillFadeEasing : "linear",
+      fill: "forwards"
+    });
+    followSong2(fillFade, scheduled(fillFadeMs));
+    if (!enabled)
+      return;
+    const travel = (selector, from, to, easing) => animateChild(line, selector, [{ transform: from }, { transform: to }], {
+      duration: lineDurationMs,
+      easing,
+      fill: "both"
+    });
+    followSong2(travel(WAVE_CLIP_SELECTOR, instrumental.fillFrom, instrumental.fillTo, instrumental.fillEasing), scheduled(lineDurationMs));
+    followSong2(travel(WAVE_PATH_SELECTOR, instrumental.waveFrom, instrumental.waveTo, instrumental.waveEasing), scheduled(lineDurationMs));
+    const oscillationMs = instrumental.waveOscillationDurationMs;
+    const oscillation = animateChild(line, WAVE_PATH_SELECTOR, [{ d: instrumental.wavePathHigh }, { d: instrumental.wavePathLow, offset: 0.5 }, { d: instrumental.wavePathHigh }], { duration: oscillationMs, easing: instrumental.waveOscillationEasing, iterations: Infinity });
+    const wrapMs = Math.max(oscillationMs, 1);
+    followSong2(oscillation, correctedWrappedAnimationTimeMs(elapsedMs, appliedTimingOffsetMs, wrapMs), oscillationMs);
+  }
+  function startInstrumentalExitAnimations(line, config2, lyricTimeS) {
+    if (lyricTimeS < line.time)
+      return;
+    const fades = config2.enabled.instrumental && config2.enabled.highlightFade;
+    animateChild(line, FILL_SELECTOR, [{ opacity: 1 }, { opacity: 0 }], {
+      duration: fades ? config2.highlight.fadeOutDurationMs : INSTANT_MS,
+      easing: config2.enabled.instrumental ? config2.highlight.fadeOutEasing : "linear",
+      fill: "none"
+    });
+  }
+  function animateChild(line, selector, keyframes, options) {
+    const element = line.lyricElement.querySelector(selector);
+    if (!element)
+      return null;
+    const animation = element.animate(keyframes, options);
+    line.animations.push(animation);
+    return animation;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/animationConfig.js
   var EARLY_SCROLL_CONSIDER = registerThemeSetting("blyrics-early-scroll-consider-s", 0.54);
-  var TIME_JUMP_THRESHOLD = 0.5;
-  var SMOOTH_PLAYBACK_CLOCK = isGecko();
-  var CLOCK_RESYNC_THRESHOLD_S = 0.06;
-  var CLOCK_SLEW_PER_S = 0.1;
-  var REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-  var SCROLL_PREPARE_LEAD_MS = 120;
-  var LINE_SCROLL_FALLBACK_DURATION_MS = 750;
+  var DEFAULT_SCROLL_EASING = "cubic-bezier(0.86, 0, 0.2, 1)";
+  function getAnimationSettings(engine, lyricsElement) {
+    engine.cachedAnimationSettings ??= {
+      config: readAnimationConfig(engine, lyricsElement),
+      scrollTiming: { earlyScrollConsiderS: Math.max(0, EARLY_SCROLL_CONSIDER.getNumberValue()) }
+    };
+    return engine.cachedAnimationSettings;
+  }
+  function readAnimationConfig(engine, lyricsElement) {
+    const css = createThemeReader(engine, lyricsElement);
+    const glowTo = resolveGlowFilter(engine, lyricsElement, "to", "0");
+    return {
+      enabled: {
+        lineScale: css.flag("--blyrics-animate-line-scale", true),
+        wordWobble: css.flag("--blyrics-animate-word-wobble", true),
+        highlightSwipe: css.flag("--blyrics-animate-highlight-swipe", true),
+        highlightGlow: css.flag("--blyrics-animate-highlight-glow", true),
+        highlightFade: css.flag("--blyrics-animate-highlight-fade", true),
+        scroll: css.flag("--blyrics-animate-scroll", true),
+        instrumental: css.flag("--blyrics-animate-instrumental", true)
+      },
+      line: {
+        durationMs: css.durationMs("--blyrics-scale-transition-duration", "0.166s"),
+        enterEasing: css.string("--blyrics-line-enter-easing", "ease"),
+        exitEasing: css.string("--blyrics-line-exit-easing", "ease"),
+        enterFrom: css.string("--blyrics-line-enter-transform-from", "scale(var(--blyrics-scale))"),
+        enterTo: css.string("--blyrics-line-enter-transform-to", "scale(var(--blyrics-active-scale))"),
+        exitFrom: css.string("--blyrics-line-exit-transform-from", "scale(var(--blyrics-active-scale))"),
+        exitTo: css.string("--blyrics-line-exit-transform-to", "scale(var(--blyrics-scale))")
+      },
+      highlight: {
+        fadeInDurationMs: css.durationMs("--blyrics-lyric-highlight-fade-in-duration", "0.33s"),
+        fadeOutDurationMs: css.durationMs("--blyrics-lyric-highlight-fade-out-duration", "0.5s"),
+        fadeInEasing: css.string("--blyrics-lyric-highlight-fade-in-easing", "ease"),
+        fadeOutEasing: css.string("--blyrics-lyric-highlight-fade-out-easing", "ease"),
+        swipeEasing: css.string("--blyrics-highlight-swipe-easing", "linear"),
+        swipeStartFrom: css.string("--blyrics-highlight-swipe-start-from", "-0.2"),
+        swipeEndFrom: css.string("--blyrics-highlight-swipe-end-from", "-0.1"),
+        swipeStartTo: css.string("--blyrics-highlight-swipe-start-to", "1.4"),
+        swipeEndTo: css.string("--blyrics-highlight-swipe-end-to", "1.5"),
+        glowTo,
+        glowDurationRatio: css.number("--blyrics-highlight-glow-duration-ratio", 1.2),
+        glowMinDurationMs: css.durationMs("--blyrics-highlight-glow-min-duration", "1.2s"),
+        glowEasing: css.string("--blyrics-highlight-glow-easing", "ease"),
+        glowContainerAlpha: parseColorAlpha(css.string("--blyrics-glow-color", "")) ?? 1,
+        glowRestingInvisible: isGlowRestingInvisible(glowTo)
+      },
+      word: {
+        wobbleDurationMs: css.durationMs("--blyrics-wobble-duration", "1s"),
+        wobbleEasing: css.string("--blyrics-word-wobble-easing", "ease"),
+        wobblePeakEasing: css.string("--blyrics-word-wobble-peak-easing", "ease-in-out"),
+        wobbleEndEasing: css.string("--blyrics-word-wobble-end-easing", "ease-out"),
+        wobbleFrom: css.string("--blyrics-word-wobble-transform-from", "scaleX(1)"),
+        wobblePeak: css.string("--blyrics-word-wobble-transform-peak", "translateX(0.05em) scaleX(1.025)"),
+        wobbleSettle: css.string("--blyrics-word-wobble-transform-settle", "translateX(0) scaleX(1)"),
+        wobbleTo: css.string("--blyrics-word-wobble-transform-to", "scaleX(1)"),
+        wobblePeakOffset: css.fraction("--blyrics-word-wobble-peak-offset", 0.125),
+        wobbleSettleOffset: css.fraction("--blyrics-word-wobble-settle-offset", 0.75)
+      },
+      letterWave: {
+        transform: css.string("--blyrics-letter-wave-transform", "translateY(-0.06em)"),
+        settle: css.string("--blyrics-letter-wave-settle", "translateY(-0.05em)"),
+        emphasisScale: css.string("--blyrics-letter-wave-emphasis-scale", "1.08"),
+        durationMs: css.durationMs("--blyrics-letter-wave-duration", "0.9s"),
+        riseEasing: css.string("--blyrics-letter-wave-rise-easing", "ease-in-out"),
+        fallEasing: css.string("--blyrics-letter-wave-fall-easing", "ease-in-out")
+      },
+      instrumental: {
+        fillFadeDurationMs: css.durationMs("--blyrics-instrumental-fill-fade-duration", "150ms"),
+        fillFadeEasing: css.string("--blyrics-instrumental-fill-fade-easing", "ease"),
+        fillFrom: css.string("--blyrics-instrumental-fill-transform-from", "translateY(78%)"),
+        fillTo: css.string("--blyrics-instrumental-fill-transform-to", "translateY(-4%)"),
+        fillEasing: css.string("--blyrics-instrumental-fill-easing", "linear"),
+        waveFrom: css.string("--blyrics-instrumental-wave-transform-from", "scaleY(1.2)"),
+        waveTo: css.string("--blyrics-instrumental-wave-transform-to", "scaleY(0.0001)"),
+        waveEasing: css.string("--blyrics-instrumental-wave-easing", "ease-in"),
+        wavePathHigh: css.string("--blyrics-instrumental-wave-path-high", INSTRUMENTAL_WAVE_PATH_HIGH_FALLBACK),
+        wavePathLow: css.string("--blyrics-instrumental-wave-path-low", INSTRUMENTAL_WAVE_PATH_LOW_FALLBACK),
+        waveOscillationDurationMs: css.durationMs("--blyrics-instrumental-wave-oscillation-duration", "1.25s"),
+        waveOscillationEasing: css.string("--blyrics-instrumental-wave-oscillation-easing", "ease-in-out")
+      },
+      lineScroll: {
+        easing: css.string("--blyrics-lyric-scroll-timing-function", DEFAULT_SCROLL_EASING),
+        differentialEffects: !engine.window.matchMedia(REDUCED_MOTION_QUERY).matches
+      }
+    };
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/debugOverlay.js
+  var DEBUG_OVERLAY_ENABLED = registerThemeSetting("blyrics-debug-renderer", false);
+  var GUIDE_START_X = 40;
+  var GUIDE_END_X = 1e3;
+  var LAST_SCROLL_COLUMN_X = 160;
+  function isDebugOverlayEnabled() {
+    return DEBUG_OVERLAY_ENABLED.getBooleanValue();
+  }
+  function drawScrollDebugOverlay(engine, frame) {
+    const transform = engine.window.getComputedStyle(frame.lyricsElement).transform;
+    const viewTop = frame.scrollTop - new engine.window.DOMMatrix(transform).f;
+    const ctx = engine.host.debug?.beginFrame(viewTop);
+    if (!ctx)
+      return;
+    const guide = (color, label, y) => {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.fillText(label, 0, y);
+      ctx.beginPath();
+      ctx.moveTo(GUIDE_START_X, y);
+      ctx.lineTo(GUIDE_END_X, y);
+      ctx.stroke();
+    };
+    guide("green", "visible top", frame.scrollTop);
+    guide("blue", "visible bottom", frame.scrollTop + frame.viewportHeight);
+    guide("yellow", "target", frame.scrollTop + frame.targetOffset);
+    const last = engine.lastScrollDebugContext;
+    drawLineColumn(ctx, viewTop, 0, "realtime", frame.followedLines, frame.lineCenters, frame.scrollTimeS, frame);
+    drawLineColumn(ctx, viewTop, LAST_SCROLL_COLUMN_X, "last scroll", last.activeElms, last.centers, last.lyricScrollTime, frame);
+  }
+  function drawLineColumn(ctx, viewTop, x, title, lines, centers, scrollTimeS, { endingThresholdS }) {
+    ctx.strokeStyle = "red";
+    ctx.fillStyle = "red";
+    ctx.fillText(title, x + 2, viewTop + 45);
+    ctx.fillText(`scroll time: ${scrollTimeS.toFixed(3)}`, x + 2, viewTop + 60);
+    for (const line of lines) {
+      const untilStartS = line.time - scrollTimeS;
+      const endS = line.time + line.duration;
+      const untilEndS = endS - scrollTimeS;
+      const color = untilEndS < endingThresholdS ? "gray" : untilStartS > 0 ? "magenta" : "orange";
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.moveTo(x + 5, line.position);
+      ctx.lineTo(x + 5, line.position + line.height);
+      ctx.stroke();
+      ctx.fillText(`time: start=${line.time.toFixed(2)} end=${endS.toFixed(2)}`, x + 15, line.position);
+      ctx.fillText(`till active: ${untilStartS.toFixed(2)}`, x + 15, line.position + 15);
+      ctx.fillText(`till end: ${untilEndS.toFixed(2)}`, x + 15, line.position + 30);
+    }
+    ctx.strokeStyle = "pink";
+    ctx.fillStyle = "pink";
+    for (const center of centers) {
+      ctx.beginPath();
+      ctx.arc(x + 5, center, 5, 0, 2 * Math.PI, false);
+      ctx.fill();
+    }
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/autoScroll.js
+  var LYRIC_ENDING_THRESHOLD_S = registerThemeSetting("blyrics-lyric-ending-threshold-s", 0.5);
+  var SCROLL_DEADBAND_PX = 2;
+  function followFocusedLines(tick) {
+    const { engine, lyricsElement, now } = tick;
+    if (isAutoScrolling(engine, now))
+      scrollToFocusedLines(tick);
+    if (engine.wasUserScrolling && engine.scrollResumeTime < now) {
+      engine.host.setResumeAffordanceVisible(false);
+      lyricsElement.classList.remove(USER_SCROLLING_CLASS);
+      engine.wasUserScrolling = false;
+    }
+    decaySkipScrolls(engine, now, !tick.countEveryUserScroll);
+  }
+  function isAutoScrolling(engine, now) {
+    return engine.scrollResumeTime < now || engine.scrollPos === -1;
+  }
+  function lastSungLine(engine) {
+    return engine.lines.findLast((line) => line.lyricElement.dataset.instrumental !== "true");
+  }
+  function scrollToFocusedLines(tick) {
+    const { engine, lyricsElement, scroller, scrollTimeS, config: config2, smoothScroll, jumped } = tick;
+    const followedLines = tick.focusedLines.length > 0 ? tick.focusedLines : engine.lines.slice(0, 1);
+    const leadLine = followedLines.at(-1);
+    if (!leadLine)
+      return;
+    const targetOffset = scroller.height * getTargetScrollRatio(engine, lyricsElement);
+    const endingThresholdS = LYRIC_ENDING_THRESHOLD_S.getNumberValue();
+    const sungLines = followedLines.filter((line) => line === leadLine || scrollTimeS < line.time + line.duration - endingThresholdS);
+    const lineCenters = sungLines.map((line) => line.position + line.height / 2);
+    const anchor = findScrollAnchor(sungLines, scrollTimeS);
+    const target = computeActiveLinesScrollTop(sungLines, anchor, scroller.height, engine.cachedScrollInsets, targetOffset);
+    const toScrollTop = clamp(creditsAwareScrollTop(engine, target.scrollTop, targetOffset), 0, scroller.maxScrollTop);
+    if (isDebugOverlayEnabled()) {
+      drawScrollDebugOverlay(engine, {
+        lyricsElement,
+        scrollTop: scroller.scrollTop,
+        viewportHeight: scroller.height,
+        targetOffset,
+        followedLines,
+        lineCenters,
+        scrollTimeS,
+        endingThresholdS
+      });
+    }
+    const pinned2 = engine.pinnedScrollLine;
+    const pinnedLineFinished = pinned2 !== null && pinned2 !== anchor && (!sungLines.includes(pinned2) || scrollTimeS >= pinned2.time + pinned2.duration);
+    const mustCommit = tick.focusChanged || pinnedLineFinished || engine.wasUserScrolling;
+    const fromScrollTop = scroller.scrollTop;
+    const moves = Math.abs(toScrollTop - fromScrollTop) > SCROLL_DEADBAND_PX;
+    const animatesScroll = smoothScroll && config2.enabled.scroll;
+    const request = () => ({
+      lines: getLineScrollItems(engine, engine.lines),
+      activeLine: leadLine,
+      fromScrollTop,
+      toScrollTop,
+      viewportHeight: scroller.height,
+      config: config2,
+      continuesEngineScroll: !jumped && !engine.wasUserScrolling && engine.scrollPos >= 0 && Math.abs(fromScrollTop - engine.scrollPos) <= SCROLL_DEADBAND_PX
+    });
+    const msUntilLeadLine = (leadLine.time - scrollTimeS) * 1e3;
+    const leadLineIsNext = msUntilLeadLine > 0 && msUntilLeadLine <= SCROLL_PREPARE_LEAD_MS;
+    if (animatesScroll && moves && !mustCommit && leadLineIsNext && !engine.lastScrollElements.includes(leadLine)) {
+      updateVisibleLyricWillChange(engine, engine.lines, fromScrollTop, toScrollTop, scroller.height);
+      prepareUpcomingLineScroll(engine, request());
+    }
+    if (!mustCommit)
+      return;
+    engine.lastScrollElements = followedLines;
+    engine.pinnedScrollLine = target.overflowsBand ? anchor : null;
+    engine.lastScrollDebugContext = { lyricScrollTime: scrollTimeS, centers: lineCenters, activeElms: followedLines };
+    if (smoothScroll && moves) {
+      if (config2.enabled.scroll) {
+        updateVisibleLyricWillChange(engine, engine.lines, fromScrollTop, toScrollTop, scroller.height);
+        commitOrPrepareLineScroll(engine, request());
+      }
+    } else {
+      dropPendingLineScroll(engine);
+    }
+    writeEngineScrollTop(engine, scroller.element, toScrollTop, tick.now);
+  }
+  function creditsAwareScrollTop(engine, scrollTop, targetOffset) {
+    const credits = engine.cachedCreditsItem;
+    const lastLine = lastSungLine(engine);
+    if (!engine.creditsFocused || !credits || !lastLine)
+      return scrollTop;
+    const creditsCentered = credits.position + credits.height / 2 - targetOffset;
+    const lastLineAtTop = lastLine.position - engine.cachedScrollInsets.top;
+    return Math.min(creditsCentered, lastLineAtTop);
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/timingLogs.js
+  var TIMING_LOGS_ENABLED = registerThemeSetting("blyrics-debug-animation-timing", false);
+  var VISIBILITY_LOG_WINDOW_MS = 3e3;
+  var PER_LINE_LOG_INTERVAL_MS = 750;
+  var LOGGED_OFFSET_THRESHOLD_MS = 30;
+  var lastLogTimes = /* @__PURE__ */ new WeakMap();
+  function shouldLogAnimationTiming(engine, line, sample, now) {
+    if (!TIMING_LOGS_ENABLED.getBooleanValue())
+      return false;
+    const inVisibilityWindow = now < engine.animationTimingVisibilityLogUntil;
+    if (!inVisibilityWindow && Math.abs(sample.offsetMs) < LOGGED_OFFSET_THRESHOLD_MS)
+      return false;
+    if (now - (lastLogTimes.get(line) ?? 0) < PER_LINE_LOG_INTERVAL_MS)
+      return false;
+    lastLogTimes.set(line, now);
+    return true;
+  }
+  function logAnimationTiming(engine, reason, line, lineIndex, sample, lyricTimeS, accumulatedOffsetMs, learnedOffsetMs = engine.learnedAnimationTimingOffsetMs) {
+    if (!TIMING_LOGS_ENABLED.getBooleanValue())
+      return;
+    engine.host.log("WAAPI timing", {
+      reason,
+      lineIndex,
+      lineTimeS: roundedSeconds(line.time),
+      mediaTimeS: roundedSeconds(lyricTimeS),
+      actualTimeMs: roundedMs(sample.actualTimeMs),
+      expectedTimeMs: roundedMs(sample.expectedTimeMs),
+      offsetMs: roundedMs(sample.offsetMs),
+      learnedOffsetMs: roundedMs(learnedOffsetMs),
+      appliedTimingOffsetMs: roundedMs(sample.appliedTimingOffsetMs),
+      biasOffsetMs: roundedMs(sample.biasOffsetMs),
+      residualOffsetMs: roundedMs(sample.offsetMs),
+      accumulatedOffsetMs: roundedMs(accumulatedOffsetMs),
+      playState: sample.playState,
+      text: linePreview(line)
+    });
+  }
+  function logAnimationCleanup(engine, reason, line, lineIndex, lyricTimeS, staleAfterS) {
+    if (!TIMING_LOGS_ENABLED.getBooleanValue())
+      return;
+    engine.host.log("Animation cleanup", {
+      reason,
+      lineIndex,
+      lineTimeS: roundedSeconds(line.time),
+      mediaTimeS: roundedSeconds(lyricTimeS),
+      staleAnimationEndTimeS: roundedSeconds(staleAfterS),
+      runningAnimationCount: countAnimations(line),
+      text: linePreview(line)
+    });
+  }
+  function noteVisibilityChange(engine) {
+    if (!TIMING_LOGS_ENABLED.getBooleanValue() || !engine.lyricsContainer)
+      return;
+    const visibilityState = engine.document.visibilityState;
+    const runningAnimationCount = engine.lines.reduce((count, line) => count + countAnimations(line), 0);
+    if (visibilityState !== "visible") {
+      engine.host.log("Visibility changed; WAAPI animations left intact", {
+        visibilityState,
+        runningAnimationCount,
+        resetSkipped: true
+      });
+      return;
+    }
+    engine.animationTimingVisibilityLogUntil = Date.now() + VISIBILITY_LOG_WINDOW_MS;
+    engine.host.log("Visibility changed; keeping WAAPI animations for timing verification", {
+      visibilityState,
+      runningAnimationCount,
+      resetSkipped: true,
+      timingLogWindowMs: VISIBILITY_LOG_WINDOW_MS
+    });
+  }
+  function countAnimations(line) {
+    return line.parts.reduce((count, part) => count + part.animations.length, line.animations.length);
+  }
+  function roundedSeconds(timeS) {
+    return roundedMs(timeS * 1e3) / 1e3;
+  }
+  function linePreview(line) {
+    return line.lyricElement.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "";
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/animationDrift.js
+  var LEARN_RATE = 0.08;
+  var LEARN_SAMPLE_LIMIT_MS = 80;
+  var MAX_LEARNED_OFFSET_MS = 80;
+  var ACCUMULATION_DECAY = 1.08;
+  var ACCUMULATION_WEIGHT = 0.4;
+  var RESET_THRESHOLD_MS = 100;
+  function correctLineDrift({ engine, line, lineIndex, lyricTimeS, isPlaying, now }) {
+    const sample = largestDriftSample(line, lyricTimeS);
+    line.accumulatedOffsetMs /= ACCUMULATION_DECAY;
+    if (sample === null)
+      return;
+    if (!isUsableForDrift(sample, isPlaying)) {
+      if (shouldLogAnimationTiming(engine, line, sample, now)) {
+        logAnimationTiming(engine, "ignored-sample", line, lineIndex, sample, lyricTimeS, line.accumulatedOffsetMs);
+      }
+      return;
+    }
+    const learnedOffsetMs = learnTimingOffset(engine, sample);
+    line.accumulatedOffsetMs += sample.offsetMs * ACCUMULATION_WEIGHT;
+    if (shouldLogAnimationTiming(engine, line, sample, now)) {
+      const accumulatedMs = line.accumulatedOffsetMs;
+      logAnimationTiming(engine, "sample", line, lineIndex, sample, lyricTimeS, accumulatedMs, learnedOffsetMs);
+    }
+    const drifted = Math.abs(line.accumulatedOffsetMs) > RESET_THRESHOLD_MS;
+    if (line.isAnimating && isPlaying && drifted) {
+      logAnimationTiming(engine, "drift-reset", line, lineIndex, sample, lyricTimeS, line.accumulatedOffsetMs);
+      resetLineAnimationState(line);
+    }
+  }
+  function isUsableForDrift(sample, isPlaying) {
+    return isPlaying && (sample.playState === "running" || sample.playState === "finished");
+  }
+  function learnTimingOffset(engine, sample) {
+    if (Math.abs(sample.biasOffsetMs) > LEARN_SAMPLE_LIMIT_MS)
+      return engine.learnedAnimationTimingOffsetMs;
+    const learned = engine.learnedAnimationTimingOffsetMs;
+    engine.learnedAnimationTimingOffsetMs = clamp(learned + (sample.biasOffsetMs - learned) * LEARN_RATE, -MAX_LEARNED_OFFSET_MS, MAX_LEARNED_OFFSET_MS);
+    return engine.learnedAnimationTimingOffsetMs;
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/wordAnimations.js
   var SWIPE_LEAD_RATIO = registerThemeSetting("blyrics-swipe-lead-ratio", 0.1);
   var SWIPE_DURATION_RATIO = registerThemeSetting("blyrics-swipe-duration-ratio", 1.6);
-  var ENABLE_DEBUG_RENDER = registerThemeSetting("blyrics-debug-renderer", false);
-  var ENABLE_ANIMATION_TIMING_LOGS = registerThemeSetting("blyrics-debug-animation-timing", false);
-  var ANIMATION_TIMING_LOG_WINDOW_MS = 3e3;
-  var ANIMATION_TIMING_LOG_INTERVAL_MS = 750;
-  var ANIMATION_TIMING_LOG_THRESHOLD_MS = 30;
-  var ANIMATION_TIMING_RESET_THRESHOLD_MS = 100;
-  var ANIMATION_TIMING_ACCUMULATION_DECAY = 1.08;
-  var ANIMATION_TIMING_ACCUMULATION_WEIGHT = 0.4;
-  var ANIMATION_TIMING_LEARN_RATE = 0.08;
-  var ANIMATION_TIMING_LEARN_SAMPLE_LIMIT_MS = 80;
-  var ANIMATION_TIMING_MAX_LEARNED_OFFSET_MS = 80;
-  function registerLineScrollStyleSetting(property, defaultValue) {
-    return [property, registerThemeSetting(property.slice(2), defaultValue)];
+  var LINE_SYNCED_WORD_CLASS2 = "blyrics-line-synced-word";
+  var INSTANT_MS2 = 1;
+  var SHOWN = [{ opacity: 1 }, { opacity: 1 }];
+  var FADE_IN = [{ opacity: 0 }, { opacity: 1 }];
+  var FADE_OUT = [{ opacity: 1 }, { opacity: 0 }];
+  var glowDelaysMs = /* @__PURE__ */ new WeakMap();
+  function startWordAnimations(engine, part, config2, lyricTimeS, appliedTimingOffsetMs) {
+    resetPartAnimations(part);
+    const word = wordTimeline(engine, part, config2, lyricTimeS, appliedTimingOffsetMs);
+    const highlight = part.lyricElement.classList.contains(LINE_SYNCED_WORD_CLASS2) ? lineSyncedHighlight(word) : richSyncedHighlight(word);
+    const motion = config2.enabled.wordWobble ? [...wobble(word), ...letterWave2(word)] : [];
+    part.animations = [...highlight, ...mirrorHighlightAnimations(part, highlight), ...motion];
   }
-  var LINE_SCROLL_AFTER_FUNCTION = "calc(750ms + log(var(--blyrics-line-scroll-abs-relative-index) + 2, 2.71828) * 80ms + (var(--blyrics-line-scroll-abs-relative-index) + 1) * 20ms)";
-  var LINE_SCROLL_STYLE_SETTINGS = [
-    registerLineScrollStyleSetting("--blyrics-line-scroll-duration", LINE_SCROLL_AFTER_FUNCTION),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-above-duration", "calc(750ms + min(var(--blyrics-line-scroll-abs-relative-index), 6) * 20ms)"),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-active-duration", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-below-duration", LINE_SCROLL_AFTER_FUNCTION),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-timing-function", "var(--blyrics-lyric-scroll-timing-function)"),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-start-easing", "var(--blyrics-line-scroll-timing-function)"),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-end-easing", "linear"),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-above-start-easing", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-active-start-easing", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-below-start-easing", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-above-end-easing", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-active-end-easing", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-below-end-easing", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-translate-y-start", "var(--blyrics-line-scroll-delta-px)"),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-translate-y-end", "0px"),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-above-translate-y-start", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-active-translate-y-start", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-below-translate-y-start", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-above-translate-y-end", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-active-translate-y-end", ""),
-    registerLineScrollStyleSetting("--blyrics-line-scroll-below-translate-y-end", "")
-  ];
-  var LINE_SCROLL_TRANSLATE_SETTINGS = LINE_SCROLL_STYLE_SETTINGS.filter(([property]) => property.includes("translate-y")).map(([, setting]) => setting);
-  var animationTimingLastLogTimes = /* @__PURE__ */ new WeakMap();
-  var SCROLL_POS_OFFSET_RATIO = registerThemeSetting("blyrics-target-scroll-pos-ratio", 0.37);
-  var PASSIVE_SCROLL_ENABLED = registerThemeSetting("blyrics-passive-scroll-enabled", true);
-  var PASSIVE_SECONDS_PER_LINE = registerThemeSetting("blyrics-passive-scroll-seconds-per-line", 3.5);
-  var PASSIVE_BOTTOM_PAUSE_S = registerThemeSetting("blyrics-passive-scroll-bottom-pause-s", 1.5);
-  var PASSIVE_RESET_DURATION_S = registerThemeSetting("blyrics-passive-scroll-reset-duration-s", 0.6);
-  var PASSIVE_TOP_PAUSE_S = registerThemeSetting("blyrics-passive-scroll-top-pause-s", 0.8);
-  var NO_PLAYER_SNAPSHOT = -1;
-  var liveEngines = /* @__PURE__ */ new Set();
+  function startWordExitAnimation(part, config2) {
+    const glows = part.animations.filter((animation) => glowStarted(animation));
+    part.animations = part.animations.filter((animation) => !glows.includes(animation));
+    resetPartAnimations(part);
+    const fades = config2.enabled.highlightFade;
+    const durationMs = fades ? config2.highlight.fadeOutDurationMs : INSTANT_MS2;
+    const fadeOut = part.highlightElement.animate(FADE_OUT, {
+      duration: durationMs,
+      easing: fades ? config2.highlight.fadeOutEasing : "linear",
+      fill: "none"
+    });
+    part.animations = [fadeOut, ...mirrorHighlightAnimations(part, [fadeOut]), ...glows];
+    fadeOut.addEventListener("finish", () => resetPartAnimations(part), { once: true });
+  }
+  function glowStarted(animation) {
+    const delayMs = glowDelaysMs.get(animation);
+    return delayMs !== void 0 && Number(animation.currentTime) >= delayMs;
+  }
+  function wordTimeline(engine, part, config2, lyricTimeS, appliedTimingOffsetMs) {
+    const durationMs = Math.max(0, part.duration * 1e3);
+    return {
+      engine,
+      part,
+      config: config2,
+      appliedTimingOffsetMs,
+      elapsedMs: (lyricTimeS - part.time) * 1e3,
+      durationMs,
+      swipeLeadMs: durationMs * SWIPE_LEAD_RATIO.getNumberValue(),
+      swipeDurationMs: durationMs * SWIPE_DURATION_RATIO.getNumberValue(),
+      glowDurationMs: Math.max(durationMs * config2.highlight.glowDurationRatio, config2.highlight.glowMinDurationMs)
+    };
+  }
+  function scheduledTimeMs(word, elapsedMs, durationMs) {
+    return correctedAnimationTimeMs(elapsedMs, word.appliedTimingOffsetMs, durationMs);
+  }
+  function followSong(word, animation, currentTimeMs, { offsetMs = 0, skipDriftSample = false } = {}) {
+    const { appliedTimingOffsetMs } = word;
+    followSongClock(word.engine, animation, { appliedTimingOffsetMs, offsetMs, skipDriftSample });
+    animation.currentTime = currentTimeMs;
+    return animation;
+  }
+  function glowShows(part, config2) {
+    return config2.enabled.highlightGlow && !part.glowSuppressed;
+  }
+  function richSyncedHighlight(word) {
+    const { part, config: config2 } = word;
+    const swipes = config2.enabled.highlightSwipe;
+    const animations = swipes ? swipe(word) : [];
+    const show = part.highlightElement.animate(SHOWN, { duration: INSTANT_MS2, easing: "linear", fill: "forwards" });
+    animations.push(followSong(word, show, scheduledTimeMs(word, word.elapsedMs, INSTANT_MS2)));
+    if (glowShows(part, config2))
+      animations.push(...glow(word, word.glowDurationMs, swipes));
+    return animations;
+  }
+  function lineSyncedHighlight(word) {
+    const { part, config: config2 } = word;
+    const fades = config2.enabled.highlightFade;
+    const durationMs = fades ? config2.highlight.fadeInDurationMs : INSTANT_MS2;
+    const fadeIn = part.highlightElement.animate(FADE_IN, {
+      duration: durationMs,
+      easing: fades ? config2.highlight.fadeInEasing : "linear",
+      fill: "forwards"
+    });
+    const animations = [followSong(word, fadeIn, scheduledTimeMs(word, word.elapsedMs, durationMs))];
+    if (glowShows(part, config2))
+      animations.push(...glow(word, config2.highlight.glowMinDurationMs, false));
+    return animations;
+  }
+  function swipe(word) {
+    const { part, swipeLeadMs, swipeDurationMs } = word;
+    const currentTimeMs = scheduledTimeMs(word, word.elapsedMs + swipeLeadMs, swipeDurationMs);
+    return part.sweep ? compositedSwipe(word, part.sweep, currentTimeMs) : [];
+  }
+  function compositedSwipe(word, cells, currentTimeMs) {
+    const { part, config: config2, swipeLeadMs, swipeDurationMs } = word;
+    const rtl = part.highlightElement.classList.contains(RTL_CLASS);
+    const timing = {
+      duration: swipeDurationMs,
+      easing: config2.highlight.swipeEasing,
+      fill: "both"
+    };
+    const animations = [];
+    cells.forEach((cell, index) => {
+      const span = cell.span ?? { start: index / cells.length, width: 1 / cells.length };
+      const plan = planCellSweep(swipeRamp(config2), span, rtl);
+      if (!plan)
+        return;
+      for (const [element, keyframes] of [
+        [cell.mask, plan.mask],
+        [cell.text, plan.text]
+      ]) {
+        const slide = element.animate(keyframes, timing);
+        animations.push(followSong(word, slide, currentTimeMs, { offsetMs: swipeLeadMs, skipDriftSample: animations.length > 0 }));
+      }
+    });
+    return animations;
+  }
+  function glow(word, durationMs, followsSwipe) {
+    return word.part.sweep ? sweepGlow(word, word.part.sweep, durationMs, followsSwipe) : [];
+  }
+  var TIGHT_GLOW_AT = 0.6;
+  var LATEST_GLOW_PEAK = TIGHT_GLOW_AT / 2;
+  function sweepGlow(word, cells, durationMs, followsSwipe) {
+    const { engine, config: config2, swipeLeadMs, swipeDurationMs } = word;
+    const fades = config2.highlight.glowRestingInvisible;
+    const easeGlow = easingLookup(engine)(config2.highlight.glowEasing);
+    const ramp = swipeRamp(config2);
+    return cells.flatMap((cell, cellIndex) => {
+      const span = cell.span ?? { start: cellIndex / cells.length, width: 1 / cells.length };
+      const delayMs = followsSwipe ? Math.max(0, cellReachedAt(ramp, span) * swipeDurationMs - swipeLeadMs) : 0;
+      const litMs = followsSwipe ? cellLitAt(ramp, span) * swipeDurationMs - swipeLeadMs : delayMs;
+      const riseMs = Math.max(0, litMs - delayMs);
+      const peak = durationMs > 0 ? Math.min(easeGlow(riseMs / durationMs), LATEST_GLOW_PEAK) : 0;
+      const timing = {
+        delay: delayMs,
+        duration: durationMs,
+        easing: config2.highlight.glowEasing,
+        fill: fades ? "none" : "forwards"
+      };
+      const currentTimeMs = scheduledTimeMs(word, word.elapsedMs, delayMs + durationMs);
+      const halos = haloKeyframes(fades, peak);
+      return cell.glows.map((halo, index) => {
+        const fade = halo.glow.animate(index === 0 ? halos.wide : halos.tight, timing);
+        glowDelaysMs.set(fade, delayMs);
+        return followSong(word, fade, currentTimeMs, { skipDriftSample: true });
+      });
+    });
+  }
+  function haloKeyframes(fades, peak) {
+    const rises = peak > 0;
+    const wideRise = rises ? [{ opacity: 0 }, { opacity: 1, offset: peak }] : [{ opacity: 1 }];
+    const tightWait = rises ? [{ opacity: 0 }, { opacity: 0, offset: peak }] : [{ opacity: 0 }];
+    if (!fades)
+      return { wide: [...wideRise, { opacity: 1 }], tight: [{ opacity: 0 }, { opacity: 0 }] };
+    return {
+      wide: [...wideRise, { opacity: 0, offset: TIGHT_GLOW_AT }, { opacity: 0 }],
+      tight: [...tightWait, { opacity: 1, offset: TIGHT_GLOW_AT }, { opacity: 0 }]
+    };
+  }
+  function wobble(word) {
+    const { wobbleFrom, wobblePeak, wobblePeakOffset, wobblePeakEasing, wobbleSettle, wobbleSettleOffset } = word.config.word;
+    const { wobbleTo, wobbleEndEasing, wobbleDurationMs, wobbleEasing } = word.config.word;
+    const keyframes = [
+      { transform: wobbleFrom },
+      { transform: wobblePeak, offset: wobblePeakOffset, easing: wobblePeakEasing },
+      { transform: wobbleSettle, offset: Math.max(wobblePeakOffset, wobbleSettleOffset) },
+      { transform: wobbleTo, easing: wobbleEndEasing }
+    ];
+    const timing = { duration: wobbleDurationMs, easing: wobbleEasing, fill: "forwards" };
+    const currentTimeMs = scheduledTimeMs(word, word.elapsedMs, wobbleDurationMs);
+    return word.part.wobbleElements.map((element) => followSong(word, element.animate(keyframes, timing), currentTimeMs));
+  }
+  function letterWave2(word) {
+    const { part, config: config2 } = word;
+    const letterCount = part.letterElements?.length ?? 0;
+    if (letterCount === 0)
+      return [];
+    const run = planLetterWaveRun(word, letterCount);
+    const glowLetterSets = glowShows(part, config2) ? part.sweep?.flatMap((cell) => cell.glows.map((glow2) => glow2.letters)) ?? [] : [];
+    const animations = [];
+    floatLetters(word, run, part.letterElements, true, animations);
+    floatLetters(word, run, part.highlightLetterElements, false, animations);
+    for (const glowLetters of glowLetterSets)
+      floatLetters(word, run, glowLetters, false, animations);
+    return animations;
+  }
+  function planLetterWaveRun(word, letterCount) {
+    const { config: config2 } = word;
+    const emphasise = word.part.lyricElement.dataset.longWord === "true";
+    const emphasisPeak = emphasise ? ` scale(${config2.letterWave.emphasisScale})` : "";
+    const emphasisRest = emphasise ? " scale(1)" : "";
+    const keyframes = [
+      { transform: `translateY(0)${emphasisRest}`, easing: config2.letterWave.riseEasing },
+      {
+        transform: `${config2.letterWave.transform}${emphasisPeak}`,
+        offset: LETTER_WAVE_CREST_OFFSET,
+        easing: config2.letterWave.fallEasing
+      },
+      { transform: `${config2.letterWave.settle}${emphasisRest}` }
+    ];
+    const waves = planLetterWave(swipeRamp(config2), letterCount, word.durationMs, word.swipeDurationMs, word.swipeLeadMs, config2.letterWave.durationMs);
+    const headStartMs = Math.max(0, -Math.min(...waves.map((wave) => wave.delayMs)));
+    const waveEndsMs = waves.map((wave) => wave.delayMs + wave.durationMs);
+    const lastWaveEndMs = Math.max(...waveEndsMs);
+    return {
+      waves,
+      keyframes,
+      signature: JSON.stringify(keyframes),
+      headStartMs,
+      lastEndingWaveIndex: waveEndsMs.lastIndexOf(lastWaveEndMs),
+      startAtMs: scheduledTimeMs(word, word.elapsedMs + headStartMs, headStartMs + lastWaveEndMs)
+    };
+  }
+  function floatLetters(word, run, letters, isBaseText, animations) {
+    letters?.forEach((letterElement, index) => {
+      const wave = run.waves[index];
+      const delayMs = wave.delayMs + run.headStartMs;
+      const float = acquireWaveAnimation(word.engine, letterElement, run.keyframes, run.signature, {
+        duration: wave.durationMs,
+        delay: delayMs,
+        fill: "forwards"
+      });
+      const skipDriftSample = !isBaseText || index !== run.lastEndingWaveIndex;
+      animations.push(followSong(word, float, run.startAtMs, { offsetMs: run.headStartMs, skipDriftSample }));
+      if (!GECKO_REDRAW || !isBaseText)
+        return;
+      const redraw = letterElement.animate(GECKO_REDRAW_KEYFRAMES, {
+        duration: GECKO_REDRAW_PERIOD_MS,
+        iterations: wave.durationMs / GECKO_REDRAW_PERIOD_MS,
+        delay: delayMs,
+        composite: "add"
+      });
+      animations.push(followSong(word, redraw, run.startAtMs, { offsetMs: run.headStartMs, skipDriftSample: true }));
+    });
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/lineAnimations.js
+  function startLineAnimations(engine, line, config2, lyricTimeS) {
+    const appliedTimingOffsetMs = engine.learnedAnimationTimingOffsetMs;
+    if (!isInstrumental(line))
+      placeContextSweeps(line, config2);
+    startLineEntrance(engine, line, config2, lyricTimeS, appliedTimingOffsetMs);
+    if (isInstrumental(line)) {
+      startInstrumentalAnimations(engine, line, config2, lyricTimeS, appliedTimingOffsetMs);
+      return;
+    }
+    suppressInvisibleWordGlows(engine, line, config2);
+    for (const part of line.parts)
+      startWordAnimations(engine, part, config2, lyricTimeS, appliedTimingOffsetMs);
+  }
+  function startLineExitAnimations(line, config2, lyricTimeS) {
+    startLineExit(line, config2);
+    if (isInstrumental(line)) {
+      startInstrumentalExitAnimations(line, config2, lyricTimeS);
+      return;
+    }
+    for (const part of line.parts) {
+      if (lyricTimeS >= part.time)
+        startWordExitAnimation(part, config2);
+      else
+        resetPartAnimations(part);
+    }
+  }
+  function isInstrumental(line) {
+    return line.lyricElement.dataset.instrumental === "true";
+  }
+  function startLineEntrance(engine, line, config2, lyricTimeS, appliedTimingOffsetMs) {
+    resetPartAnimations(line);
+    if (!config2.enabled.lineScale)
+      return;
+    const { enterFrom, enterTo, enterEasing, durationMs } = config2.line;
+    const entrance = line.lyricElement.animate([{ transform: enterFrom }, { transform: enterTo }], {
+      duration: durationMs,
+      easing: enterEasing,
+      fill: "forwards"
+    });
+    followSongClock(engine, entrance, { appliedTimingOffsetMs, offsetMs: 0 });
+    const elapsedMs = (lyricTimeS - line.time) * 1e3;
+    entrance.currentTime = correctedAnimationTimeMs(elapsedMs, appliedTimingOffsetMs, durationMs);
+    line.animations = [entrance];
+  }
+  function startLineExit(line, config2) {
+    resetPartAnimations(line);
+    if (!config2.enabled.lineScale)
+      return;
+    const { exitFrom, exitTo, exitEasing, durationMs } = config2.line;
+    const exit = line.lyricElement.animate([{ transform: exitFrom }, { transform: exitTo }], {
+      duration: durationMs,
+      easing: exitEasing,
+      fill: "none"
+    });
+    line.animations = [exit];
+    exit.addEventListener("finish", () => resetPartAnimations(line), { once: true });
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/lineLifecycle.js
+  var ANIMATION_PREPARE_AHEAD_S = 2;
+  var LINE_END_GRACE_S = 0.05;
+  var STALE_ANIMATION_GRACE_S = 0.05;
+  function driveLineAnimations(tick) {
+    const { engine, lyricTimeS, playhead } = tick;
+    const lines = engine.lines;
+    const prepareAheadS = playhead.isPlaying ? ANIMATION_PREPARE_AHEAD_S : 0;
+    const linesToStart = [];
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index];
+      const nextLineStartS = lines[index + 1]?.time ?? Infinity;
+      const animationEndS = Math.max(nextLineStartS, line.time + line.duration + LINE_END_GRACE_S);
+      if (lyricTimeS + prepareAheadS >= line.time && lyricTimeS < animationEndS) {
+        updateLineAnimationState(tick, line, index);
+        if (!line.isAnimating)
+          linesToStart.push(line);
+      } else {
+        retireLine(tick, line, index, animationEndS);
+      }
+    }
+    for (const line of linesToStart)
+      startLine(tick, line);
+  }
+  function updateLineAnimationState(tick, line, index) {
+    const { lyricTimeS, playhead } = tick;
+    if (!line.isSelected) {
+      line.isSelected = true;
+      line.lyricElement.classList.add(ANIMATING_CLASS);
+    }
+    if (line.isAnimationPlayStatePlaying !== playhead.isPlaying) {
+      line.isAnimationPlayStatePlaying = playhead.isPlaying;
+      setAnimationsPlayState(line, playhead.isPlaying);
+      if (playhead.isPlaying)
+        line.isAnimating = false;
+    }
+    const playbackDiscontinuity = playhead.jumped && playhead.isPlaying || playhead.mediaClockRanBackwards || playhead.seekedWhilePaused;
+    if (playbackDiscontinuity && line.isAnimating)
+      resetLineAnimationState(line);
+    updateWordStates(line, lyricTimeS);
+    correctLineDrift({
+      engine: tick.engine,
+      line,
+      lineIndex: index,
+      lyricTimeS,
+      isPlaying: playhead.isPlaying,
+      now: tick.now
+    });
+  }
+  function retireLine({ engine, lyricTimeS, playhead, config: config2 }, line, index, animationEndS) {
+    const staleAfterS = animationEndS + config2.highlight.fadeOutDurationMs / 1e3 + STALE_ANIMATION_GRACE_S;
+    const isStale = lyricTimeS > staleAfterS;
+    const wasSelected = line.isSelected;
+    if (wasSelected) {
+      if (playhead.isPlaying || playhead.jumped || playhead.seekedWhilePaused) {
+        if (isStale) {
+          logAnimationCleanup(engine, "selected-stale-reset", line, index, lyricTimeS, staleAfterS);
+          resetLineAnimationState(line);
+        } else {
+          startLineExitAnimations(line, config2, lyricTimeS);
+          markLineAnimationsStopped(line);
+        }
+      } else {
+        setAnimationsPlayState(line, false);
+        line.isAnimationPlayStatePlaying = false;
+      }
+      line.isSelected = false;
+      clearLineStateClasses(line);
+    } else if (hasLineAnimations(line) && (playhead.jumped || isStale)) {
+      logAnimationCleanup(engine, playhead.jumped ? "time-jump-reset" : "stale-reset", line, index, lyricTimeS, staleAfterS);
+      resetLineAnimationState(line);
+    }
+    if (wasSelected || playhead.jumped)
+      updateWordStates(line, lyricTimeS);
+  }
+  function startLine({ engine, lyricTimeS, playhead, config: config2, now }, line) {
+    startLineAnimations(engine, line, config2, lyricTimeS);
+    line.isAnimating = true;
+    line.lastAnimSetupAt = now;
+    line.isAnimationPlayStatePlaying = playhead.isPlaying;
+    line.accumulatedOffsetMs = 0;
+    if (!playhead.isPlaying)
+      setAnimationsPlayState(line, false);
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/tick.js
+  var NO_LYRICS_ELEMENT_LOG = "No lyrics element found on the page, skipping lyrics injection";
+  var TICK_ERROR_LOG = "Error in lyrics tick:";
+  function resolveTickOptions(options) {
+    return {
+      isPlaying: options.isPlaying,
+      eventCreationTime: options.eventCreationTime ?? NO_PLAYER_SNAPSHOT,
+      smoothScroll: options.smoothScroll ?? true,
+      globalLyricOffset: options.globalLyricOffset ?? 0,
+      lyricOffset: options.lyricOffset ?? 0,
+      richsyncOffsetTrim: options.richsyncOffsetTrim ?? 0,
+      lineOffsetTrim: options.lineOffsetTrim ?? 0,
+      passiveScrollEnabled: options.passiveScrollEnabled ?? false,
+      playbackRate: usablePlaybackRate(options.playbackRate),
+      followPausedSeeks: options.followPausedSeeks ?? false,
+      countEveryUserScroll: options.countEveryUserScroll ?? false
+    };
+  }
+  function usablePlaybackRate(rate) {
+    return rate !== void 0 && Number.isFinite(rate) && rate > 0 ? rate : 1;
+  }
+  function tickView(engine, reportedTimeS, options) {
+    rememberTickOptions(engine, options);
+    if (reportedTimeS === 0 && !options.isPlaying)
+      return "ok";
+    if (hasNoLyricsPlaceholder(engine)) {
+      stopPassiveScrollLoop(engine);
+      return "ok";
+    }
+    if (hasUnsyncedLyrics(engine)) {
+      followUnsyncedLyrics(engine, options);
+      return "ok";
+    }
+    const now = Date.now();
+    const playhead = advancePlaybackClock(reportedTimeS, options, engine.playbackRate, now);
+    if (playhead.jumped)
+      dropPendingLineScroll(engine);
+    if (!engine.host.isViewVisible()) {
+      clearVisibleLyricWillChange(engine);
+      return "ok";
+    }
+    if (engine.host.syncAdState())
+      return "ok";
+    const lyricsElement = engine.lyricsContainer;
+    if (!lyricsElement) {
+      engine.host.log(NO_LYRICS_ELEMENT_LOG);
+      return "lyrics-missing";
+    }
+    try {
+      renderSyncedLyrics(engine, lyricsElement, playhead, options, now);
+    } catch (error) {
+      if (!isUndefinedAccessError(error))
+        engine.host.log(TICK_ERROR_LOG, error);
+    }
+    return "ok";
+  }
+  function rememberTickOptions(engine, options) {
+    engine.lastTickOptions = options;
+    engine.passiveScrollEnabled = options.passiveScrollEnabled;
+    if (engine.playbackRate === options.playbackRate)
+      return;
+    engine.playbackRate = options.playbackRate;
+    applyPlaybackRateToRunningAnimations(engine);
+  }
+  function followUnsyncedLyrics(engine, { isPlaying, passiveScrollEnabled }) {
+    if (engine.layout === "stage")
+      return;
+    if (isPlaying && !playbackClock.lastPlayState)
+      engine.scrollResumeTime = 0;
+    playbackClock.lastPlayState = isPlaying;
+    if (passiveScrollEnabled)
+      startPassiveScrollLoop(engine);
+  }
+  function isUndefinedAccessError(error) {
+    return error.message?.includes("undefined") ?? false;
+  }
+  function renderSyncedLyrics(engine, lyricsElement, playhead, options, now) {
+    const lyricTimeS = playhead.timeS + lyricClockShiftS(engine, lyricsElement, options);
+    const scrollTimeS = correctedScrollTimeS(engine, lyricTimeS) + getCSSDurationInMs(engine, lyricsElement, "--blyrics-scroll-timing-offset") / 1e3;
+    const { config: config2, scrollTiming } = getAnimationSettings(engine, lyricsElement);
+    const isStage = engine.layout === "stage";
+    const scroller = isStage ? null : readScrollerBeforeWrites(engine);
+    if (!isStage && !scroller) {
+      clearVisibleLyricWillChange(engine);
+      return;
+    }
+    if (scroller && config2.enabled.scroll) {
+      const pendingScrollTop = engine.pendingLineScroll?.toScrollTop ?? scroller.scrollTop;
+      updateVisibleLyricWillChange(engine, engine.lines, scroller.scrollTop, pendingScrollTop, scroller.height);
+    } else {
+      stopLineScrolling(engine);
+    }
+    const focus = focusLines(engine, scrollTimeS, scrollTiming.earlyScrollConsiderS);
+    driveLineAnimations({ engine, lyricTimeS, playhead, config: config2, now });
+    const creditsFocusChanged = updateCreditsFocus(engine, lyricsElement, scrollTimeS);
+    if (!scroller) {
+      applyStage(engine, lyricTimeS, playhead.jumped);
+      return;
+    }
+    followFocusedLines({
+      engine,
+      lyricsElement,
+      scroller,
+      focusedLines: focus.lines,
+      scrollTimeS,
+      config: config2,
+      smoothScroll: options.smoothScroll,
+      countEveryUserScroll: options.countEveryUserScroll,
+      jumped: playhead.jumped,
+      focusChanged: playhead.jumped || focus.reachedUncommittedLine || creditsFocusChanged,
+      now
+    });
+  }
+  function readScrollerBeforeWrites(engine) {
+    const element = engine.host.getScrollElement();
+    if (!element)
+      return null;
+    if (element !== engine.observedTabRenderer)
+      setupTabRendererObserver(engine, element);
+    return {
+      element,
+      height: engine.cachedTabRendererHeight ?? element.getBoundingClientRect().height,
+      scrollTop: element.scrollTop,
+      maxScrollTop: Math.max(0, element.scrollHeight - element.clientHeight)
+    };
+  }
+  function stopLineScrolling(engine) {
+    dropPendingLineScroll(engine);
+    clearVisibleLyricWillChange(engine);
+    clearLineScrolls(engine);
+  }
+  function focusLines(engine, scrollTimeS, earlyScrollConsiderS) {
+    const lines = engine.lines;
+    const focused = [];
+    let reachedUncommittedLine = false;
+    for (let index = 0; index < lines.length; index++) {
+      const line = lines[index];
+      const nextLineStartS = lines[index + 1]?.time ?? Infinity;
+      const inFocus = scrollTimeS >= line.time - earlyScrollConsiderS && (scrollTimeS < nextLineStartS || scrollTimeS < line.time + line.duration);
+      setLineCurrent(line, inFocus);
+      if (!inFocus)
+        continue;
+      focused.push(line);
+      engine.selectedElementIndex = index;
+      if (scrollTimeS >= line.time && !engine.lastScrollElements.includes(line))
+        reachedUncommittedLine = true;
+    }
+    return { lines: focused, reachedUncommittedLine };
+  }
+  function setLineCurrent(line, current) {
+    if (line.isScrolled === current)
+      return;
+    line.isScrolled = current;
+    line.lyricElement.classList.toggle(CURRENT_LYRICS_CLASS, current);
+  }
+  function updateCreditsFocus(engine, lyricsElement, scrollTimeS) {
+    const lastLine = lastSungLine(engine);
+    const focused = lastLine !== void 0 && (engine.cachedCreditsItem?.height ?? 0) > 0 && scrollTimeS >= lastLine.time + lastLine.duration;
+    if (focused === engine.creditsFocused)
+      return false;
+    engine.creditsFocused = focused;
+    if (focused)
+      lyricsElement.dataset.creditsFocused = "true";
+    else
+      delete lyricsElement.dataset.creditsFocused;
+    return true;
+  }
+  function relayout(engine, linesAreRendered) {
+    if (engine.layout === "stage") {
+      if (!linesAreRendered || !engine.lyricsContainer)
+        return false;
+      engine.cachedCreditsItem = measureTrailingItem(engine.lyricsContainer, CREDITS_CLASS);
+      measureStage(engine);
+      return restartContextSweeps(engine);
+    }
+    applyScrollPadding(engine);
+    const scrollElement = engine.host.getScrollElement();
+    if (scrollElement)
+      measureScrollViewport(engine, scrollElement);
+    if (!linesAreRendered)
+      return false;
+    const lyricsElement = engine.lyricsContainer;
+    if (!lyricsElement)
+      return false;
+    engine.lyricWidth = lyricsElement.clientWidth;
+    engine.lyricHeight = lyricsElement.clientHeight;
+    measureLinePositions(engine, lyricsElement);
+    const restarted = restartContextSweeps(engine);
+    engine.cachedCreditsItem = measureTrailingItem(lyricsElement, CREDITS_CLASS);
+    engine.cachedFooterItem = measureTrailingItem(lyricsElement, FOOTER_CLASS);
+    setupLineCullObserver(engine);
+    requestRescroll(engine);
+    engine.host.debug?.resize();
+    return restarted;
+  }
+  function restartContextSweeps(engine) {
+    let restarted = false;
+    for (const line of engine.lines) {
+      if (line.isAnimating && line.parts.some((part) => part.sweepContext)) {
+        resetLineAnimationState(line);
+        restarted = true;
+      }
+    }
+    return restarted;
+  }
+  function measureLinePositions(engine, lyricsElement) {
+    clearOffscreenLineCulling(engine);
+    for (const line of engine.lines) {
+      const bounds = getRelativeLayoutBounds(lyricsElement, line.lyricElement);
+      line.position = bounds.y;
+      line.height = bounds.height;
+      line.decorations = new Map(lineDecorators(line.lyricElement).map((element) => [element, getRelativeLayoutBounds(lyricsElement, element).y]));
+    }
+  }
+  function cancelLyricPositionUpdate(engine) {
+    if (engine.pendingLyricsUpdateFrame === null)
+      return;
+    engine.window.cancelAnimationFrame(engine.pendingLyricsUpdateFrame);
+    engine.pendingLyricsUpdateFrame = null;
+  }
+  function retickFromPlaybackClock(engine, buildTickOptions) {
+    const options = buildTickOptions(playbackClock.lastEventCreationTime, playbackClock.lastPlayState);
+    return tickView(engine, playbackClock.lastTime, resolveTickOptions(options));
+  }
+  function retickAtLastTime(engine) {
+    if (engine.lastTickOptions)
+      tickView(engine, playbackClock.lastTime, engine.lastTickOptions);
+  }
+  function scheduleLyricPositionUpdate(engine, isViewRendering, retick) {
+    if (engine.pendingLyricsUpdateFrame !== null)
+      return;
+    dropPendingLineScroll(engine);
+    engine.pendingLyricsUpdateFrame = engine.window.requestAnimationFrame(() => {
+      engine.pendingLyricsUpdateFrame = null;
+      const isRendering = isViewRendering();
+      const playSlide = isRendering ? captureDecorationSlide(engine) : null;
+      relayout(engine, isRendering);
+      playSlide?.();
+      if (isRendering)
+        retick();
+    });
+  }
+
+  // web/node_modules/@braccato/core/dist/engine/instance.js
   function createAnimationEngineInstance(engineDocument, engineWindow, host, layout = "scroll") {
     const reducedMotionQuery = engineWindow.matchMedia(REDUCED_MOTION_QUERY);
     const handleReducedMotionChange = () => clearStyleCaches(engine);
@@ -535,7 +3981,7 @@
       skipScrolls: 0,
       skipScrollsDecayTimes: [],
       scrollResumeTime: 0,
-      scrollPos: 0,
+      scrollPos: -1,
       selectedElementIndex: 0,
       wasUserScrolling: false,
       lastScrollElements: [],
@@ -547,6 +3993,7 @@
       },
       passiveScrollAccumulatedTime: 0,
       passiveLastWallTime: 0,
+      passiveScrollTop: null,
       cachedTabRendererHeight: null,
       cachedScrollInsets: NO_SCROLL_INSETS,
       cachedFooterItem: null,
@@ -555,7 +4002,9 @@
       cachedLineScrollTiming: /* @__PURE__ */ new Map(),
       tabRendererResizeObserver: null,
       observedTabRenderer: null,
-      lineScrollAnimations: [],
+      runningLineScrolls: [],
+      elementMotions: /* @__PURE__ */ new Map(),
+      easingTables: /* @__PURE__ */ new Map(),
       lineScrollAnimationToken: 0,
       pendingLineScroll: null,
       lineScrollElementTokens: /* @__PURE__ */ new WeakMap(),
@@ -600,2871 +4049,6 @@
     liveEngines.add(engine);
     return engine;
   }
-  var playbackClock = {
-    lastTime: 0,
-    lastPlayState: false,
-    lastEventCreationTime: NO_PLAYER_SNAPSHOT,
-    smoothedTime: 0,
-    smoothedAt: NO_PLAYER_SNAPSHOT
-  };
-  function resetPlaybackClock() {
-    playbackClock.lastTime = 0;
-    playbackClock.lastPlayState = false;
-    playbackClock.lastEventCreationTime = NO_PLAYER_SNAPSHOT;
-    playbackClock.smoothedAt = NO_PLAYER_SNAPSHOT;
-  }
-  function smoothedPlaybackTime(previousTime, previousAt, rawTime, now, playbackRate) {
-    if (previousAt === NO_PLAYER_SNAPSHOT)
-      return rawTime;
-    const elapsedS = Math.max(0, now - previousAt) / 1e3;
-    const predictedTime = previousTime + elapsedS * playbackRate;
-    const errorS = rawTime - predictedTime;
-    if (errorS >= 0 || Math.abs(errorS) >= CLOCK_RESYNC_THRESHOLD_S)
-      return rawTime;
-    return predictedTime + errorS * Math.min(1, elapsedS * CLOCK_SLEW_PER_S);
-  }
-  function resetScrollResume(engine) {
-    engine.scrollResumeTime = 0;
-  }
-  function noteUserScroll(engine, isPassive, userInitiated = false) {
-    if (userInitiated) {
-      engine.skipScrolls = 0;
-      engine.skipScrollsDecayTimes = [];
-    }
-    if (engine.skipScrolls > 0) {
-      engine.skipScrolls--;
-      engine.skipScrollsDecayTimes.shift();
-      return;
-    }
-    dropPendingLineScroll(engine);
-    if (engine.host.isLoaderActive())
-      return;
-    if (engine.scrollResumeTime < Date.now()) {
-      engine.host.log(PAUSING_LYRICS_SCROLL_LOG);
-    }
-    engine.scrollResumeTime = Date.now() + (isPassive ? PASSIVE_USER_SCROLL_RESUME_DELAY_MS : USER_SCROLL_RESUME_DELAY_MS);
-    engine.wasUserScrolling = true;
-    engine.host.setResumeAffordanceVisible(true);
-    engine.lyricsContainer?.classList.add(USER_SCROLLING_CLASS);
-  }
-  function noteContainerResize(engine, width, height) {
-    if (width === engine.lyricWidth && height === engine.lyricHeight)
-      return false;
-    return true;
-  }
-  function clearOnScreenLyrics(engine) {
-    if (!engine.lyricsContainer)
-      return false;
-    engine.lyricsContainer.replaceChildren();
-    resetStage(engine);
-    return true;
-  }
-  function getRenderedLines(engine) {
-    return engine.lines;
-  }
-  function getRenderedSyncType(engine) {
-    return engine.syncType;
-  }
-  function clearLyrics(engine) {
-    engine.scrollPos = -1;
-    dropPendingLineScroll(engine);
-    clearLineScrollAnimations(engine);
-    clearVisibleLyricWillChange(engine);
-    engine.lineCullObserver?.disconnect();
-    engine.lineCullObserver = null;
-    clearOffscreenLineCulling(engine);
-    for (const line of engine.lines) {
-      resetLineAnimationState(line);
-      line.isSelected = false;
-    }
-    engine.skipScrollsDecayTimes = [];
-    engine.lastScrollElements = [];
-    engine.pinnedScrollLine = null;
-    engine.lastScrollDebugContext.activeElms = [];
-    engine.lastScrollDebugContext.centers = [];
-    engine.passiveScrollAccumulatedTime = 0;
-    engine.passiveLastWallTime = 0;
-    stopPassiveScrollLoop(engine);
-    engine.lines = [];
-    engine.cachedFooterItem = null;
-    engine.cachedCreditsItem = null;
-    engine.creditsFocused = false;
-    engine.lyricsContainer = null;
-    engine.waveAnimationPool.length = 0;
-    resetStage(engine);
-  }
-  function resetStage(engine) {
-    for (const animation of [
-      ...engine.stageMoves.values(),
-      ...engine.stageFades.values(),
-      ...engine.stageBlurs.values()
-    ]) {
-      animation.cancel();
-    }
-    engine.stageMoves.clear();
-    engine.stageFades.clear();
-    engine.stageBlurs.clear();
-    engine.stageMetrics.clear();
-    engine.stageY.clear();
-    engine.stageKey = "";
-    engine.stageHeight = 0;
-    if (engine.stageBox !== null) {
-      engine.stageBox = null;
-      engine.host.onStageLayout?.(null);
-    }
-  }
-  function resetPartAnimations(part) {
-    for (const animation of part.animations) {
-      animation.cancel();
-      const pool = pooledWaveAnimations.get(animation);
-      if (pool)
-        pool.push(animation);
-    }
-    part.animations = [];
-  }
-  function resetLineAnimations(lineData) {
-    const children = [lineData, ...lineData.parts];
-    children.forEach(resetPartAnimations);
-  }
-  function hasLineAnimations(lineData) {
-    return [lineData, ...lineData.parts].some((part) => part.animations.length > 0);
-  }
-  function markLineAnimationsStopped(lineData) {
-    lineData.isAnimating = false;
-    lineData.isAnimationPlayStatePlaying = false;
-    lineData.accumulatedOffsetMs = 0;
-  }
-  function resetLineAnimationState(lineData) {
-    resetLineAnimations(lineData);
-    markLineAnimationsStopped(lineData);
-  }
-  function togglePartClass(part, className, force) {
-    part.lyricElement.classList.toggle(className, force);
-    if ("highlightElement" in part) {
-      part.highlightElement.classList.toggle(className, force);
-      part.imageLayers?.highlight?.classList.toggle(className, force);
-    }
-  }
-  function setAnimationsPlayState(lineData, isPlaying) {
-    const children = [lineData, ...lineData.parts];
-    for (const part of children) {
-      togglePartClass(part, PAUSED_CLASS, !isPlaying);
-      for (const animation of part.animations) {
-        if (isPlaying) {
-          animation.play();
-        } else {
-          animation.pause();
-        }
-      }
-    }
-  }
-  function clearLineStateClasses(lineData) {
-    lineData.lyricElement.classList.remove(ANIMATING_CLASS);
-    for (const part of [lineData, ...lineData.parts]) {
-      togglePartClass(part, PAUSED_CLASS, false);
-    }
-  }
-  function updateWordStates(lineData, currentTime) {
-    const parts = lineData.parts;
-    const lineEndTime = lineData.time + lineData.duration;
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      const endTime = part.duration > 0 ? part.time + part.duration : parts[i + 1]?.time ?? lineEndTime;
-      let state = WORD_STATE_PAST;
-      if (currentTime < part.time) {
-        state = WORD_STATE_UPCOMING;
-      } else if (currentTime < endTime) {
-        state = WORD_STATE_ACTIVE;
-      }
-      if (part.wordState === state)
-        continue;
-      part.wordState = state;
-      part.lyricElement.setAttribute(WORD_STATE_ATTR, state);
-      part.highlightElement.setAttribute(WORD_STATE_ATTR, state);
-      part.imageLayers?.highlight?.setAttribute(WORD_STATE_ATTR, state);
-    }
-  }
-  var LINE_SYNCED_WORD_CLASS2 = "blyrics-line-synced-word";
-  var INSTRUMENTAL_FILL_SELECTOR = ".blyrics--instrumental-fill";
-  var INSTRUMENTAL_WAVE_CLIP_SELECTOR = ".blyrics--wave-clip";
-  var INSTRUMENTAL_WAVE_PATH_SELECTOR = ".blyrics--wave-path";
-  var INSTRUMENTAL_WAVE_PATH_HIGH_FALLBACK = `path("${INSTRUMENTAL_WAVE_PATH_HIGH}")`;
-  var INSTRUMENTAL_WAVE_PATH_LOW_FALLBACK = `path("${INSTRUMENTAL_WAVE_PATH_LOW}")`;
-  var LINE_SCROLL_INDEX_PROPERTY = "--blyrics-line-scroll-index";
-  var LINE_SCROLL_ACTIVE_INDEX_PROPERTY = "--blyrics-line-scroll-active-index";
-  var LINE_SCROLL_RELATIVE_INDEX_PROPERTY = "--blyrics-line-scroll-relative-index";
-  var LINE_SCROLL_ABS_RELATIVE_INDEX_PROPERTY = "--blyrics-line-scroll-abs-relative-index";
-  var LINE_SCROLL_SIDE_PROPERTY = "--blyrics-line-scroll-side";
-  var LINE_SCROLL_DELTA_PROPERTY = "--blyrics-line-scroll-delta-px";
-  var LINE_SCROLL_DISTANCE_PROPERTY = "--blyrics-line-scroll-distance-px";
-  var LINE_SCROLL_WILL_CHANGE_VALUE = "transform, translate";
-  var LINE_SCROLL_INLINE_PROPERTIES = [
-    LINE_SCROLL_INDEX_PROPERTY,
-    LINE_SCROLL_ACTIVE_INDEX_PROPERTY,
-    LINE_SCROLL_RELATIVE_INDEX_PROPERTY,
-    LINE_SCROLL_ABS_RELATIVE_INDEX_PROPERTY,
-    LINE_SCROLL_SIDE_PROPERTY,
-    LINE_SCROLL_DELTA_PROPERTY,
-    LINE_SCROLL_DISTANCE_PROPERTY,
-    ...LINE_SCROLL_STYLE_SETTINGS.map(([property]) => property)
-  ];
-  var animationTimingTracks = /* @__PURE__ */ new WeakMap();
-  function mirrorImageHighlightAnimations(part, animations) {
-    const target = part.imageLayers?.highlight;
-    if (!target)
-      return [];
-    const mirrors = [];
-    for (const animation of animations) {
-      const effect = animation.effect;
-      if (!effect || effect.target !== part.highlightElement)
-        continue;
-      const mirror = target.animate(effect.getKeyframes(), effect.getTiming());
-      mirror.playbackRate = animation.playbackRate;
-      mirror.currentTime = animation.currentTime;
-      const timing = animationTimingTracks.get(animation);
-      if (timing)
-        animationTimingTracks.set(mirror, { ...timing, skipDriftSample: true });
-      mirrors.push(mirror);
-    }
-    return mirrors;
-  }
-  function trackLyricAnimationTiming(engine, animation, timing) {
-    animationTimingTracks.set(animation, {
-      ...timing,
-      appliedTimingOffsetMs: timing.appliedTimingOffsetMs ?? engine.learnedAnimationTimingOffsetMs
-    });
-    animation.playbackRate = engine.playbackRate;
-    return animation;
-  }
-  var pooledWaveAnimations = /* @__PURE__ */ new WeakMap();
-  var pooledWaveKeyframeSignatures = /* @__PURE__ */ new WeakMap();
-  function acquireWaveAnimation(engine, letterElement, keyframes, keyframeSignature, timing) {
-    const pool = engine.waveAnimationPool;
-    const pooled = pool[pool.length - 1];
-    const effect = pooled?.effect;
-    if (pooled && effect && typeof effect.setKeyframes === "function") {
-      pool.pop();
-      effect.target = letterElement;
-      if (pooledWaveKeyframeSignatures.get(pooled) !== keyframeSignature) {
-        effect.setKeyframes(keyframes);
-        pooledWaveKeyframeSignatures.set(pooled, keyframeSignature);
-      }
-      effect.updateTiming(timing);
-      pooled.play();
-      return pooled;
-    }
-    const animation = letterElement.animate(keyframes, timing);
-    pooledWaveAnimations.set(animation, pool);
-    pooledWaveKeyframeSignatures.set(animation, keyframeSignature);
-    return animation;
-  }
-  function applyPlaybackRateToRunningAnimations(engine) {
-    for (const line of engine.lines) {
-      for (const animation of line.animations) {
-        if (animationTimingTracks.has(animation))
-          animation.playbackRate = engine.playbackRate;
-      }
-      for (const part of line.parts) {
-        for (const animation of part.animations) {
-          if (animationTimingTracks.has(animation))
-            animation.playbackRate = engine.playbackRate;
-        }
-      }
-    }
-  }
-  function correctedAnimationTimeMs(targetTimeMs, appliedTimingOffsetMs, maxTimeMs) {
-    const scheduledTimeMs = targetTimeMs - appliedTimingOffsetMs;
-    return maxTimeMs === void 0 ? scheduledTimeMs : Math.min(scheduledTimeMs, maxTimeMs);
-  }
-  function correctedWrappedAnimationTimeMs(targetTimeMs, appliedTimingOffsetMs, wrapDurationMs) {
-    return positiveModulo(targetTimeMs - appliedTimingOffsetMs, wrapDurationMs);
-  }
-  function correctedScrollTimeS(engine, currentTime) {
-    return currentTime - engine.learnedAnimationTimingOffsetMs / 1e3;
-  }
-  function timingValueToMs(value) {
-    if (typeof value === "number") {
-      return Number.isFinite(value) || value === Number.POSITIVE_INFINITY ? value : null;
-    }
-    if (typeof value === "string") {
-      const durationMs = toMs(value);
-      return durationMs > 0 ? durationMs : null;
-    }
-    if (!value || typeof value !== "object") {
-      return null;
-    }
-    const numericValue = value;
-    if (typeof numericValue.to !== "function") {
-      return null;
-    }
-    try {
-      const msValue = numericValue.to("ms").value;
-      return typeof msValue === "number" && Number.isFinite(msValue) ? msValue : null;
-    } catch (_err) {
-      return null;
-    }
-  }
-  function animationCurrentTimeMs(animation) {
-    return timingValueToMs(animation.currentTime);
-  }
-  function animationEndTimeMs(animation) {
-    return timingValueToMs(animation.effect?.getComputedTiming().endTime);
-  }
-  function wrappedTimingOffsetMs(actualTimeMs, expectedTimeMs, wrapDurationMs) {
-    return positiveModulo(actualTimeMs - expectedTimeMs + wrapDurationMs / 2, wrapDurationMs) - wrapDurationMs / 2;
-  }
-  function normalizeAnimationTimeMs(animation, timeMs, timing) {
-    if (!Number.isFinite(timeMs) || timeMs < 0) {
-      return null;
-    }
-    if (timing.wrapDurationMs && timing.wrapDurationMs > 0) {
-      return positiveModulo(timeMs, timing.wrapDurationMs);
-    }
-    const endTimeMs = animationEndTimeMs(animation);
-    if (endTimeMs !== null && Number.isFinite(endTimeMs)) {
-      return Math.min(timeMs, endTimeMs);
-    }
-    return timeMs;
-  }
-  function animationTimingSample(part, animation, currentTime) {
-    const timing = animationTimingTracks.get(animation);
-    if (!timing || timing.skipDriftSample) {
-      return null;
-    }
-    if (animation.playState === "idle") {
-      return null;
-    }
-    const actualTimeMs = animationCurrentTimeMs(animation);
-    if (actualTimeMs === null) {
-      return null;
-    }
-    const rawExpectedTimeMs = (currentTime - part.time) * 1e3 + timing.offsetMs;
-    const expectedTimeMs = normalizeAnimationTimeMs(animation, rawExpectedTimeMs, timing);
-    const normalizedActualTimeMs = normalizeAnimationTimeMs(animation, actualTimeMs, timing);
-    if (expectedTimeMs === null || normalizedActualTimeMs === null) {
-      return null;
-    }
-    const offsetMs = timing.wrapDurationMs && timing.wrapDurationMs > 0 ? wrappedTimingOffsetMs(normalizedActualTimeMs, expectedTimeMs, timing.wrapDurationMs) : normalizedActualTimeMs - expectedTimeMs;
-    const biasOffsetMs = offsetMs + timing.appliedTimingOffsetMs;
-    return {
-      actualTimeMs: normalizedActualTimeMs,
-      appliedTimingOffsetMs: timing.appliedTimingOffsetMs,
-      biasOffsetMs,
-      expectedTimeMs,
-      offsetMs,
-      playState: animation.playState
-    };
-  }
-  function largestNativeTimingSample(part, currentTime) {
-    let largestSample = null;
-    for (const animation of part.animations) {
-      const sample = animationTimingSample(part, animation, currentTime);
-      if (sample === null) {
-        continue;
-      }
-      if (largestSample === null || Math.abs(sample.offsetMs) > Math.abs(largestSample.offsetMs)) {
-        largestSample = sample;
-      }
-    }
-    return largestSample;
-  }
-  function lineNativeTimingSample(lineData, currentTime) {
-    let largestSample = null;
-    for (const part of [lineData, ...lineData.parts]) {
-      const sample = largestNativeTimingSample(part, currentTime);
-      if (sample === null) {
-        continue;
-      }
-      if (largestSample === null || Math.abs(sample.offsetMs) > Math.abs(largestSample.offsetMs)) {
-        largestSample = sample;
-      }
-    }
-    return largestSample;
-  }
-  function linePreview(lineData) {
-    return lineData.lyricElement.textContent?.trim().replace(/\s+/g, " ").slice(0, 80) ?? "";
-  }
-  function canUseTimingSampleForDrift(sample, isPlaying) {
-    if (!isPlaying) {
-      return false;
-    }
-    return sample.playState === "running" || sample.playState === "finished";
-  }
-  function learnAnimationTimingOffset(engine, sample) {
-    if (Math.abs(sample.biasOffsetMs) > ANIMATION_TIMING_LEARN_SAMPLE_LIMIT_MS) {
-      return engine.learnedAnimationTimingOffsetMs;
-    }
-    engine.learnedAnimationTimingOffsetMs = clamp(engine.learnedAnimationTimingOffsetMs + (sample.biasOffsetMs - engine.learnedAnimationTimingOffsetMs) * ANIMATION_TIMING_LEARN_RATE, -ANIMATION_TIMING_MAX_LEARNED_OFFSET_MS, ANIMATION_TIMING_MAX_LEARNED_OFFSET_MS);
-    return engine.learnedAnimationTimingOffsetMs;
-  }
-  function shouldLogAnimationTiming(engine, lineData, sample, now) {
-    if (!ENABLE_ANIMATION_TIMING_LOGS.getBooleanValue()) {
-      return false;
-    }
-    const isVisibilityLogWindow = now < engine.animationTimingVisibilityLogUntil;
-    if (!isVisibilityLogWindow && Math.abs(sample.offsetMs) < ANIMATION_TIMING_LOG_THRESHOLD_MS) {
-      return false;
-    }
-    const lastLogTime = animationTimingLastLogTimes.get(lineData) ?? 0;
-    if (now - lastLogTime < ANIMATION_TIMING_LOG_INTERVAL_MS) {
-      return false;
-    }
-    animationTimingLastLogTimes.set(lineData, now);
-    return true;
-  }
-  function logAnimationTiming(engine, reason, lineData, lineIndex, sample, currentTime, accumulatedOffsetMs, learnedOffsetMs = engine.learnedAnimationTimingOffsetMs, residualOffsetMs = sample.offsetMs) {
-    if (!ENABLE_ANIMATION_TIMING_LOGS.getBooleanValue()) {
-      return;
-    }
-    engine.host.log("WAAPI timing", {
-      reason,
-      lineIndex,
-      lineTimeS: roundedMs(lineData.time * 1e3) / 1e3,
-      mediaTimeS: roundedMs(currentTime * 1e3) / 1e3,
-      actualTimeMs: roundedMs(sample.actualTimeMs),
-      expectedTimeMs: roundedMs(sample.expectedTimeMs),
-      offsetMs: roundedMs(sample.offsetMs),
-      learnedOffsetMs: roundedMs(learnedOffsetMs),
-      appliedTimingOffsetMs: roundedMs(sample.appliedTimingOffsetMs),
-      biasOffsetMs: roundedMs(sample.biasOffsetMs),
-      residualOffsetMs: roundedMs(residualOffsetMs),
-      accumulatedOffsetMs: roundedMs(accumulatedOffsetMs),
-      playState: sample.playState,
-      text: linePreview(lineData)
-    });
-  }
-  function logAnimationCleanup(engine, reason, lineData, lineIndex, currentTime, staleAnimationEndTime) {
-    if (!ENABLE_ANIMATION_TIMING_LOGS.getBooleanValue()) {
-      return;
-    }
-    engine.host.log("Animation cleanup", {
-      reason,
-      lineIndex,
-      lineTimeS: roundedMs(lineData.time * 1e3) / 1e3,
-      mediaTimeS: roundedMs(currentTime * 1e3) / 1e3,
-      staleAnimationEndTimeS: roundedMs(staleAnimationEndTime * 1e3) / 1e3,
-      runningAnimationCount: [lineData, ...lineData.parts].reduce((count, part) => count + part.animations.length, 0),
-      text: linePreview(lineData)
-    });
-  }
-  function noteVisibilityChange(engine) {
-    if (!ENABLE_ANIMATION_TIMING_LOGS.getBooleanValue()) {
-      return;
-    }
-    if (!engine.lyricsContainer)
-      return;
-    const runningAnimationCount = engine.lines.reduce((count, line) => count + [line, ...line.parts].reduce((lineCount, part) => lineCount + part.animations.length, 0), 0);
-    if (engine.document.visibilityState === "visible") {
-      engine.animationTimingVisibilityLogUntil = Date.now() + ANIMATION_TIMING_LOG_WINDOW_MS;
-      engine.host.log("Visibility changed; keeping WAAPI animations for timing verification", {
-        visibilityState: engine.document.visibilityState,
-        runningAnimationCount,
-        resetSkipped: true,
-        timingLogWindowMs: ANIMATION_TIMING_LOG_WINDOW_MS
-      });
-      return;
-    }
-    engine.host.log("Visibility changed; WAAPI animations left intact", {
-      visibilityState: engine.document.visibilityState,
-      runningAnimationCount,
-      resetSkipped: true
-    });
-  }
-  function activeTextGradientKeyframes(config2) {
-    return [
-      {
-        "--lyric-transition-amount-start": config2.highlight.swipeStartFrom,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndFrom
-      },
-      {
-        "--lyric-transition-amount-start": config2.highlight.swipeStartTo,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndTo
-      }
-    ];
-  }
-  function activeTextGlowKeyframes(config2, part) {
-    if (part.imageLayers)
-      return [
-        { filter: `blur(${config2.highlight.imageGlowFrom})`, opacity: config2.highlight.imageGlowOpacityFrom },
-        { filter: `blur(${config2.highlight.imageGlowTo})`, opacity: config2.highlight.imageGlowOpacityTo }
-      ];
-    return [{ filter: config2.highlight.glowFrom }, { filter: config2.highlight.glowTo }];
-  }
-  function activeTextVisibleKeyframes() {
-    return [{ opacity: 1 }, { opacity: 1 }];
-  }
-  function activeTextInstantKeyframes(config2) {
-    return [
-      {
-        opacity: 1,
-        "--lyric-transition-amount-start": config2.highlight.swipeStartTo,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndTo
-      },
-      {
-        opacity: 1,
-        "--lyric-transition-amount-start": config2.highlight.swipeStartTo,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndTo
-      }
-    ];
-  }
-  function lineSyncedTextKeyframes(config2) {
-    return [
-      {
-        opacity: 0,
-        "--lyric-transition-amount-start": config2.highlight.swipeStartTo,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndTo
-      },
-      {
-        opacity: 1,
-        "--lyric-transition-amount-start": config2.highlight.swipeStartTo,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndTo
-      }
-    ];
-  }
-  function fadeOutTextKeyframes(config2, part) {
-    return [
-      {
-        opacity: 1,
-        filter: part.imageLayers ? "none" : config2.highlight.glowTo,
-        "--lyric-transition-amount-start": config2.highlight.swipeStartTo,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndTo
-      },
-      {
-        opacity: 0,
-        filter: part.imageLayers ? "none" : config2.highlight.glowTo,
-        "--lyric-transition-amount-start": config2.highlight.swipeStartTo,
-        "--lyric-transition-amount-end": config2.highlight.swipeEndTo
-      }
-    ];
-  }
-  function computeLetterSwipeWindows(swipe, letterCount, swipeDurationMs) {
-    if (swipe.easing !== "linear" || swipeDurationMs <= 0 || letterCount <= 0) {
-      return null;
-    }
-    const startFrom = Number.parseFloat(swipe.startFrom);
-    const startTo = Number.parseFloat(swipe.startTo);
-    const endFrom = Number.parseFloat(swipe.endFrom);
-    const endTo = Number.parseFloat(swipe.endTo);
-    if (![startFrom, startTo, endFrom, endTo].every(Number.isFinite) || startTo <= startFrom || endTo <= endFrom) {
-      return null;
-    }
-    const startAt = (timeMs) => startFrom + (startTo - startFrom) * timeMs / swipeDurationMs;
-    const endAt = (timeMs) => endFrom + (endTo - endFrom) * timeMs / swipeDurationMs;
-    const timeWhereEnd = (value) => swipeDurationMs * (value - endFrom) / (endTo - endFrom);
-    const timeWhereStart = (value) => swipeDurationMs * (value - startFrom) / (startTo - startFrom);
-    const windows = [];
-    for (let index = 0; index < letterCount; index++) {
-      const beginMs = clamp(timeWhereEnd(index / letterCount), 0, swipeDurationMs);
-      const finishMs = clamp(timeWhereStart((index + 1) / letterCount), 0, swipeDurationMs);
-      windows.push({
-        delayMs: beginMs,
-        durationMs: Math.max(finishMs - beginMs, 1),
-        from: { start: startAt(beginMs), end: endAt(beginMs) },
-        to: { start: startAt(finishMs), end: endAt(finishMs) }
-      });
-    }
-    return windows;
-  }
-  function planLetterMaskSweep(swipe, letterCount, swipeDurationMs, rtl) {
-    if (letterCount <= 0)
-      return [];
-    const windows = computeLetterSwipeWindows({ ...swipe, easing: "linear" }, letterCount, swipeDurationMs);
-    if (!windows)
-      return [];
-    const maskSpan = letterCount + 2;
-    const maskPositionAt = (start, index) => {
-      const q2 = (0.5 * maskSpan - (start * letterCount - index)) / (maskSpan - 1);
-      return `${(rtl ? 1 - q2 : q2) * 100}% 0%`;
-    };
-    const linear = swipe.easing === "linear";
-    const durationMs = swipeDurationMs > 0 ? swipeDurationMs : 1;
-    return windows.map((window2, index) => {
-      const from = maskPositionAt(window2.from.start, index);
-      const to = maskPositionAt(window2.to.start, index);
-      if (linear) {
-        return {
-          keyframes: [
-            { offset: 0, maskPosition: from },
-            { offset: 1, maskPosition: to }
-          ],
-          delayMs: window2.delayMs,
-          durationMs: window2.durationMs,
-          easing: "linear"
-        };
-      }
-      const revealStart = clamp(window2.delayMs / durationMs, 0, 1);
-      const revealEnd = clamp((window2.delayMs + window2.durationMs) / durationMs, 0, 1);
-      const keyframes = [{ offset: 0, maskPosition: from }];
-      if (revealStart > 0)
-        keyframes.push({ offset: revealStart, maskPosition: from });
-      if (revealEnd > revealStart)
-        keyframes.push({ offset: revealEnd, maskPosition: to });
-      if (revealEnd < 1)
-        keyframes.push({ offset: 1, maskPosition: to });
-      return { keyframes, delayMs: 0, durationMs, easing: swipe.easing };
-    });
-  }
-  function swipeRamp(config2) {
-    return {
-      easing: config2.highlight.swipeEasing,
-      startFrom: config2.highlight.swipeStartFrom,
-      startTo: config2.highlight.swipeStartTo,
-      endFrom: config2.highlight.swipeEndFrom,
-      endTo: config2.highlight.swipeEndTo
-    };
-  }
-  var LETTER_WAVE_CREST_OFFSET = 0.4;
-  var GECKO_REDRAW = isGecko();
-  var GECKO_REDRAW_KEYFRAMES = [{ opacity: 0 }, { opacity: -2e-3 }, { opacity: 0 }];
-  var GECKO_REDRAW_PERIOD_MS = 200;
-  function planLetterWave(swipe, letterCount, wordDurationMs, swipeDurationMs, swipeLeadMs, floatDurationMs) {
-    const riseMs = floatDurationMs * LETTER_WAVE_CREST_OFFSET;
-    const windows = computeLetterSwipeWindows({ ...swipe, easing: "linear" }, letterCount, swipeDurationMs);
-    const timings = [];
-    for (let index = 0; index < letterCount; index++) {
-      if (!windows) {
-        timings.push({ delayMs: wordDurationMs * index / letterCount, durationMs: floatDurationMs });
-        continue;
-      }
-      const touchedMs = windows[index].delayMs - swipeLeadMs;
-      const litMs = touchedMs + windows[index].durationMs;
-      if (litMs - riseMs > touchedMs) {
-        timings.push({ delayMs: touchedMs, durationMs: (litMs - touchedMs) / LETTER_WAVE_CREST_OFFSET });
-      } else {
-        timings.push({ delayMs: litMs - riseMs, durationMs: floatDurationMs });
-      }
-    }
-    return timings;
-  }
-  function startRichSyncedHighlightAnimations(engine, part, config2, swipeTimeMs, wordTimeMs, swipeDurationMs, glowDurationMs, appliedTimingOffsetMs) {
-    const animations = [];
-    const highlight = part.highlightElement;
-    let swipeAnimation;
-    if (config2.enabled.highlightSwipe) {
-      const swipeTiming = { appliedTimingOffsetMs, offsetMs: swipeTimeMs - wordTimeMs };
-      const swipeCurrentTimeMs = correctedAnimationTimeMs(swipeTimeMs, appliedTimingOffsetMs, swipeDurationMs);
-      const highlightLetters = part.highlightLetterElements;
-      if (highlightLetters && highlightLetters.length > 0) {
-        const sweeps = planLetterMaskSweep(swipeRamp(config2), highlightLetters.length, swipeDurationMs, part.highlightElement.classList.contains(RTL_CLASS));
-        sweeps.forEach((sweep, index) => {
-          const targets = [highlightLetters[index], part.imageLayers?.glowLetters[index]].filter((target) => target !== void 0);
-          for (const target of targets) {
-            const animation = trackLyricAnimationTiming(
-              engine,
-              target.animate(sweep.keyframes.map((frame) => ({
-                offset: frame.offset,
-                maskPosition: frame.maskPosition,
-                WebkitMaskPosition: frame.maskPosition
-              })), { duration: sweep.durationMs, delay: sweep.delayMs, easing: sweep.easing, fill: "both" }),
-              // The last letter's sweep ends last, so it alone covers the whole word.
-              index === sweeps.length - 1 && target === highlightLetters[index] ? swipeTiming : { ...swipeTiming, skipDriftSample: true }
-            );
-            animation.currentTime = swipeCurrentTimeMs;
-            if (index === 0)
-              swipeAnimation = animation;
-            animations.push(animation);
-          }
-        });
-      } else {
-        swipeAnimation = trackLyricAnimationTiming(engine, highlight.animate(activeTextGradientKeyframes(config2), {
-          duration: swipeDurationMs,
-          easing: config2.highlight.swipeEasing,
-          fill: "forwards"
-        }), swipeTiming);
-        swipeAnimation.currentTime = swipeCurrentTimeMs;
-        animations.push(swipeAnimation);
-      }
-    }
-    const opacityAnimation = trackLyricAnimationTiming(engine, highlight.animate(config2.enabled.highlightSwipe ? activeTextVisibleKeyframes() : activeTextInstantKeyframes(config2), {
-      duration: 1,
-      easing: "linear",
-      fill: "forwards"
-    }), { appliedTimingOffsetMs, offsetMs: 0 });
-    opacityAnimation.currentTime = correctedAnimationTimeMs(wordTimeMs, appliedTimingOffsetMs, 1);
-    animations.push(opacityAnimation);
-    let glowAnimation;
-    if (config2.enabled.highlightGlow && !part.glowSuppressed) {
-      glowAnimation = trackLyricAnimationTiming(engine, (part.imageLayers?.glow ?? highlight).animate(activeTextGlowKeyframes(config2, part), {
-        duration: glowDurationMs,
-        easing: config2.highlight.glowEasing,
-        fill: part.imageLayers ? "forwards" : config2.highlight.glowRestingInvisible ? "none" : "forwards"
-      }), { appliedTimingOffsetMs, offsetMs: 0 });
-      glowAnimation.currentTime = correctedAnimationTimeMs(wordTimeMs, appliedTimingOffsetMs, glowDurationMs);
-      animations.push(glowAnimation);
-    }
-    return { animations, swipe: swipeAnimation, fade: opacityAnimation, glow: glowAnimation };
-  }
-  function startLineSyncedHighlightAnimations(engine, part, config2, wordTimeMs, glowDurationMs, appliedTimingOffsetMs) {
-    const animations = [];
-    const fadeInDuration = config2.enabled.highlightFade ? config2.highlight.fadeInDurationMs : 1;
-    const highlight = part.highlightElement;
-    const opacityAnimation = trackLyricAnimationTiming(engine, highlight.animate(lineSyncedTextKeyframes(config2), {
-      duration: fadeInDuration,
-      easing: config2.enabled.highlightFade ? config2.highlight.fadeInEasing : "linear",
-      fill: "forwards"
-    }), { appliedTimingOffsetMs, offsetMs: 0 });
-    opacityAnimation.currentTime = correctedAnimationTimeMs(wordTimeMs, appliedTimingOffsetMs, fadeInDuration);
-    animations.push(opacityAnimation);
-    let glowAnimation;
-    if (config2.enabled.highlightGlow && !part.glowSuppressed) {
-      glowAnimation = trackLyricAnimationTiming(engine, (part.imageLayers?.glow ?? highlight).animate(activeTextGlowKeyframes(config2, part), {
-        duration: glowDurationMs,
-        easing: config2.highlight.glowEasing,
-        fill: part.imageLayers ? "forwards" : config2.highlight.glowRestingInvisible ? "none" : "forwards"
-      }), { appliedTimingOffsetMs, offsetMs: 0 });
-      glowAnimation.currentTime = correctedAnimationTimeMs(wordTimeMs, appliedTimingOffsetMs, glowDurationMs);
-      animations.push(glowAnimation);
-    }
-    return { animations, fade: opacityAnimation, glow: glowAnimation };
-  }
-  function startLineAnimation(engine, lineData, config2, currentTime, appliedTimingOffsetMs) {
-    resetPartAnimations(lineData);
-    const rawElapsedMs = (currentTime - lineData.time) * 1e3;
-    if (!config2.enabled.lineScale) {
-      lineData.animations = [];
-      return;
-    }
-    const animation = trackLyricAnimationTiming(engine, lineData.lyricElement.animate([{ transform: config2.line.enterFrom }, { transform: config2.line.enterTo }], {
-      duration: config2.line.durationMs,
-      easing: config2.line.enterEasing,
-      fill: "forwards"
-    }), { appliedTimingOffsetMs, offsetMs: 0 });
-    animation.currentTime = correctedAnimationTimeMs(rawElapsedMs, appliedTimingOffsetMs, config2.line.durationMs);
-    lineData.animations = [animation];
-  }
-  function startLineExitAnimation(lineData, config2) {
-    resetPartAnimations(lineData);
-    if (!config2.enabled.lineScale) {
-      return;
-    }
-    const animation = lineData.lyricElement.animate([{ transform: config2.line.exitFrom }, { transform: config2.line.exitTo }], {
-      duration: config2.line.durationMs,
-      easing: config2.line.exitEasing,
-      fill: "none"
-    });
-    lineData.animations = [animation];
-    animation.addEventListener("finish", () => {
-      resetPartAnimations(lineData);
-    }, { once: true });
-  }
-  function startWordAnimations(engine, part, config2, currentTime, appliedTimingOffsetMs) {
-    resetPartAnimations(part);
-    const rawElapsedMs = (currentTime - part.time) * 1e3;
-    const timedDurationMs = Math.max(0, part.duration * 1e3);
-    const isLineSyncedWord = part.lyricElement.classList.contains(LINE_SYNCED_WORD_CLASS2);
-    const swipeLeadMs = timedDurationMs * SWIPE_LEAD_RATIO.getNumberValue();
-    const swipeTimeMs = rawElapsedMs + swipeLeadMs;
-    const wordTimeMs = rawElapsedMs;
-    const swipeDurationMs = timedDurationMs * SWIPE_DURATION_RATIO.getNumberValue();
-    const glowDurationMs = Math.max(timedDurationMs * config2.highlight.glowDurationRatio, config2.highlight.glowMinDurationMs);
-    const highlightAnimations = isLineSyncedWord ? startLineSyncedHighlightAnimations(engine, part, config2, wordTimeMs, config2.highlight.glowMinDurationMs, appliedTimingOffsetMs) : startRichSyncedHighlightAnimations(engine, part, config2, swipeTimeMs, wordTimeMs, swipeDurationMs, glowDurationMs, appliedTimingOffsetMs);
-    const wobbleAnimations = [];
-    if (config2.enabled.wordWobble) {
-      const wobbleKeyframes = [
-        { transform: config2.word.wobbleFrom },
-        {
-          transform: config2.word.wobblePeak,
-          offset: config2.word.wobblePeakOffset,
-          easing: config2.word.wobblePeakEasing
-        },
-        {
-          transform: config2.word.wobbleSettle,
-          offset: Math.max(config2.word.wobblePeakOffset, config2.word.wobbleSettleOffset)
-        },
-        { transform: config2.word.wobbleTo, easing: config2.word.wobbleEndEasing }
-      ];
-      const wobbleOptions = {
-        duration: config2.word.wobbleDurationMs,
-        easing: config2.word.wobbleEasing,
-        fill: "forwards"
-      };
-      const wobbleStartMs = correctedAnimationTimeMs(wordTimeMs, appliedTimingOffsetMs, config2.word.wobbleDurationMs);
-      for (const wordElement of part.wobbleElements) {
-        const animation = trackLyricAnimationTiming(engine, wordElement.animate(wobbleKeyframes, wobbleOptions), {
-          appliedTimingOffsetMs,
-          offsetMs: 0
-        });
-        animation.currentTime = wobbleStartMs;
-        wobbleAnimations.push(animation);
-      }
-      const letters = part.letterElements;
-      if (letters && letters.length > 0) {
-        const emphasise = part.lyricElement?.dataset.longWord === "true";
-        const emphasisPeak = emphasise ? ` scale(${config2.letterWave.emphasisScale})` : "";
-        const emphasisRest = emphasise ? " scale(1)" : "";
-        const floatKeyframes = [
-          { transform: `translateY(0)${emphasisRest}`, easing: config2.letterWave.riseEasing },
-          {
-            transform: `${config2.letterWave.transform}${emphasisPeak}`,
-            offset: LETTER_WAVE_CREST_OFFSET,
-            easing: config2.letterWave.fallEasing
-          },
-          { transform: `${config2.letterWave.settle}${emphasisRest}` }
-        ];
-        const letterCount = letters.length;
-        const waves = planLetterWave(swipeRamp(config2), letterCount, timedDurationMs, swipeDurationMs, swipeLeadMs, config2.letterWave.durationMs);
-        const waveLeadMs = Math.max(0, -Math.min(...waves.map((wave) => wave.delayMs)));
-        const waveEndsMs = waves.map((wave) => wave.delayMs + wave.durationMs);
-        const lastWaveEndMs = Math.max(...waveEndsMs);
-        const lastEndingWaveIndex = waveEndsMs.lastIndexOf(lastWaveEndMs);
-        const cascadeDurationMs = waveLeadMs + lastWaveEndMs;
-        const floatStartMs = correctedAnimationTimeMs(wordTimeMs + waveLeadMs, appliedTimingOffsetMs, cascadeDurationMs);
-        const floatKeyframeSignature = JSON.stringify(floatKeyframes);
-        const glowLetters = config2.enabled.highlightGlow && !part.glowSuppressed ? part.imageLayers?.glowLetters : void 0;
-        const glowEndMs = Number.parseFloat(config2.highlight.imageGlowOpacityTo) === 0 ? waveLeadMs + glowDurationMs : Infinity;
-        const animateLetters = (letters2, endMs, sampled) => {
-          letters2?.forEach((letterElement, index) => {
-            const delayMs = waves[index].delayMs + waveLeadMs;
-            if (delayMs >= endMs)
-              return;
-            const endDelayMs = Math.min(0, endMs - delayMs - waves[index].durationMs);
-            const animation = trackLyricAnimationTiming(engine, acquireWaveAnimation(engine, letterElement, floatKeyframes, floatKeyframeSignature, {
-              duration: waves[index].durationMs,
-              delay: delayMs,
-              endDelay: endDelayMs,
-              fill: "forwards"
-            }), {
-              appliedTimingOffsetMs,
-              offsetMs: waveLeadMs,
-              // The wave that ends last covers the whole word. A theme's swipe ramp can make that an early letter.
-              skipDriftSample: !sampled || index !== lastEndingWaveIndex
-            });
-            animation.currentTime = floatStartMs;
-            wobbleAnimations.push(animation);
-            if (!GECKO_REDRAW || !sampled)
-              return;
-            const redraw = trackLyricAnimationTiming(engine, letterElement.animate(GECKO_REDRAW_KEYFRAMES, {
-              duration: GECKO_REDRAW_PERIOD_MS,
-              iterations: waves[index].durationMs / GECKO_REDRAW_PERIOD_MS,
-              delay: delayMs,
-              composite: "add"
-            }), { appliedTimingOffsetMs, offsetMs: waveLeadMs, skipDriftSample: true });
-            redraw.currentTime = floatStartMs;
-            wobbleAnimations.push(redraw);
-          });
-        };
-        animateLetters(part.letterElements, Infinity, true);
-        animateLetters(part.highlightLetterElements, Infinity, false);
-        animateLetters(glowLetters, glowEndMs, false);
-      }
-    }
-    part.animations = [
-      ...highlightAnimations.animations,
-      ...mirrorImageHighlightAnimations(part, highlightAnimations.animations),
-      ...wobbleAnimations
-    ];
-  }
-  function startLineAnimations(engine, lineData, config2, currentTime) {
-    const appliedTimingOffsetMs = engine.learnedAnimationTimingOffsetMs;
-    startLineAnimation(engine, lineData, config2, currentTime, appliedTimingOffsetMs);
-    if (lineData.lyricElement.dataset.instrumental === "true") {
-      startInstrumentalAnimations(engine, lineData, config2, currentTime, appliedTimingOffsetMs);
-      return;
-    }
-    resolveLineGlowSuppression(engine, lineData, config2);
-    for (const part of lineData.parts) {
-      startWordAnimations(engine, part, config2, currentTime, appliedTimingOffsetMs);
-    }
-  }
-  function startWordExitAnimation(part, config2, imagePaint = []) {
-    resetPartAnimations(part);
-    const fadeDuration = config2.enabled.highlightFade ? config2.highlight.fadeOutDurationMs : 1;
-    const animation = part.highlightElement.animate(fadeOutTextKeyframes(config2, part), {
-      duration: fadeDuration,
-      easing: config2.enabled.highlightFade ? config2.highlight.fadeOutEasing : "linear",
-      fill: "none"
-    });
-    part.animations = [animation, ...mirrorImageHighlightAnimations(part, [animation])];
-    for (const { target, frame } of imagePaint) {
-      part.animations.push(target.animate([frame, frame], { duration: fadeDuration, fill: "none" }));
-    }
-    animation.addEventListener("finish", () => {
-      resetPartAnimations(part);
-    }, { once: true });
-  }
-  function startLineExitAnimations(engine, lineData, config2, currentTime) {
-    const imagePaint = /* @__PURE__ */ new Map();
-    for (const part of lineData.parts) {
-      if (!part.imageLayers || currentTime < part.time)
-        continue;
-      const style = engine.window.getComputedStyle(part.imageLayers.glow);
-      const paint = [
-        { target: part.imageLayers.glow, frame: { opacity: style.opacity, filter: style.filter } }
-      ];
-      for (const target of part.letterElements ?? []) {
-        paint.push({ target, frame: { transform: engine.window.getComputedStyle(target).transform } });
-      }
-      for (const target of [...part.highlightLetterElements ?? [], ...part.imageLayers.glowLetters]) {
-        const letterStyle = engine.window.getComputedStyle(target);
-        paint.push({ target, frame: { maskPosition: letterStyle.maskPosition, transform: letterStyle.transform } });
-      }
-      imagePaint.set(part, paint);
-    }
-    startLineExitAnimation(lineData, config2);
-    if (lineData.lyricElement.dataset.instrumental === "true") {
-      startInstrumentalExitAnimations(engine, lineData, config2, currentTime);
-      return;
-    }
-    for (const part of lineData.parts) {
-      if (currentTime >= part.time) {
-        startWordExitAnimation(part, config2, imagePaint.get(part));
-      } else {
-        resetPartAnimations(part);
-      }
-    }
-  }
-  function animateInstrumentalChild(engine, lineData, selector, keyframes, options, timing) {
-    const element = lineData.lyricElement.querySelector(selector);
-    if (!element)
-      return null;
-    const animation = timing ? trackLyricAnimationTiming(engine, element.animate(keyframes, options), timing) : element.animate(keyframes, options);
-    lineData.animations.push(animation);
-    return animation;
-  }
-  function startInstrumentalAnimations(engine, lineData, config2, currentTime, appliedTimingOffsetMs) {
-    const rawElapsedMs = (currentTime - lineData.time) * 1e3;
-    const durationMs = Math.max(lineData.duration * 1e3, 1);
-    const fillFadeDuration = config2.enabled.instrumental ? config2.instrumental.fillFadeDurationMs : 1;
-    const fillAnimation = animateInstrumentalChild(engine, lineData, INSTRUMENTAL_FILL_SELECTOR, [{ opacity: 0 }, { opacity: 1 }], {
-      duration: fillFadeDuration,
-      easing: config2.enabled.instrumental ? config2.instrumental.fillFadeEasing : "linear",
-      fill: "forwards"
-    }, { appliedTimingOffsetMs, offsetMs: 0 });
-    let fillTravelAnimation = null;
-    let waveFlattenAnimation = null;
-    let waveOscillationAnimation = null;
-    if (config2.enabled.instrumental) {
-      fillTravelAnimation = animateInstrumentalChild(engine, lineData, INSTRUMENTAL_WAVE_CLIP_SELECTOR, [{ transform: config2.instrumental.fillFrom }, { transform: config2.instrumental.fillTo }], {
-        duration: durationMs,
-        easing: config2.instrumental.fillEasing,
-        fill: "both"
-      }, { appliedTimingOffsetMs, offsetMs: 0 });
-      waveFlattenAnimation = animateInstrumentalChild(engine, lineData, INSTRUMENTAL_WAVE_PATH_SELECTOR, [{ transform: config2.instrumental.waveFrom }, { transform: config2.instrumental.waveTo }], {
-        duration: durationMs,
-        easing: config2.instrumental.waveEasing,
-        fill: "both"
-      }, { appliedTimingOffsetMs, offsetMs: 0 });
-      waveOscillationAnimation = animateInstrumentalChild(engine, lineData, INSTRUMENTAL_WAVE_PATH_SELECTOR, [
-        { d: config2.instrumental.wavePathHigh },
-        { d: config2.instrumental.wavePathLow, offset: 0.5 },
-        { d: config2.instrumental.wavePathHigh }
-      ], {
-        duration: config2.instrumental.waveOscillationDurationMs,
-        easing: config2.instrumental.waveOscillationEasing,
-        iterations: Infinity
-      }, {
-        appliedTimingOffsetMs,
-        offsetMs: 0,
-        wrapDurationMs: config2.instrumental.waveOscillationDurationMs
-      });
-    }
-    if (fillAnimation) {
-      fillAnimation.currentTime = correctedAnimationTimeMs(rawElapsedMs, appliedTimingOffsetMs, fillFadeDuration);
-    }
-    for (const animation of [fillTravelAnimation, waveFlattenAnimation]) {
-      if (animation) {
-        animation.currentTime = correctedAnimationTimeMs(rawElapsedMs, appliedTimingOffsetMs, durationMs);
-      }
-    }
-    if (waveOscillationAnimation) {
-      waveOscillationAnimation.currentTime = correctedWrappedAnimationTimeMs(rawElapsedMs, appliedTimingOffsetMs, Math.max(config2.instrumental.waveOscillationDurationMs, 1));
-    }
-  }
-  function startInstrumentalExitAnimations(engine, lineData, config2, currentTime) {
-    if (currentTime < lineData.time)
-      return;
-    const fadeDuration = config2.enabled.instrumental && config2.enabled.highlightFade ? config2.highlight.fadeOutDurationMs : 1;
-    animateInstrumentalChild(engine, lineData, INSTRUMENTAL_FILL_SELECTOR, [{ opacity: 1 }, { opacity: 0 }], {
-      duration: fadeDuration,
-      easing: config2.enabled.instrumental ? config2.highlight.fadeOutEasing : "linear",
-      fill: "none"
-    });
-  }
-  function clearStyleCaches(engine) {
-    dropPendingLineScroll(engine);
-    engine.cachedDurations.clear();
-    engine.cachedCSSValues.clear();
-    engine.cachedAnimationSettings = null;
-    engine.cachedLineScrollTiming.clear();
-  }
-  function getCSSValue(engine, lyricsElement, property, fallback) {
-    let value = engine.cachedCSSValues.get(property);
-    if (value === void 0) {
-      value = engine.window.getComputedStyle(lyricsElement).getPropertyValue(property).trim() || fallback;
-      engine.cachedCSSValues.set(property, value);
-    }
-    return value;
-  }
-  function getCSSDurationInMs(engine, lyricsElement, property) {
-    let duration = engine.cachedDurations.get(property);
-    if (duration === void 0) {
-      duration = toMs(getCSSValue(engine, lyricsElement, property, "0ms"));
-      engine.cachedDurations.set(property, duration);
-    }
-    return duration;
-  }
-  function getCSSDurationWithFallback(engine, lyricsElement, property, fallback) {
-    return Math.max(toMs(getCSSValue(engine, lyricsElement, property, fallback)), 1);
-  }
-  function getCSSNumber(engine, lyricsElement, property, fallback) {
-    const value = Number.parseFloat(getCSSValue(engine, lyricsElement, property, `${fallback}`));
-    return Number.isFinite(value) ? value : fallback;
-  }
-  function getCSSBoolean(engine, lyricsElement, property, fallback) {
-    const value = getCSSValue(engine, lyricsElement, property, fallback ? "1" : "0").toLowerCase();
-    if (value === "false" || value === "off" || value === "none")
-      return false;
-    const numericValue = Number.parseFloat(value);
-    if (Number.isFinite(numericValue))
-      return numericValue > 0;
-    return fallback;
-  }
-  function getCSSOffset(engine, lyricsElement, property, fallback) {
-    return Math.max(0, Math.min(1, getCSSNumber(engine, lyricsElement, property, fallback)));
-  }
-  function getTargetScrollRatio(engine, lyricsElement) {
-    const scoped = Number.parseFloat(getCSSValue(engine, lyricsElement, "--blyrics-target-scroll-pos-ratio", ""));
-    return Number.isFinite(scoped) ? Math.max(0, Math.min(1, scoped)) : SCROLL_POS_OFFSET_RATIO.getNumberValue();
-  }
-  var GLOW_INVISIBLE_ALPHA = 0.5 / 255;
-  function alphaToken(token) {
-    const value = token.endsWith("%") ? Number.parseFloat(token) / 100 : Number.parseFloat(token);
-    return clamp(value, 0, 1);
-  }
-  function parseColorAlpha(value) {
-    const color = value.trim().toLowerCase();
-    if (color === "")
-      return null;
-    if (color === "transparent")
-      return 0;
-    const slashAlpha = color.match(/\/\s*([0-9]*\.?[0-9]+%?)\s*\)\s*$/);
-    if (slashAlpha)
-      return alphaToken(slashAlpha[1]);
-    const commaAlpha = color.match(/^(?:rgba|hsla)\([^)]*,\s*([0-9]*\.?[0-9]+%?)\s*\)$/);
-    if (commaAlpha)
-      return alphaToken(commaAlpha[1]);
-    const hex = color.match(/^#([0-9a-f]{4}|[0-9a-f]{8})$/);
-    if (hex) {
-      const digits = hex[1];
-      const alphaHex = digits.length === 8 ? digits.slice(6) : digits.slice(3).repeat(2);
-      return Number.parseInt(alphaHex, 16) / 255;
-    }
-    const opaqueFunction = /^(?:rgb|hsl|hwb|lab|lch|oklab|oklch|color)\(/.test(color);
-    const opaqueHex = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/.test(color);
-    const namedColor = /^[a-z]+$/.test(color);
-    if (opaqueFunction || opaqueHex || namedColor)
-      return 1;
-    return null;
-  }
-  function resolveLineGlowSuppression(engine, lineData, config2) {
-    if (lineData.parts.some((part) => part.imageLayers) || config2.highlight.glowContainerAlpha >= GLOW_INVISIBLE_ALPHA) {
-      for (const part of lineData.parts)
-        part.glowSuppressed = false;
-      return;
-    }
-    for (const part of lineData.parts) {
-      const color = engine.window.getComputedStyle(part.highlightElement).getPropertyValue("--blyrics-glow-color");
-      part.glowSuppressed = (parseColorAlpha(color) ?? 1) < GLOW_INVISIBLE_ALPHA;
-    }
-  }
-  function resolveGlowFilter(engine, lyricsElement, suffix, radiusDefault) {
-    const override = getCSSValue(engine, lyricsElement, `--blyrics-highlight-glow-filter-${suffix}`, "");
-    if (override)
-      return override;
-    const radius = getCSSValue(engine, lyricsElement, `--blyrics-highlight-glow-radius-${suffix}`, radiusDefault);
-    return `drop-shadow(0 0 ${radius} var(--blyrics-glow-color))`;
-  }
-  function isGlowRestingInvisible(glowTo) {
-    const value = glowTo.trim();
-    if (value === "" || value === "none")
-      return true;
-    const match = value.match(/^drop-shadow\(\s*0\s+0\s+(\S+)\s+var\(--blyrics-glow-color\)\)$/);
-    return match ? Number.parseFloat(match[1]) === 0 : false;
-  }
-  function readAnimationConfig(engine, lyricsElement) {
-    const prefersReducedMotion = engine.window.matchMedia(REDUCED_MOTION_QUERY).matches;
-    const scrollEasing = getCSSValue(engine, lyricsElement, "--blyrics-lyric-scroll-timing-function", "cubic-bezier(0.86, 0, 0.2, 1)");
-    return {
-      enabled: {
-        lineScale: getCSSBoolean(engine, lyricsElement, "--blyrics-animate-line-scale", true),
-        wordWobble: getCSSBoolean(engine, lyricsElement, "--blyrics-animate-word-wobble", true),
-        highlightSwipe: getCSSBoolean(engine, lyricsElement, "--blyrics-animate-highlight-swipe", true),
-        highlightGlow: getCSSBoolean(engine, lyricsElement, "--blyrics-animate-highlight-glow", true),
-        highlightFade: getCSSBoolean(engine, lyricsElement, "--blyrics-animate-highlight-fade", true),
-        scroll: getCSSBoolean(engine, lyricsElement, "--blyrics-animate-scroll", true),
-        instrumental: getCSSBoolean(engine, lyricsElement, "--blyrics-animate-instrumental", true)
-      },
-      line: {
-        durationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-scale-transition-duration", "0.166s"),
-        enterEasing: getCSSValue(engine, lyricsElement, "--blyrics-line-enter-easing", "ease"),
-        exitEasing: getCSSValue(engine, lyricsElement, "--blyrics-line-exit-easing", "ease"),
-        enterFrom: getCSSValue(engine, lyricsElement, "--blyrics-line-enter-transform-from", "scale(var(--blyrics-scale))"),
-        enterTo: getCSSValue(engine, lyricsElement, "--blyrics-line-enter-transform-to", "scale(var(--blyrics-active-scale))"),
-        exitFrom: getCSSValue(engine, lyricsElement, "--blyrics-line-exit-transform-from", "scale(var(--blyrics-active-scale))"),
-        exitTo: getCSSValue(engine, lyricsElement, "--blyrics-line-exit-transform-to", "scale(var(--blyrics-scale))")
-      },
-      highlight: {
-        fadeInDurationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-lyric-highlight-fade-in-duration", "0.33s"),
-        fadeOutDurationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-lyric-highlight-fade-out-duration", "0.5s"),
-        fadeInEasing: getCSSValue(engine, lyricsElement, "--blyrics-lyric-highlight-fade-in-easing", "ease"),
-        fadeOutEasing: getCSSValue(engine, lyricsElement, "--blyrics-lyric-highlight-fade-out-easing", "ease"),
-        swipeEasing: getCSSValue(engine, lyricsElement, "--blyrics-highlight-swipe-easing", "linear"),
-        swipeStartFrom: getCSSValue(engine, lyricsElement, "--blyrics-highlight-swipe-start-from", "-0.2"),
-        swipeEndFrom: getCSSValue(engine, lyricsElement, "--blyrics-highlight-swipe-end-from", "-0.1"),
-        swipeStartTo: getCSSValue(engine, lyricsElement, "--blyrics-highlight-swipe-start-to", "1.4"),
-        swipeEndTo: getCSSValue(engine, lyricsElement, "--blyrics-highlight-swipe-end-to", "1.5"),
-        imageGlowFrom: getCSSValue(engine, lyricsElement, "--blyrics-highlight-glow-radius-from", "0.8rem"),
-        imageGlowTo: getCSSValue(engine, lyricsElement, "--blyrics-highlight-glow-radius-to", "0px"),
-        imageGlowOpacityFrom: getCSSValue(engine, lyricsElement, "--blyrics-image-glow-opacity-from", "0.5"),
-        imageGlowOpacityTo: getCSSValue(engine, lyricsElement, "--blyrics-image-glow-opacity-to", "0"),
-        glowFrom: resolveGlowFilter(engine, lyricsElement, "from", "0.8rem"),
-        glowTo: resolveGlowFilter(engine, lyricsElement, "to", "0"),
-        glowDurationRatio: getCSSNumber(engine, lyricsElement, "--blyrics-highlight-glow-duration-ratio", 1.2),
-        glowMinDurationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-highlight-glow-min-duration", "1.2s"),
-        glowEasing: getCSSValue(engine, lyricsElement, "--blyrics-highlight-glow-easing", "ease"),
-        glowContainerAlpha: parseColorAlpha(getCSSValue(engine, lyricsElement, "--blyrics-glow-color", "")) ?? 1,
-        glowRestingInvisible: isGlowRestingInvisible(resolveGlowFilter(engine, lyricsElement, "to", "0"))
-      },
-      word: {
-        wobbleDurationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-wobble-duration", "1s"),
-        wobbleEasing: getCSSValue(engine, lyricsElement, "--blyrics-word-wobble-easing", "ease"),
-        wobblePeakEasing: getCSSValue(engine, lyricsElement, "--blyrics-word-wobble-peak-easing", "ease-in-out"),
-        wobbleEndEasing: getCSSValue(engine, lyricsElement, "--blyrics-word-wobble-end-easing", "ease-out"),
-        wobbleFrom: getCSSValue(engine, lyricsElement, "--blyrics-word-wobble-transform-from", "scaleX(1)"),
-        wobblePeak: getCSSValue(engine, lyricsElement, "--blyrics-word-wobble-transform-peak", "translateX(0.05em) scaleX(1.025)"),
-        wobbleSettle: getCSSValue(engine, lyricsElement, "--blyrics-word-wobble-transform-settle", "translateX(0) scaleX(1)"),
-        wobbleTo: getCSSValue(engine, lyricsElement, "--blyrics-word-wobble-transform-to", "scaleX(1)"),
-        wobblePeakOffset: getCSSOffset(engine, lyricsElement, "--blyrics-word-wobble-peak-offset", 0.125),
-        wobbleSettleOffset: getCSSOffset(engine, lyricsElement, "--blyrics-word-wobble-settle-offset", 0.75)
-      },
-      letterWave: {
-        transform: getCSSValue(engine, lyricsElement, "--blyrics-letter-wave-transform", "translateY(-0.06em)"),
-        settle: getCSSValue(engine, lyricsElement, "--blyrics-letter-wave-settle", "translateY(-0.05em)"),
-        emphasisScale: getCSSValue(engine, lyricsElement, "--blyrics-letter-wave-emphasis-scale", "1.08"),
-        durationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-letter-wave-duration", "0.9s"),
-        riseEasing: getCSSValue(engine, lyricsElement, "--blyrics-letter-wave-rise-easing", "ease-in-out"),
-        fallEasing: getCSSValue(engine, lyricsElement, "--blyrics-letter-wave-fall-easing", "ease-in-out")
-      },
-      instrumental: {
-        fillFadeDurationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-instrumental-fill-fade-duration", "150ms"),
-        fillFadeEasing: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-fill-fade-easing", "ease"),
-        fillFrom: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-fill-transform-from", "translateY(78%)"),
-        fillTo: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-fill-transform-to", "translateY(-4%)"),
-        fillEasing: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-fill-easing", "linear"),
-        waveFrom: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-wave-transform-from", "scaleY(1.2)"),
-        waveTo: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-wave-transform-to", "scaleY(0.0001)"),
-        waveEasing: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-wave-easing", "ease-in"),
-        wavePathHigh: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-wave-path-high", INSTRUMENTAL_WAVE_PATH_HIGH_FALLBACK),
-        wavePathLow: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-wave-path-low", INSTRUMENTAL_WAVE_PATH_LOW_FALLBACK),
-        waveOscillationDurationMs: getCSSDurationWithFallback(engine, lyricsElement, "--blyrics-instrumental-wave-oscillation-duration", "1.25s"),
-        waveOscillationEasing: getCSSValue(engine, lyricsElement, "--blyrics-instrumental-wave-oscillation-easing", "ease-in-out")
-      },
-      lineScroll: {
-        easing: scrollEasing,
-        differentialEffects: !prefersReducedMotion
-      }
-    };
-  }
-  function readScrollTiming() {
-    return { earlyScrollConsiderS: Math.max(0, EARLY_SCROLL_CONSIDER.getNumberValue()) };
-  }
-  function getAnimationSettings(engine, lyricsElement) {
-    if (!engine.cachedAnimationSettings) {
-      const config2 = readAnimationConfig(engine, lyricsElement);
-      engine.cachedAnimationSettings = {
-        config: config2,
-        scrollTiming: readScrollTiming()
-      };
-    }
-    return engine.cachedAnimationSettings;
-  }
-  function clearLineScrollAnimations(engine) {
-    const records = engine.lineScrollAnimations;
-    engine.lineScrollAnimations = [];
-    for (const record of records) {
-      record.animation.cancel();
-      clearLineScrollInlineProperties(engine, record.lineElement, record.token);
-    }
-  }
-  function removeLineScrollAnimation(engine, record) {
-    const index = engine.lineScrollAnimations.indexOf(record);
-    if (index !== -1) {
-      engine.lineScrollAnimations.splice(index, 1);
-    }
-    clearLineScrollInlineProperties(engine, record.lineElement, record.token);
-  }
-  function trackLineScrollAnimation(engine, animation, lineElement, token) {
-    const record = { animation, lineElement, token };
-    engine.lineScrollAnimations.push(record);
-    animation.addEventListener("finish", () => removeLineScrollAnimation(engine, record), { once: true });
-    animation.addEventListener("cancel", () => removeLineScrollAnimation(engine, record), { once: true });
-  }
-  function lineScrollSide(relativeIndex, scrollDeltaPx) {
-    const isScrollingUp = scrollDeltaPx < 0;
-    if (relativeIndex < 0)
-      return isScrollingUp ? "below" : "above";
-    if (relativeIndex > 0)
-      return isScrollingUp ? "above" : "below";
-    return "active";
-  }
-  function setLineScrollSettingProperty(lineElement, property, setting) {
-    const value = setting.getStringValue().trim();
-    if (value) {
-      lineElement.style.setProperty(property, value);
-    } else {
-      lineElement.style.removeProperty(property);
-    }
-  }
-  function setLineScrollStyleProperties(lineElement) {
-    for (const [property, setting] of LINE_SCROLL_STYLE_SETTINGS) {
-      setLineScrollSettingProperty(lineElement, property, setting);
-    }
-  }
-  function lineScrollTranslate(side, state, useDifferentialEffects) {
-    const sideProperty = `--blyrics-line-scroll-${side}-translate-y-${state}`;
-    const sharedProperty = `--blyrics-line-scroll-translate-y-${state}`;
-    const fallback = state === "start" ? "var(--blyrics-line-scroll-delta-px, 0px)" : "0px";
-    if (useDifferentialEffects) {
-      return `0 var(${sideProperty}, var(${sharedProperty}, ${fallback}))`;
-    }
-    return `0 var(${sharedProperty}, ${fallback})`;
-  }
-  function normalizedTranslate(translateValue) {
-    const translate = translateValue.trim();
-    return translate && translate !== "none" ? translate : "0px 0px";
-  }
-  function restoreInlineStyleProperty(lineElement, property, previousValue, previousPriority) {
-    if (previousValue) {
-      lineElement.style.setProperty(property, previousValue, previousPriority);
-    } else {
-      lineElement.style.removeProperty(property);
-    }
-  }
-  function lineScrollDurationProperty(side, fallbackMs, useDifferentialEffects) {
-    return useDifferentialEffects ? `var(--blyrics-line-scroll-${side}-duration, var(--blyrics-line-scroll-duration, ${fallbackMs}ms))` : `var(--blyrics-line-scroll-duration, ${fallbackMs}ms)`;
-  }
-  function clearLineScrollInlineProperties(engine, lineElement, token) {
-    if (token !== void 0 && engine.lineScrollElementTokens.get(lineElement) !== token) {
-      return;
-    }
-    for (const property of LINE_SCROLL_INLINE_PROPERTIES) {
-      lineElement.style.removeProperty(property);
-    }
-    engine.lineScrollElementTokens.delete(lineElement);
-  }
-  function lineScrollEasingProperty(side, keyframe, fallback, useDifferentialEffects) {
-    return useDifferentialEffects ? `var(--blyrics-line-scroll-${side}-${keyframe}-easing, var(--blyrics-line-scroll-${keyframe}-easing, var(--blyrics-line-scroll-timing-function, ${fallback})))` : `var(--blyrics-line-scroll-${keyframe}-easing, var(--blyrics-line-scroll-timing-function, ${fallback}))`;
-  }
-  function batchResolveLineScrollProperty(engine, items, property, probeValue, readValue) {
-    const previous = items.map((item) => ({
-      value: item.lineElement.style.getPropertyValue(property),
-      priority: item.lineElement.style.getPropertyPriority(property)
-    }));
-    for (const item of items) {
-      item.lineElement.style.setProperty(property, probeValue(item), "important");
-    }
-    const values = items.map((item) => readValue(engine.window.getComputedStyle(item.lineElement)));
-    for (let index = 0; index < items.length; index++) {
-      restoreInlineStyleProperty(items[index].lineElement, property, previous[index].value, previous[index].priority);
-    }
-    return values;
-  }
-  function isLineVisibleDuringScroll(lineData, fromScrollTop, toScrollTop, viewportHeight) {
-    const visibleTop = Math.min(fromScrollTop, toScrollTop);
-    const visibleBottom = Math.max(fromScrollTop + viewportHeight, toScrollTop + viewportHeight);
-    const lineTop = lineData.position;
-    const lineBottom = lineData.position + lineData.height;
-    return lineBottom >= visibleTop && lineTop <= visibleBottom;
-  }
-  function clearVisibleLyricWillChange(engine) {
-    for (const element of engine.visibleWillChangeElements) {
-      element.style.removeProperty("will-change");
-    }
-    engine.visibleWillChangeElements = /* @__PURE__ */ new Set();
-  }
-  var LINE_CULL_ROOT_MARGIN = "100% 0px 100% 0px";
-  function cullLine(element) {
-    element.style.setProperty("content-visibility", "auto");
-  }
-  function uncullLine(element) {
-    element.style.removeProperty("content-visibility");
-  }
-  function clearOffscreenLineCulling(engine) {
-    for (const element of engine.culledLineElements) {
-      uncullLine(element);
-    }
-    engine.culledLineElements = /* @__PURE__ */ new Set();
-  }
-  function setupLineCullObserver(engine) {
-    engine.lineCullObserver?.disconnect();
-    clearOffscreenLineCulling(engine);
-    if (engine.layout === "stage") {
-      engine.lineCullObserver = null;
-      return;
-    }
-    const ObserverConstructor = engine.window.IntersectionObserver;
-    if (typeof ObserverConstructor !== "function" || engine.lines.length === 0) {
-      engine.lineCullObserver = null;
-      return;
-    }
-    engine.host.getScrollElement()?.style.setProperty("overflow-anchor", "none");
-    const restingHeights = engine.lines.map((line) => line.lyricElement.offsetHeight);
-    engine.lines.forEach((line, index) => {
-      line.lyricElement.style.setProperty("contain-intrinsic-block-size", `auto ${restingHeights[index]}px`);
-    });
-    const observer = new ObserverConstructor((entries) => {
-      for (const entry of entries) {
-        const element = entry.target;
-        if (entry.isIntersecting) {
-          if (engine.culledLineElements.delete(element))
-            uncullLine(element);
-        } else if (!engine.culledLineElements.has(element)) {
-          cullLine(element);
-          engine.culledLineElements.add(element);
-        }
-      }
-    }, { root: null, rootMargin: LINE_CULL_ROOT_MARGIN, threshold: 0 });
-    for (const line of engine.lines) {
-      observer.observe(line.lyricElement);
-    }
-    engine.lineCullObserver = observer;
-  }
-  function updateVisibleLyricWillChange(engine, lines, fromScrollTop, toScrollTop, viewportHeight) {
-    const nextVisibleElements = /* @__PURE__ */ new Set();
-    for (const line of lines) {
-      if (isLineVisibleDuringScroll(line, fromScrollTop, toScrollTop, viewportHeight)) {
-        line.lyricElement.style.setProperty("will-change", LINE_SCROLL_WILL_CHANGE_VALUE);
-        nextVisibleElements.add(line.lyricElement);
-      }
-    }
-    for (const element of engine.visibleWillChangeElements) {
-      if (!nextVisibleElements.has(element)) {
-        element.style.removeProperty("will-change");
-      }
-    }
-    engine.visibleWillChangeElements = nextVisibleElements;
-  }
-  function getLineScrollItems(engine, lines) {
-    const trailing = [engine.cachedCreditsItem, engine.cachedFooterItem].filter((item) => item !== null);
-    return trailing.length > 0 ? [...lines, ...trailing] : lines;
-  }
-  function measureTrailingItem(lyricsElement, className) {
-    const element = lyricsElement.querySelector(`:scope > .${className}`);
-    if (!element)
-      return null;
-    const bounds = getRelativeLayoutBounds(lyricsElement, element);
-    return { lyricElement: element, position: bounds.y, height: bounds.height };
-  }
-  function prepareLineScrollOffsets(engine, lines, activeLineIndex, scrollDeltaPx, fromScrollTop, toScrollTop, viewportHeight, config2) {
-    if (!config2.enabled.scroll || activeLineIndex < 0) {
-      return null;
-    }
-    const scrollDistancePx = Math.abs(scrollDeltaPx);
-    const translateThemed = LINE_SCROLL_TRANSLATE_SETTINGS.some((setting) => setting.isManuallySet());
-    const defaultStartTranslate = `0px ${scrollDeltaPx}px`;
-    const requests = [];
-    for (let index = 0; index < lines.length; index++) {
-      if (!isLineVisibleDuringScroll(lines[index], fromScrollTop, toScrollTop, viewportHeight)) {
-        continue;
-      }
-      const lineElement = lines[index].lyricElement;
-      const relativeIndex = index - activeLineIndex;
-      const side = lineScrollSide(relativeIndex, scrollDeltaPx);
-      const token = ++engine.lineScrollAnimationToken;
-      engine.lineScrollElementTokens.set(lineElement, token);
-      const item = { lineElement, side, token };
-      const timingKey = `${side}|${Math.abs(relativeIndex)}`;
-      requests.push({ item, index, relativeIndex, timingKey, timing: engine.cachedLineScrollTiming.get(timingKey) });
-    }
-    const linesToWrite = requests.filter((request) => translateThemed || !request.timing);
-    for (const { item, index, relativeIndex } of linesToWrite) {
-      const lineElement = item.lineElement;
-      lineElement.style.setProperty(LINE_SCROLL_INDEX_PROPERTY, String(index));
-      lineElement.style.setProperty(LINE_SCROLL_ACTIVE_INDEX_PROPERTY, String(activeLineIndex));
-      lineElement.style.setProperty(LINE_SCROLL_RELATIVE_INDEX_PROPERTY, String(relativeIndex));
-      lineElement.style.setProperty(LINE_SCROLL_ABS_RELATIVE_INDEX_PROPERTY, String(Math.abs(relativeIndex)));
-      lineElement.style.setProperty(LINE_SCROLL_SIDE_PROPERTY, item.side);
-      lineElement.style.setProperty(LINE_SCROLL_DELTA_PROPERTY, `${scrollDeltaPx}px`);
-      lineElement.style.setProperty(LINE_SCROLL_DISTANCE_PROPERTY, `${scrollDistancePx}px`);
-      setLineScrollStyleProperties(lineElement);
-    }
-    const misses = requests.filter((request) => !request.timing);
-    if (misses.length > 0) {
-      const missItems = misses.map((request) => request.item);
-      const durations = batchResolveLineScrollProperty(engine, missItems, "transition-duration", (item) => lineScrollDurationProperty(item.side, LINE_SCROLL_FALLBACK_DURATION_MS, config2.lineScroll.differentialEffects), (style) => {
-        const durationMs = toMs(style.transitionDuration.split(",")[0].trim());
-        return durationMs > 0 ? durationMs : LINE_SCROLL_FALLBACK_DURATION_MS;
-      });
-      const startEasings = batchResolveLineScrollProperty(engine, missItems, "transition-timing-function", (item) => lineScrollEasingProperty(item.side, "start", config2.lineScroll.easing, config2.lineScroll.differentialEffects), (style) => style.transitionTimingFunction.trim() || config2.lineScroll.easing);
-      const endEasings = batchResolveLineScrollProperty(engine, missItems, "transition-timing-function", (item) => lineScrollEasingProperty(item.side, "end", config2.lineScroll.easing, config2.lineScroll.differentialEffects), (style) => style.transitionTimingFunction.trim() || config2.lineScroll.easing);
-      misses.forEach((request, resolveIndex) => {
-        const timing = {
-          durationMs: durations[resolveIndex],
-          startEasing: startEasings[resolveIndex],
-          endEasing: endEasings[resolveIndex]
-        };
-        engine.cachedLineScrollTiming.set(request.timingKey, timing);
-        request.timing = timing;
-      });
-    }
-    let startTranslates = null;
-    let endTranslates = null;
-    if (translateThemed) {
-      const items = requests.map((request) => request.item);
-      startTranslates = batchResolveLineScrollProperty(engine, items, "translate", (item) => lineScrollTranslate(item.side, "start", config2.lineScroll.differentialEffects), (style) => normalizedTranslate(style.translate));
-      endTranslates = batchResolveLineScrollProperty(engine, items, "translate", (item) => lineScrollTranslate(item.side, "end", config2.lineScroll.differentialEffects), (style) => normalizedTranslate(style.translate));
-    }
-    return {
-      items: requests.map((request, requestIndex) => {
-        const timing = request.timing;
-        return {
-          ...request.item,
-          durationMs: timing.durationMs,
-          startEasing: timing.startEasing,
-          endEasing: timing.endEasing,
-          startTranslate: startTranslates ? startTranslates[requestIndex] : defaultStartTranslate,
-          endTranslate: endTranslates ? endTranslates[requestIndex] : "0px 0px"
-        };
-      })
-    };
-  }
-  function startPreparedLineScroll(engine, plan) {
-    for (const item of plan.items) {
-      if (!item.lineElement.isConnected || engine.lineScrollElementTokens.get(item.lineElement) !== item.token)
-        continue;
-      const animation = item.lineElement.animate([
-        { translate: item.startTranslate, easing: item.startEasing },
-        { translate: item.endTranslate, easing: item.endEasing }
-      ], {
-        composite: "add",
-        duration: item.durationMs,
-        easing: "linear",
-        fill: "none"
-      });
-      trackLineScrollAnimation(engine, animation, item.lineElement, item.token);
-    }
-  }
-  function discardLineScrollPlan(engine, plan) {
-    for (const item of plan.items) {
-      clearLineScrollInlineProperties(engine, item.lineElement, item.token);
-    }
-  }
-  function dropPendingLineScroll(engine) {
-    if (!engine.pendingLineScroll)
-      return;
-    discardLineScrollPlan(engine, engine.pendingLineScroll.plan);
-    engine.pendingLineScroll = null;
-  }
-  function pendingLineScrollMatches(engine, activeLine, fromScrollTop, toScrollTop) {
-    return !!(engine.pendingLineScroll && engine.pendingLineScroll.activeLineElement === activeLine.lyricElement && Math.abs(engine.pendingLineScroll.fromScrollTop - fromScrollTop) <= 2 && Math.abs(engine.pendingLineScroll.toScrollTop - toScrollTop) <= 2);
-  }
-  function commitOrPrepareLineScroll(engine, lines, activeLine, scrollDeltaPx, fromScrollTop, toScrollTop, viewportHeight, config2) {
-    if (pendingLineScrollMatches(engine, activeLine, fromScrollTop, toScrollTop)) {
-      const pending = engine.pendingLineScroll;
-      engine.pendingLineScroll = null;
-      startPreparedLineScroll(engine, pending.plan);
-      return;
-    }
-    dropPendingLineScroll(engine);
-    const plan = prepareLineScrollOffsets(engine, lines, lines.findIndex((line) => line.lyricElement === activeLine.lyricElement), scrollDeltaPx, fromScrollTop, toScrollTop, viewportHeight, config2);
-    if (plan)
-      startPreparedLineScroll(engine, plan);
-  }
-  function prepareUpcomingLineScroll(engine, lines, activeLine, scrollDeltaPx, fromScrollTop, toScrollTop, viewportHeight, config2) {
-    if (pendingLineScrollMatches(engine, activeLine, fromScrollTop, toScrollTop))
-      return;
-    dropPendingLineScroll(engine);
-    const activeLineIndex = lines.findIndex((line) => line.lyricElement === activeLine.lyricElement);
-    const plan = prepareLineScrollOffsets(engine, lines, activeLineIndex, scrollDeltaPx, fromScrollTop, toScrollTop, viewportHeight, config2);
-    if (plan) {
-      engine.pendingLineScroll = {
-        plan,
-        activeLineElement: activeLine.lyricElement,
-        fromScrollTop,
-        toScrollTop
-      };
-    }
-  }
-  function decaySkipScrolls(engine, now) {
-    let j2 = 0;
-    for (; j2 < engine.skipScrollsDecayTimes.length; j2++) {
-      if (engine.skipScrollsDecayTimes[j2] > now) {
-        break;
-      }
-    }
-    engine.skipScrollsDecayTimes = engine.skipScrollsDecayTimes.slice(j2);
-    engine.skipScrolls -= j2;
-    if (engine.skipScrolls < 0) {
-      engine.skipScrolls = 0;
-    }
-  }
-  function hasNoLyricsPlaceholder(engine) {
-    return engine.lyricsContainer?.dataset.noLyrics === "true";
-  }
-  function hasUnsyncedLyrics(engine) {
-    return engine.lyricsContainer !== null && engine.syncType === "none" && !hasNoLyricsPlaceholder(engine);
-  }
-  function stopPassiveScrollLoop(engine) {
-    if (engine.passiveRAFId !== null) {
-      engine.window.cancelAnimationFrame(engine.passiveRAFId);
-      engine.passiveRAFId = null;
-    }
-  }
-  function startPassiveScrollLoop(engine) {
-    if (engine.passiveRAFId !== null)
-      return;
-    engine.passiveRAFId = engine.window.requestAnimationFrame(() => passiveScrollRAFLoop(engine));
-  }
-  function passiveScrollRAFLoop(engine) {
-    engine.passiveRAFId = null;
-    if (!engine.passiveScrollEnabled || !PASSIVE_SCROLL_ENABLED.getBooleanValue() || !hasUnsyncedLyrics(engine))
-      return;
-    passiveScrollEngine(engine, playbackClock.lastPlayState);
-    engine.passiveRAFId = engine.window.requestAnimationFrame(() => passiveScrollRAFLoop(engine));
-  }
-  function passiveScrollEngine(engine, isPlaying) {
-    if (!engine.host.isViewVisible())
-      return;
-    if (engine.host.isLoaderActive())
-      return;
-    const tabRenderer = engine.host.getScrollElement();
-    if (!tabRenderer)
-      return;
-    const now = Date.now();
-    if (engine.passiveLastWallTime > 0 && isPlaying) {
-      const wallDelta = (now - engine.passiveLastWallTime) / 1e3;
-      engine.passiveScrollAccumulatedTime += Math.min(wallDelta, 0.5);
-    }
-    engine.passiveLastWallTime = now;
-    if (engine.scrollResumeTime > now) {
-      return;
-    }
-    if (engine.wasUserScrolling) {
-      engine.host.setResumeAffordanceVisible(false);
-      engine.lyricsContainer?.classList.remove(USER_SCROLLING_CLASS);
-      engine.wasUserScrolling = false;
-      const maxScroll2 = tabRenderer.scrollHeight - tabRenderer.clientHeight;
-      if (maxScroll2 > 0) {
-        const ratio = tabRenderer.scrollTop / maxScroll2;
-        const numLines2 = engine.lines.length;
-        const scrollDuration2 = numLines2 * PASSIVE_SECONDS_PER_LINE.getNumberValue();
-        engine.passiveScrollAccumulatedTime = ratio * scrollDuration2;
-      }
-    }
-    const numLines = engine.lines.length;
-    if (numLines === 0)
-      return;
-    const scrollDuration = numLines * PASSIVE_SECONDS_PER_LINE.getNumberValue();
-    const bottomPause = PASSIVE_BOTTOM_PAUSE_S.getNumberValue();
-    const resetDuration = PASSIVE_RESET_DURATION_S.getNumberValue();
-    const topPause = PASSIVE_TOP_PAUSE_S.getNumberValue();
-    const cycleLength = scrollDuration + bottomPause + resetDuration + topPause;
-    const maxScroll = tabRenderer.scrollHeight - tabRenderer.clientHeight;
-    if (maxScroll <= 0)
-      return;
-    const cycleTime = engine.passiveScrollAccumulatedTime % cycleLength;
-    let targetScroll;
-    if (cycleTime < scrollDuration) {
-      targetScroll = cycleTime / scrollDuration * maxScroll;
-    } else if (cycleTime < scrollDuration + bottomPause) {
-      targetScroll = maxScroll;
-    } else if (cycleTime < scrollDuration + bottomPause + resetDuration) {
-      const resetProgress = (cycleTime - scrollDuration - bottomPause) / resetDuration;
-      const eased = 1 - (1 - resetProgress) * (1 - resetProgress);
-      targetScroll = maxScroll * (1 - eased);
-    } else {
-      targetScroll = 0;
-    }
-    const prevScrollTop = tabRenderer.scrollTop;
-    tabRenderer.scrollTop = targetScroll;
-    const appliedScrollTop = tabRenderer.scrollTop;
-    if (appliedScrollTop !== prevScrollTop) {
-      engine.skipScrolls = 1;
-    }
-  }
-  function setupTabRendererObserver(engine, element) {
-    if (engine.tabRendererResizeObserver) {
-      engine.tabRendererResizeObserver.disconnect();
-    }
-    engine.tabRendererResizeObserver = new engine.window.ResizeObserver(() => {
-      dropPendingLineScroll(engine);
-      if (element && element.isConnected) {
-        measureScrollViewport(engine, element);
-      }
-    });
-    engine.tabRendererResizeObserver.observe(element);
-    engine.observedTabRenderer = element;
-    measureScrollViewport(engine, element);
-  }
-  var NO_SCROLL_INSETS = { top: 0, bottom: 0 };
-  function resolveScrollInset(value, viewportHeight) {
-    const amount = Number.parseFloat(value);
-    if (!Number.isFinite(amount) || amount <= 0)
-      return 0;
-    return value.trim().endsWith("%") ? viewportHeight * amount / 100 : amount;
-  }
-  function resolveScrollInsets(scrollPaddingTop, scrollPaddingBottom, viewportHeight) {
-    const top = resolveScrollInset(scrollPaddingTop, viewportHeight);
-    const bottom = resolveScrollInset(scrollPaddingBottom, viewportHeight);
-    return top + bottom < viewportHeight ? { top, bottom } : NO_SCROLL_INSETS;
-  }
-  function measureScrollViewport(engine, element) {
-    const height = element.getBoundingClientRect().height;
-    const { scrollPaddingTop, scrollPaddingBottom } = engine.window.getComputedStyle(element);
-    engine.cachedTabRendererHeight = height;
-    engine.cachedScrollInsets = resolveScrollInsets(scrollPaddingTop, scrollPaddingBottom, height);
-  }
-  function findScrollAnchor(sungLines, scrollTime) {
-    return sungLines.findLast((line) => line.time <= scrollTime && scrollTime < line.time + line.duration) ?? sungLines.findLast((line) => line.time <= scrollTime) ?? sungLines[0];
-  }
-  function computeActiveLinesScrollTop(sungLines, anchor, viewportHeight, insets, targetOffset) {
-    const first = sungLines[0];
-    const last = sungLines[sungLines.length - 1];
-    const averageCentre = sungLines.reduce((total, line) => total + line.position + line.height / 2, 0) / sungLines.length;
-    const visibleBottom = viewportHeight - insets.bottom;
-    let scrollTop = averageCentre - targetOffset;
-    scrollTop = Math.max(scrollTop, last.position + last.height - visibleBottom);
-    scrollTop = Math.min(scrollTop, last.position - insets.top);
-    scrollTop = Math.min(scrollTop, first.position - insets.top);
-    scrollTop = Math.max(scrollTop, anchor.position + anchor.height - visibleBottom);
-    scrollTop = Math.min(scrollTop, anchor.position - insets.top);
-    return {
-      scrollTop,
-      overflowsBand: last.position + last.height - first.position > visibleBottom - insets.top
-    };
-  }
-  function resolveTickOptions(options) {
-    return {
-      isPlaying: options.isPlaying,
-      eventCreationTime: options.eventCreationTime ?? NO_PLAYER_SNAPSHOT,
-      smoothScroll: options.smoothScroll ?? true,
-      globalLyricOffset: options.globalLyricOffset ?? 0,
-      lyricOffset: options.lyricOffset ?? 0,
-      richsyncOffsetTrim: options.richsyncOffsetTrim ?? 0,
-      lineOffsetTrim: options.lineOffsetTrim ?? 0,
-      passiveScrollEnabled: options.passiveScrollEnabled ?? false,
-      playbackRate: resolvePlaybackRate(options.playbackRate)
-    };
-  }
-  function resolvePlaybackRate(rate) {
-    return rate !== void 0 && Number.isFinite(rate) && rate > 0 ? rate : 1;
-  }
-  var STAGE_MOTION = { durationMs: 380, easing: "cubic-bezier(0.2, 0, 0, 1)" };
-  var STAGE_OPACITY_PROPERTY = "--blyrics-stage-opacity";
-  var stageOpacityRegistrations = /* @__PURE__ */ new WeakSet();
-  var STAGE_FADE_IN_MS = 300;
-  var STAGE_FADE_IN_DELAY_MS = 70;
-  var STAGE_FADE_OUT_MS = 220;
-  var STAGE_BLUR = "blur(3px)";
-  var STAGE_GAP_EM = 0.32;
-  function stageElements(engine) {
-    const elements = [];
-    const items = [];
-    let lastEnd = 0;
-    for (const line of engine.lines) {
-      const end = line.time + line.duration;
-      lastEnd = Math.max(lastEnd, end);
-      elements.push(line.lyricElement);
-      items.push({
-        kind: line.lyricElement.dataset.instrumental === "true" ? "instrumental" : line.lyricElement.dataset.blank === "true" ? "blank" : "line",
-        start: line.time,
-        end
-      });
-    }
-    const credits = engine.lyricsContainer?.querySelector(`:scope > .${CREDITS_CLASS}`);
-    if (credits) {
-      elements.push(credits);
-      items.push({ kind: "credits", start: lastEnd, end: Number.POSITIVE_INFINITY });
-    }
-    return { elements, items };
-  }
-  function originXOf(align) {
-    if (align === "center")
-      return 0.5;
-    if (align === "right" || align === "end")
-      return 1;
-    return 0;
-  }
-  var ELEMENT_NODE = 1;
-  var TEXT_NODE = 3;
-  function contentWidthOf(element, style) {
-    return element.clientWidth - (Number.parseFloat(style.paddingLeft) || 0) - (Number.parseFloat(style.paddingRight) || 0);
-  }
-  function collectContentRects(engine, range, node, contentWidth, rects) {
-    for (const child of node.childNodes) {
-      if (child.nodeType === TEXT_NODE) {
-        range.selectNodeContents(child);
-        rects.push(...range.getClientRects());
-        continue;
-      }
-      if (child.nodeType !== ELEMENT_NODE)
-        continue;
-      const element = child;
-      const style = engine.window.getComputedStyle(element);
-      if (style.display === "none")
-        continue;
-      if (style.display === "contents") {
-        collectContentRects(engine, range, element, contentWidth, rects);
-      } else if (style.display.startsWith("inline")) {
-        rects.push(...element.getClientRects());
-      } else if (element.offsetWidth < contentWidth - 1) {
-        rects.push(element.getBoundingClientRect());
-      } else {
-        collectContentRects(engine, range, element, contentWidthOf(element, style), rects);
-      }
-    }
-    return rects;
-  }
-  function measureStage(engine) {
-    engine.stageMetrics.clear();
-    const container = engine.lyricsContainer;
-    if (!container)
-      return;
-    engine.stageFontSize = Number.parseFloat(engine.window.getComputedStyle(container).fontSize) || 16;
-    const range = engine.document.createRange();
-    for (const element of stageElements(engine).elements) {
-      const style = engine.window.getComputedStyle(element);
-      const originX = originXOf(style.textAlign);
-      const span = stageTextSpan(element.offsetLeft, element.offsetWidth, element.getBoundingClientRect(), collectContentRects(engine, range, element, contentWidthOf(element, style), []), { left: Number.parseFloat(style.paddingLeft) || 0, right: Number.parseFloat(style.paddingRight) || 0 }, originX);
-      engine.stageMetrics.set(element, {
-        height: element.offsetHeight,
-        left: span.left,
-        width: span.width,
-        originX
-      });
-    }
-    engine.stageKey = "";
-    engine.stageRemeasured = true;
-  }
-  function currentTranslateY(engine, element, fallback) {
-    const parts = engine.window.getComputedStyle(element).translate.split(" ");
-    const y = Number.parseFloat(parts[1] ?? "");
-    return Number.isFinite(y) ? y : fallback;
-  }
-  function snapStageElement(engine, element, y) {
-    engine.stageMoves.get(element)?.cancel();
-    engine.stageMoves.set(element, element.animate([{ translate: `0 ${y}px` }], { duration: 0, fill: "forwards" }));
-    engine.stageY.set(element, y);
-  }
-  function placeStageElement(engine, { element, placement, wasVisible, fromY, fromOpacity }, instant, reduced) {
-    engine.stageMoves.get(element)?.cancel();
-    engine.stageFades.get(element)?.cancel();
-    const moveMs = instant || reduced ? 0 : STAGE_MOTION.durationMs;
-    engine.stageMoves.set(element, element.animate([{ translate: `0 ${fromY}px` }, { translate: `0 ${placement.y}px` }], {
-      duration: moveMs,
-      easing: STAGE_MOTION.easing,
-      fill: "forwards"
-    }));
-    const fadeMs = instant ? 0 : placement.visible ? STAGE_FADE_IN_MS : STAGE_FADE_OUT_MS;
-    if (placement.visible)
-      element.dataset.stageVisible = "";
-    else if (fadeMs === 0)
-      delete element.dataset.stageVisible;
-    const fade = element.animate([{ [STAGE_OPACITY_PROPERTY]: fromOpacity }, { [STAGE_OPACITY_PROPERTY]: placement.visible ? 1 : 0 }], {
-      duration: fadeMs,
-      delay: placement.visible && !instant ? STAGE_FADE_IN_DELAY_MS : 0,
-      easing: placement.visible ? "ease-out" : "ease",
-      // Backwards too: the fade replaces one that was cancelled, and through its delay the line would
-      // otherwise drop to the stylesheet's resting opacity of zero.
-      fill: "both"
-    });
-    if (!placement.visible && fadeMs > 0) {
-      fade.onfinish = () => {
-        if (engine.stageFades.get(element) === fade)
-          delete element.dataset.stageVisible;
-      };
-    }
-    engine.stageFades.set(element, fade);
-    engine.stageY.set(element, placement.y);
-    engine.stageBlurs.get(element)?.cancel();
-    engine.stageBlurs.delete(element);
-    if (fadeMs === 0 || reduced || wasVisible === placement.visible)
-      return;
-    const blurs = ["none", STAGE_BLUR];
-    engine.stageBlurs.set(element, element.animate((placement.visible ? blurs.reverse() : blurs).map((filter) => ({ filter })), {
-      duration: fadeMs,
-      delay: placement.visible ? STAGE_FADE_IN_DELAY_MS : 0,
-      easing: placement.visible ? "ease-out" : "ease",
-      // Added to the theme's own filter rather than replacing it, and held only until the line is in focus.
-      composite: "add",
-      fill: placement.visible ? "backwards" : "forwards"
-    }));
-  }
-  function registerStageOpacity(engine) {
-    const css = engine.window.CSS;
-    if (stageOpacityRegistrations.has(engine.window) || typeof css?.registerProperty !== "function")
-      return;
-    stageOpacityRegistrations.add(engine.window);
-    try {
-      css.registerProperty({ name: STAGE_OPACITY_PROPERTY, syntax: "<number>", inherits: false, initialValue: "0" });
-    } catch (error) {
-      engine.host.log("Stage opacity property was already registered", error);
-    }
-  }
-  function isStageRoleVisible(role) {
-    return role !== "queued" && role !== "gone";
-  }
-  function sameBox(a, b) {
-    if (a === null || b === null)
-      return a === b;
-    return a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
-  }
-  function applyStage(engine, timeS, instant) {
-    const container = engine.lyricsContainer;
-    if (!container)
-      return;
-    registerStageOpacity(engine);
-    const { elements, items } = stageElements(engine);
-    const roles = planStage(items, timeS);
-    const key = roles.join(",");
-    if (key === engine.stageKey && !instant)
-      return;
-    engine.stageKey = key;
-    const remeasured = engine.stageRemeasured;
-    engine.stageRemeasured = false;
-    const metrics = elements.map((element) => engine.stageMetrics.get(element) ?? { height: 0, left: 0, width: 0, originX: 0 });
-    const geometry = {
-      stageHeight: container.clientHeight,
-      gap: engine.stageFontSize * STAGE_GAP_EM,
-      activeScale: getCSSNumber(engine, container, "--blyrics-active-scale", 1)
-    };
-    const floorShift = remeasured && engine.stageHeight > 0 ? geometry.stageHeight - engine.stageHeight : 0;
-    engine.stageHeight = geometry.stageHeight;
-    const { placements, box } = layoutStage(roles, items, metrics, elements.map((element) => {
-      const y = engine.stageY.get(element);
-      return y === void 0 ? null : y + floorShift;
-    }), geometry);
-    const moves = [];
-    elements.forEach((element, index) => {
-      const placement = placements[index];
-      const previousY = engine.stageY.get(element);
-      const wasVisible = element.dataset.stageRole !== void 0 && isStageRoleVisible(element.dataset.stageRole);
-      const unchanged = previousY !== void 0 && wasVisible === placement.visible && (!placement.visible || previousY === placement.y);
-      const onScreen = placement.visible || element.dataset.stageVisible !== void 0;
-      if (remeasured && !instant && onScreen && element.dataset.stageRole === roles[index]) {
-        if (previousY !== placement.y)
-          snapStageElement(engine, element, placement.y);
-        return;
-      }
-      if (unchanged && !instant)
-        return;
-      moves.push({
-        element,
-        placement,
-        wasVisible,
-        // A queued line rises from below the floor as it is now, never from where an older size put it.
-        fromY: element.dataset.stageRole === "queued" && placement.visible ? queuedStageY(geometry.stageHeight, metrics[index].height, geometry.gap) : currentTranslateY(engine, element, previousY ?? placement.y),
-        fromOpacity: Number(engine.window.getComputedStyle(element).opacity) || 0
-      });
-    });
-    const reduced = engine.window.matchMedia(REDUCED_MOTION_QUERY).matches;
-    elements.forEach((element, index) => {
-      if (element.dataset.stageRole !== roles[index])
-        element.dataset.stageRole = roles[index];
-    });
-    for (const move of moves)
-      placeStageElement(engine, move, instant, reduced);
-    if (!sameBox(box, engine.stageBox)) {
-      engine.stageBox = box;
-      engine.host.onStageLayout?.(box);
-    }
-  }
-  function lyricClockShiftS(engine, lyricsElement, options) {
-    const syncTypeShiftS = engine.syncType === "richsync" ? getCSSDurationInMs(engine, lyricsElement, "--blyrics-richsync-timing-offset") / 1e3 - options.richsyncOffsetTrim : getCSSDurationInMs(engine, lyricsElement, "--blyrics-timing-offset") / 1e3 - options.lineOffsetTrim;
-    return syncTypeShiftS - options.globalLyricOffset - options.lyricOffset;
-  }
-  function playerTimeForLyricTime(engine, lyricTimeS) {
-    const options = engine.lastTickOptions;
-    const lyricsElement = engine.lyricsContainer;
-    if (!options || !lyricsElement)
-      return lyricTimeS;
-    return Math.max(0, lyricTimeS - lyricClockShiftS(engine, lyricsElement, options));
-  }
-  function tickView(engine, currentTime, options) {
-    const { eventCreationTime, isPlaying, smoothScroll } = options;
-    engine.lastTickOptions = options;
-    engine.passiveScrollEnabled = options.passiveScrollEnabled;
-    if (engine.playbackRate !== options.playbackRate) {
-      engine.playbackRate = options.playbackRate;
-      applyPlaybackRateToRunningAnimations(engine);
-    }
-    const now = Date.now();
-    if (currentTime === 0 && !isPlaying) {
-      return "ok";
-    }
-    if (hasNoLyricsPlaceholder(engine)) {
-      stopPassiveScrollLoop(engine);
-      return "ok";
-    }
-    if (hasUnsyncedLyrics(engine)) {
-      if (engine.layout === "stage")
-        return "ok";
-      if (!playbackClock.lastPlayState && isPlaying) {
-        engine.scrollResumeTime = 0;
-      }
-      playbackClock.lastPlayState = isPlaying;
-      if (!options.passiveScrollEnabled)
-        return "ok";
-      startPassiveScrollLoop(engine);
-      return "ok";
-    }
-    const timeJumped = Math.abs(currentTime - playbackClock.lastTime - (eventCreationTime - playbackClock.lastEventCreationTime) / 1e3) > TIME_JUMP_THRESHOLD;
-    if (timeJumped)
-      dropPendingLineScroll(engine);
-    playbackClock.lastTime = currentTime;
-    playbackClock.lastPlayState = isPlaying;
-    playbackClock.lastEventCreationTime = eventCreationTime;
-    let timeOffset = now - eventCreationTime;
-    if (!isPlaying || eventCreationTime === NO_PLAYER_SNAPSHOT) {
-      timeOffset = 0;
-    }
-    currentTime += timeOffset / 1e3;
-    if (SMOOTH_PLAYBACK_CLOCK) {
-      if (isPlaying && !timeJumped) {
-        currentTime = smoothedPlaybackTime(playbackClock.smoothedTime, playbackClock.smoothedAt, currentTime, now, engine.playbackRate);
-      }
-      playbackClock.smoothedTime = currentTime;
-      playbackClock.smoothedAt = isPlaying ? now : NO_PLAYER_SNAPSHOT;
-    }
-    if (!engine.host.isViewVisible()) {
-      clearVisibleLyricWillChange(engine);
-      return "ok";
-    }
-    if (engine.host.syncAdState()) {
-      return "ok";
-    }
-    try {
-      const lyricsElement = engine.lyricsContainer;
-      if (!lyricsElement) {
-        engine.host.log(NO_LYRICS_ELEMENT_LOG);
-        return "lyrics-missing";
-      }
-      const lines = engine.lines;
-      currentTime += lyricClockShiftS(engine, lyricsElement, options);
-      const lyricScrollTime = correctedScrollTimeS(engine, currentTime) + getCSSDurationInMs(engine, lyricsElement, "--blyrics-scroll-timing-offset") / 1e3;
-      const { config: animationConfig, scrollTiming } = getAnimationSettings(engine, lyricsElement);
-      const isStage = engine.layout === "stage";
-      const tabRenderer = isStage ? null : engine.host.getScrollElement();
-      if (!isStage && !tabRenderer) {
-        clearVisibleLyricWillChange(engine);
-        return "ok";
-      }
-      if (tabRenderer && tabRenderer !== engine.observedTabRenderer) {
-        setupTabRendererObserver(engine, tabRenderer);
-      }
-      const tabRendererHeight = tabRenderer ? engine.cachedTabRendererHeight ?? tabRenderer.getBoundingClientRect().height : 0;
-      let scrollTop = tabRenderer?.scrollTop ?? 0;
-      const maxScrollTop = tabRenderer ? Math.max(0, tabRenderer.scrollHeight - tabRenderer.clientHeight) : 0;
-      if (!isStage && animationConfig.enabled.scroll) {
-        updateVisibleLyricWillChange(engine, lines, scrollTop, engine.pendingLineScroll?.toScrollTop ?? scrollTop, tabRendererHeight);
-      } else {
-        dropPendingLineScroll(engine);
-        clearVisibleLyricWillChange(engine);
-        clearLineScrollAnimations(engine);
-      }
-      let activeElems = [];
-      const linesToAnimate = [];
-      let newLyricSelected = timeJumped;
-      lines.every((lineData, index) => {
-        const time = lineData.time;
-        let nextTime = Infinity;
-        if (index + 1 < lines.length) {
-          const nextLyric = lines[index + 1];
-          nextTime = nextLyric.time;
-        }
-        if (lyricScrollTime >= time - scrollTiming.earlyScrollConsiderS && (lyricScrollTime < nextTime || lyricScrollTime < time + lineData.duration)) {
-          activeElems.push(lineData);
-          if (!engine.lastScrollElements.includes(lineData) && lyricScrollTime >= time) {
-            newLyricSelected = true;
-          }
-          engine.selectedElementIndex = index;
-          if (!lineData.isScrolled) {
-            lineData.lyricElement.classList.add(CURRENT_LYRICS_CLASS);
-            lineData.isScrolled = true;
-          }
-        } else {
-          if (lineData.isScrolled) {
-            lineData.lyricElement.classList.remove(CURRENT_LYRICS_CLASS);
-            lineData.isScrolled = false;
-          }
-        }
-        let setUpAnimationEarlyTime = 2;
-        if (!isPlaying) {
-          setUpAnimationEarlyTime = 0;
-        }
-        const effectiveEndTime = Math.max(nextTime, time + lineData.duration + 0.05);
-        if (currentTime + setUpAnimationEarlyTime >= time && currentTime < effectiveEndTime) {
-          if (!lineData.isSelected) {
-            lineData.isSelected = true;
-            lineData.lyricElement.classList.add(ANIMATING_CLASS);
-          }
-          if (isPlaying !== lineData.isAnimationPlayStatePlaying) {
-            lineData.isAnimationPlayStatePlaying = isPlaying;
-            setAnimationsPlayState(lineData, isPlaying);
-            if (isPlaying)
-              lineData.isAnimating = false;
-          }
-          updateWordStates(lineData, currentTime);
-          const nativeTimingSample = lineNativeTimingSample(lineData, currentTime);
-          let usedNativeTimingSampleForDrift = false;
-          lineData.accumulatedOffsetMs = lineData.accumulatedOffsetMs / ANIMATION_TIMING_ACCUMULATION_DECAY;
-          if (nativeTimingSample !== null && canUseTimingSampleForDrift(nativeTimingSample, isPlaying)) {
-            usedNativeTimingSampleForDrift = true;
-            const learnedOffsetMs = learnAnimationTimingOffset(engine, nativeTimingSample);
-            const residualOffsetMs = nativeTimingSample.offsetMs;
-            lineData.accumulatedOffsetMs += residualOffsetMs * ANIMATION_TIMING_ACCUMULATION_WEIGHT;
-            if (shouldLogAnimationTiming(engine, lineData, nativeTimingSample, now)) {
-              logAnimationTiming(engine, "sample", lineData, index, nativeTimingSample, currentTime, lineData.accumulatedOffsetMs, learnedOffsetMs, residualOffsetMs);
-            }
-          } else if (nativeTimingSample !== null && shouldLogAnimationTiming(engine, lineData, nativeTimingSample, now)) {
-            logAnimationTiming(engine, "ignored-sample", lineData, index, nativeTimingSample, currentTime, lineData.accumulatedOffsetMs);
-          }
-          if (lineData.isAnimating && usedNativeTimingSampleForDrift && Math.abs(lineData.accumulatedOffsetMs) > ANIMATION_TIMING_RESET_THRESHOLD_MS && isPlaying) {
-            if (nativeTimingSample !== null) {
-              logAnimationTiming(engine, "drift-reset", lineData, index, nativeTimingSample, currentTime, lineData.accumulatedOffsetMs);
-            }
-            resetLineAnimationState(lineData);
-          }
-          if (!lineData.isAnimating) {
-            linesToAnimate.push(lineData);
-          }
-        } else {
-          const staleAnimationEndTime = effectiveEndTime + animationConfig.highlight.fadeOutDurationMs / 1e3 + 0.05;
-          if (lineData.isSelected) {
-            if (isPlaying || timeJumped) {
-              if (currentTime > staleAnimationEndTime) {
-                logAnimationCleanup(engine, "selected-stale-reset", lineData, index, currentTime, staleAnimationEndTime);
-                resetLineAnimationState(lineData);
-              } else {
-                startLineExitAnimations(engine, lineData, animationConfig, currentTime);
-                markLineAnimationsStopped(lineData);
-              }
-            } else {
-              setAnimationsPlayState(lineData, false);
-              lineData.isAnimationPlayStatePlaying = false;
-            }
-            lineData.isSelected = false;
-            clearLineStateClasses(lineData);
-            updateWordStates(lineData, currentTime);
-          } else if (hasLineAnimations(lineData) && (timeJumped || currentTime > staleAnimationEndTime)) {
-            logAnimationCleanup(engine, timeJumped ? "time-jump-reset" : "stale-reset", lineData, index, currentTime, staleAnimationEndTime);
-            resetLineAnimationState(lineData);
-          }
-          if (timeJumped) {
-            updateWordStates(lineData, currentTime);
-          }
-        }
-        return true;
-      });
-      if (linesToAnimate.length > 0) {
-        for (const lineData of linesToAnimate) {
-          startLineAnimations(engine, lineData, animationConfig, currentTime);
-          lineData.isAnimating = true;
-          lineData.lastAnimSetupAt = now;
-          lineData.isAnimationPlayStatePlaying = isPlaying;
-          lineData.accumulatedOffsetMs = 0;
-          if (!isPlaying)
-            setAnimationsPlayState(lineData, false);
-        }
-      }
-      const lastSungLine = lines.findLast((lineData) => lineData.lyricElement.dataset.instrumental !== "true");
-      const creditsFocused = lastSungLine !== void 0 && (engine.cachedCreditsItem?.height ?? 0) > 0 && lyricScrollTime >= lastSungLine.time + lastSungLine.duration;
-      if (creditsFocused !== engine.creditsFocused) {
-        engine.creditsFocused = creditsFocused;
-        if (creditsFocused)
-          lyricsElement.dataset.creditsFocused = "true";
-        else
-          delete lyricsElement.dataset.creditsFocused;
-        newLyricSelected = true;
-      }
-      if (isStage || !tabRenderer) {
-        if (isStage)
-          applyStage(engine, currentTime, timeJumped);
-        return "ok";
-      }
-      if (engine.scrollResumeTime < Date.now() || engine.scrollPos === -1) {
-        if (activeElems.length == 0) {
-          activeElems.push(lines[0]);
-        }
-        const scrollPosOffset = tabRendererHeight * getTargetScrollRatio(engine, lyricsElement);
-        let lastActiveLyric = activeElems[activeElems.length - 1];
-        const sungLines = activeElems.filter((lineData, index) => lyricScrollTime < lineData.time + lineData.duration - LYRIC_ENDING_THRESHOLD_S.getNumberValue() || index == activeElems.length - 1);
-        const lyricPositions = sungLines.map((lineData) => lineData.position + lineData.height / 2);
-        const scrollInsets = engine.cachedScrollInsets;
-        const scrollAnchor = findScrollAnchor(sungLines, lyricScrollTime);
-        const scrollTarget = computeActiveLinesScrollTop(sungLines, scrollAnchor, tabRendererHeight, scrollInsets, scrollPosOffset);
-        let scrollPos = scrollTarget.scrollTop;
-        const pinned2 = engine.pinnedScrollLine;
-        if (pinned2 && pinned2 !== scrollAnchor && (!sungLines.includes(pinned2) || lyricScrollTime >= pinned2.time + pinned2.duration)) {
-          newLyricSelected = true;
-        }
-        const credits = engine.cachedCreditsItem;
-        if (engine.creditsFocused && credits && lastSungLine) {
-          scrollPos = Math.min(credits.position + credits.height / 2 - scrollPosOffset, lastSungLine.position - scrollInsets.top);
-        }
-        scrollPos = clamp(scrollPos, 0, maxScrollTop);
-        if (ENABLE_DEBUG_RENDER.getBooleanValue()) {
-          let transform = engine.window.getComputedStyle(lyricsElement).transform;
-          const matrix = new engine.window.DOMMatrix(transform);
-          let yTransform = matrix.f;
-          let yTop = scrollTop - yTransform;
-          const ctx = engine.host.debug?.beginFrame(yTop);
-          if (ctx) {
-            let debugLyrics = function(xOffset, name, activeElems2, lyricPositions2, lyricScrollTime2) {
-              ctx.strokeStyle = "red";
-              ctx.fillStyle = "red";
-              ctx.fillText(name, xOffset + 2, yTop + 45);
-              ctx.fillText("scroll time: " + lyricScrollTime2.toFixed(3), xOffset + 2, yTop + 60);
-              activeElems2.forEach((elm) => {
-                let timeTillActive = elm.time - lyricScrollTime2;
-                let endTime = elm.time + elm.duration;
-                let timeTillEnd = endTime - lyricScrollTime2;
-                if (timeTillEnd < LYRIC_ENDING_THRESHOLD_S.getNumberValue()) {
-                  ctx.strokeStyle = "gray";
-                  ctx.fillStyle = "gray";
-                } else if (timeTillActive > 0) {
-                  ctx.strokeStyle = "magenta";
-                  ctx.fillStyle = "magenta";
-                } else {
-                  ctx.strokeStyle = "orange";
-                  ctx.fillStyle = "orange";
-                }
-                ctx?.beginPath();
-                ctx?.moveTo(xOffset + 5, elm.position);
-                ctx?.lineTo(xOffset + 5, elm.position + elm.height);
-                ctx?.stroke();
-                ctx?.fillText("time: start=" + elm.time.toFixed(2) + " end=" + endTime.toFixed(2), xOffset + 15, elm.position);
-                ctx?.fillText("till active: " + timeTillActive.toFixed(2), xOffset + 15, elm.position + 15);
-                ctx?.fillText("till end: " + timeTillEnd.toFixed(2), xOffset + 15, elm.position + 30);
-              });
-              ctx.strokeStyle = "pink";
-              ctx.fillStyle = "pink";
-              lyricPositions2.forEach((lyricPosition) => {
-                ctx?.beginPath();
-                ctx?.arc(xOffset + 5, lyricPosition, 5, 0, 2 * Math.PI, false);
-                ctx?.fill();
-              });
-            };
-            ctx.strokeStyle = "green";
-            ctx.fillStyle = "green";
-            ctx?.fillText("visible top", 0, scrollTop);
-            ctx?.beginPath();
-            ctx?.moveTo(40, scrollTop);
-            ctx?.lineTo(1e3, scrollTop);
-            ctx.stroke();
-            ctx.strokeStyle = "blue";
-            ctx.fillStyle = "blue";
-            ctx?.fillText("visible bottom", 0, scrollTop + tabRendererHeight);
-            ctx?.beginPath();
-            ctx?.moveTo(40, scrollTop + tabRendererHeight);
-            ctx?.lineTo(1e3, scrollTop + tabRendererHeight);
-            ctx.stroke();
-            ctx.strokeStyle = "yellow";
-            ctx.fillStyle = "yellow";
-            ctx?.fillText("target", 0, scrollTop + scrollPosOffset);
-            ctx?.beginPath();
-            ctx?.moveTo(40, scrollTop + scrollPosOffset);
-            ctx?.lineTo(1e3, scrollTop + scrollPosOffset);
-            ctx.stroke();
-            debugLyrics(0, "realtime", activeElems, lyricPositions, lyricScrollTime);
-            debugLyrics(160, "last scroll", engine.lastScrollDebugContext.activeElms, engine.lastScrollDebugContext.centers, engine.lastScrollDebugContext.lyricScrollTime);
-          }
-        }
-        const timeUntilUpcomingScrollMs = (lastActiveLyric.time - lyricScrollTime) * 1e3;
-        if (smoothScroll && animationConfig.enabled.scroll && !newLyricSelected && !engine.wasUserScrolling && timeUntilUpcomingScrollMs > 0 && timeUntilUpcomingScrollMs <= SCROLL_PREPARE_LEAD_MS && !engine.lastScrollElements.includes(lastActiveLyric) && Math.abs(scrollTop - scrollPos) > 2) {
-          updateVisibleLyricWillChange(engine, lines, scrollTop, scrollPos, tabRendererHeight);
-          prepareUpcomingLineScroll(engine, getLineScrollItems(engine, lines), lastActiveLyric, scrollPos - scrollTop, scrollTop, scrollPos, tabRendererHeight, animationConfig);
-        }
-        if (engine.wasUserScrolling || newLyricSelected) {
-          engine.lastScrollElements = activeElems;
-          engine.pinnedScrollLine = scrollTarget.overflowsBand ? scrollAnchor : null;
-          engine.lastScrollDebugContext.lyricScrollTime = lyricScrollTime;
-          engine.lastScrollDebugContext.centers = lyricPositions;
-          engine.lastScrollDebugContext.activeElms = activeElems;
-          if (smoothScroll && Math.abs(scrollTop - scrollPos) > 2) {
-            const scrollDeltaPx = scrollPos - scrollTop;
-            if (animationConfig.enabled.scroll) {
-              updateVisibleLyricWillChange(engine, lines, scrollTop, scrollPos, tabRendererHeight);
-              const lineScrollItems = getLineScrollItems(engine, lines);
-              commitOrPrepareLineScroll(engine, lineScrollItems, lastActiveLyric, scrollDeltaPx, scrollTop, scrollPos, tabRendererHeight, animationConfig);
-            }
-          } else {
-            dropPendingLineScroll(engine);
-          }
-          scrollTop = scrollPos;
-          engine.scrollPos = scrollTop;
-          tabRenderer.scrollTop = scrollTop;
-          engine.skipScrolls = 1;
-          engine.skipScrollsDecayTimes = [Date.now() + 2e3];
-        }
-      }
-      if (engine.wasUserScrolling && engine.scrollResumeTime < Date.now()) {
-        engine.host.setResumeAffordanceVisible(false);
-        lyricsElement.classList.remove(USER_SCROLLING_CLASS);
-        engine.wasUserScrolling = false;
-      }
-      decaySkipScrolls(engine, now);
-    } catch (err) {
-      if (!err.message?.includes("undefined")) {
-        engine.host.log(LYRICS_CHECK_INTERVAL_ERROR, err);
-      }
-    }
-    return "ok";
-  }
-  function computeScrollPadding(measurements) {
-    const { viewportHeight, targetScrollRatio, contentHeight, lastLineCentre } = measurements;
-    const top = Math.max(0, viewportHeight * targetScrollRatio - measurements.firstLineHeight / 2);
-    const lastLineTargetContentHeight = lastLineCentre === null ? viewportHeight : lastLineCentre + viewportHeight * (1 - targetScrollRatio);
-    const trailingContentHeight = measurements.footerHeight + measurements.lastLineHeight / 2;
-    const viewportTailSpace = viewportHeight * (1 - targetScrollRatio) - trailingContentHeight;
-    const bottom = Math.max(lastLineTargetContentHeight - contentHeight, viewportHeight - contentHeight, viewportTailSpace, 0);
-    return { top, bottom: Math.ceil(bottom) };
-  }
-  function applyScrollPadding(engine) {
-    const lyricsElement = engine.lyricsContainer;
-    const tabRenderer = engine.host.getScrollElement();
-    if (!lyricsElement || !tabRenderer)
-      return;
-    if (hasNoLyricsPlaceholder(engine)) {
-      setScrollPadding(engine, lyricsElement, { top: 0, bottom: 0 });
-      return;
-    }
-    const tabRendererHeight = tabRenderer.getBoundingClientRect().height;
-    const scrollPosOffsetRatio = getTargetScrollRatio(engine, lyricsElement);
-    const currentPaddingBottom = Number.parseFloat(engine.window.getComputedStyle(lyricsElement).paddingBottom) || 0;
-    const lyricsHeightWithoutBottomPadding = Math.max(0, lyricsElement.scrollHeight - currentPaddingBottom);
-    const lyricLines = lyricsElement.querySelectorAll(`:scope > .${LINE_CLASS}`);
-    const firstLyric = lyricLines[0] ?? null;
-    const lastLyric = lyricLines[lyricLines.length - 1] ?? null;
-    const credits = lyricsElement.querySelector(`:scope > .${CREDITS_CLASS}`);
-    const creditsBounds = credits ? getRelativeLayoutBounds(lyricsElement, credits) : null;
-    const lastLyricBounds = creditsBounds && creditsBounds.height > 0 ? creditsBounds : lastLyric ? getRelativeLayoutBounds(lyricsElement, lastLyric) : null;
-    const footer = lyricsElement.querySelector(`:scope > .${FOOTER_CLASS}`);
-    const { top, bottom } = computeScrollPadding({
-      viewportHeight: tabRendererHeight,
-      targetScrollRatio: scrollPosOffsetRatio,
-      contentHeight: lyricsHeightWithoutBottomPadding,
-      firstLineHeight: firstLyric ? getRelativeLayoutBounds(lyricsElement, firstLyric).height : 0,
-      lastLineCentre: lastLyricBounds ? lastLyricBounds.y + lastLyricBounds.height / 2 : null,
-      lastLineHeight: lastLyricBounds?.height ?? 0,
-      footerHeight: footer ? getRelativeLayoutBounds(lyricsElement, footer).height : 0
-    });
-    setScrollPadding(engine, lyricsElement, { top, bottom });
-  }
-  function setScrollPadding(engine, lyricsElement, { top, bottom }) {
-    engine.document.documentElement.style.setProperty("--blyrics-padding-top", top + "px");
-    engine.document.documentElement.style.setProperty("--blyrics-padding-bottom", bottom + "px");
-    lyricsElement.style.setProperty("padding-bottom", bottom + "px");
-  }
-  function relayout(engine, measureLines) {
-    if (engine.layout === "stage") {
-      if (!measureLines || !engine.lyricsContainer)
-        return;
-      engine.cachedCreditsItem = measureTrailingItem(engine.lyricsContainer, CREDITS_CLASS);
-      measureStage(engine);
-      return;
-    }
-    applyScrollPadding(engine);
-    const scrollElement = engine.host.getScrollElement();
-    if (scrollElement)
-      measureScrollViewport(engine, scrollElement);
-    if (!measureLines)
-      return;
-    const lyricsElement = engine.lyricsContainer;
-    if (!lyricsElement)
-      return;
-    engine.lyricWidth = lyricsElement.clientWidth;
-    engine.lyricHeight = lyricsElement.clientHeight;
-    clearOffscreenLineCulling(engine);
-    for (const line of engine.lines) {
-      const bounds = getRelativeLayoutBounds(lyricsElement, line.lyricElement);
-      line.position = bounds.y;
-      line.height = bounds.height;
-      line.decorations = new Map(lineDecorators(line.lyricElement).map((element) => [element, getRelativeLayoutBounds(lyricsElement, element).y]));
-    }
-    engine.cachedCreditsItem = measureTrailingItem(lyricsElement, CREDITS_CLASS);
-    engine.cachedFooterItem = measureTrailingItem(lyricsElement, FOOTER_CLASS);
-    setupLineCullObserver(engine);
-    engine.wasUserScrolling = true;
-    engine.host.debug?.resize();
-  }
-  var DECORATION_SLIDE_MS = 350;
-  var DECORATION_SLIDE_EASING = "cubic-bezier(0.25, 1, 0.5, 1)";
-  var DECORATION_MIN_SHIFT_PX = 0.5;
-  function slideElementBy(element, dy) {
-    element.animate({ translate: [`0 ${dy}px`, "0 0"] }, { duration: DECORATION_SLIDE_MS, easing: DECORATION_SLIDE_EASING, composite: "add" });
-  }
-  function decorationSlideAllowed(engine, container) {
-    if (engine.window.matchMedia(REDUCED_MOTION_QUERY).matches)
-      return false;
-    return engine.window.getComputedStyle(container).getPropertyValue("--blyrics-animate-decoration-entry").trim() !== "0";
-  }
-  function lineDecorators(lineElement) {
-    return [
-      ...lineElement.querySelectorAll(`.${ROMANIZED_LYRICS_CLASS}`),
-      ...lineElement.querySelectorAll(`.${TRANSLATED_LYRICS_CLASS}`)
-    ];
-  }
-  function captureDecorationSlide(engine) {
-    const container = engine.lyricsContainer;
-    if (!container || engine.layout === "stage" || !decorationSlideAllowed(engine, container))
-      return null;
-    const before = engine.lines.map((line) => ({
-      line,
-      position: line.position,
-      decorations: new Map(line.decorations)
-    }));
-    return () => {
-      for (const { line, position, decorations } of before) {
-        const lineShift = position - line.position;
-        if (Math.abs(lineShift) >= DECORATION_MIN_SHIFT_PX)
-          slideElementBy(line.lyricElement, lineShift);
-        for (const [element, was] of decorations) {
-          const now = line.decorations.get(element);
-          if (now === void 0)
-            continue;
-          const shift = was - now - lineShift;
-          if (Math.abs(shift) >= DECORATION_MIN_SHIFT_PX)
-            slideElementBy(element, shift);
-        }
-      }
-    };
-  }
-  function cancelLyricPositionUpdate(engine) {
-    if (engine.pendingLyricsUpdateFrame === null)
-      return;
-    engine.window.cancelAnimationFrame(engine.pendingLyricsUpdateFrame);
-    engine.pendingLyricsUpdateFrame = null;
-  }
-  function retickFromPlaybackClock(engine, buildTickOptions) {
-    return tickView(engine, playbackClock.lastTime, resolveTickOptions(buildTickOptions(playbackClock.lastEventCreationTime, playbackClock.lastPlayState)));
-  }
-  function scheduleLyricPositionUpdate(engine, isViewRendering, retick) {
-    if (engine.pendingLyricsUpdateFrame !== null) {
-      return;
-    }
-    dropPendingLineScroll(engine);
-    engine.pendingLyricsUpdateFrame = engine.window.requestAnimationFrame(() => {
-      engine.pendingLyricsUpdateFrame = null;
-      const isRendering = isViewRendering();
-      const playSlide = isRendering ? captureDecorationSlide(engine) : null;
-      relayout(engine, isRendering);
-      playSlide?.();
-      if (!isRendering)
-        return;
-      retick();
-    });
-  }
-
-  // web/node_modules/@braccato/core/dist/language.js
-  function normalizeLanguage(language) {
-    if (!language || language === "auto" || language === "und")
-      return "";
-    try {
-      return Intl.getCanonicalLocales(language.trim().replaceAll("_", "-"))[0] ?? "";
-    } catch {
-      return "";
-    }
-  }
-  function detectCjkLanguage(text) {
-    if (/[\p{Script=Hiragana}\p{Script=Katakana}]/u.test(text))
-      return "ja";
-    if (new RegExp("\\p{Script=Hangul}", "u").test(text))
-      return "ko";
-    return null;
-  }
-  function isCjkLanguage(language) {
-    return /^(ja|ko|zh|yue)(-|$)|-(Hans|Hant)(-|$)/i.test(language);
-  }
-  function resolveLyricLanguages(lyrics, sourceLanguage) {
-    const language = normalizeLanguage(sourceLanguage);
-    const hints = lyrics.map((line) => line.isInstrumental ? null : detectCjkLanguage(line.words));
-    const songHints = new Set(hints.filter((hint) => hint !== null));
-    const songHint = songHints.size === 1 ? [...songHints][0] : "";
-    const fallback = isCjkLanguage(language) ? language : songHint || language;
-    return lyrics.map((line, index) => {
-      if (line.isInstrumental)
-        return "";
-      const hint = hints[index];
-      if (hint && fallback.split("-")[0] !== hint)
-        return hint;
-      if (new RegExp("\\p{Script=Han}", "u").test(line.words) && !isCjkLanguage(fallback))
-        return "";
-      return fallback;
-    });
-  }
-  function applyLyricLanguage(element, language) {
-    const normalized = normalizeLanguage(language);
-    element.lang = normalized;
-    const romanization = element.querySelector(`.${ROMANIZED_LYRICS_CLASS}`);
-    if (romanization)
-      romanization.lang = `${normalized ? new Intl.Locale(normalized).language : "und"}-Latn`;
-  }
-
-  // web/node_modules/@braccato/core/dist/seek.js
-  function getSeekTimeFromClick(event, lyricElement) {
-    const target = event.target;
-    const container = lyricElement.closest(`.${LYRICS_CLASS}`);
-    const isRichsync = container?.dataset.sync === "richsync";
-    if (!isRichsync || !event.altKey) {
-      return parseFloat(lyricElement.dataset.time || "0");
-    }
-    let wordElement = target.closest(`.${WORD_CLASS}`);
-    if (!wordElement) {
-      const words = lyricElement.querySelectorAll(`.${WORD_CLASS}`);
-      let closestDist = Infinity;
-      words.forEach((word) => {
-        const rect = word.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        const dist = Math.hypot(event.clientX - centerX, event.clientY - centerY);
-        if (dist < closestDist) {
-          closestDist = dist;
-          wordElement = word;
-        }
-      });
-    }
-    if (!wordElement)
-      return null;
-    return parseFloat(wordElement.dataset.time || "0");
-  }
-
-  // web/node_modules/@braccato/core/dist/text.js
-  var testRtl = (text) => /[\p{Script=Arabic}\p{Script=Hebrew}\p{Script=Syriac}\p{Script=Thaana}\p{Script=Nko}\p{Script=Adlam}\p{Script=Mandaic}\p{Script=Hanifi_Rohingya}\p{Script=Samaritan}\p{Script=Yezidi}\p{Script=Mende_Kikakui}\p{Script=Old_Hungarian}]/u.test(text);
-  var testJoiningScript = (text) => /[\p{Script_Extensions=Arabic}\p{Script_Extensions=Syriac}\p{Script_Extensions=Nko}\p{Script_Extensions=Mongolian}\p{Script_Extensions=Adlam}\p{Script_Extensions=Mandaic}\p{Script_Extensions=Hanifi_Rohingya}]/u.test(text);
-  var SCRIPT_TO_LANG = [
-    [new RegExp("\\p{Script=Hiragana}|\\p{Script=Katakana}", "u"), "ja"],
-    [new RegExp("\\p{Script=Hangul}", "u"), "ko"],
-    [new RegExp("\\p{Script=Han}", "u"), "zh"],
-    [new RegExp("\\p{Script=Cyrillic}", "u"), "ru"],
-    [new RegExp("\\p{Script=Devanagari}", "u"), "hi"],
-    [new RegExp("\\p{Script=Arabic}", "u"), "ar"],
-    [new RegExp("\\p{Script=Thai}", "u"), "th"],
-    [new RegExp("\\p{Script=Greek}", "u"), "el"],
-    [new RegExp("\\p{Script=Hebrew}", "u"), "he"],
-    [new RegExp("\\p{Script=Bengali}", "u"), "bn"],
-    [new RegExp("\\p{Script=Tamil}", "u"), "ta"],
-    [new RegExp("\\p{Script=Telugu}", "u"), "te"],
-    [new RegExp("\\p{Script=Malayalam}", "u"), "ml"],
-    [new RegExp("\\p{Script=Kannada}", "u"), "kn"],
-    [new RegExp("\\p{Script=Gujarati}", "u"), "gu"],
-    [new RegExp("\\p{Script=Gurmukhi}", "u"), "pa"],
-    [new RegExp("\\p{Script=Sinhala}", "u"), "si"],
-    [new RegExp("\\p{Script=Myanmar}", "u"), "my"],
-    [new RegExp("\\p{Script=Georgian}", "u"), "ka"],
-    [new RegExp("\\p{Script=Khmer}", "u"), "km"],
-    [new RegExp("\\p{Script=Lao}", "u"), "lo"]
-  ];
-  var comparable = (text) => text.toLowerCase().replaceAll(new RegExp("\\p{P}", "gu"), "").trim();
-  var isSameText = (a, b) => comparable(a) === comparable(b);
-
-  // web/node_modules/@braccato/core/dist/inject.js
-  var disableRichsync = registerThemeSetting("blyrics-disable-richsync", false, true);
-  var lineSyncedAnimationDelay = registerThemeSetting("blyrics-line-synced-animation-delay", 50, true);
-  var longWordThreshold = registerThemeSetting("blyrics-long-word-threshold", 1500, true);
-  var longWordWrapThreshold = registerThemeSetting("blyrics-long-word-wrap-threshold", 10, true);
-  var letterWave = registerThemeSetting("blyrics-letter-wave", true, true);
-  var hideCredits = registerThemeSetting("blyrics-hide-credits", false, true);
-  var graphemeSegmenter = new Intl.Segmenter(void 0, { granularity: "grapheme" });
-  var LTR_SCRIPT_REGEX = /[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Han}\p{Script=Hangul}\p{Script=Hiragana}\p{Script=Katakana}]/u;
-  var SPACE_REGEX = /^\s+$/u;
-  function findNearestAgent(lyrics, fromIndex) {
-    for (let i = fromIndex + 1; i < lyrics.length; i++) {
-      if (!lyrics[i].isInstrumental && lyrics[i].agent) {
-        return lyrics[i].agent;
-      }
-    }
-    for (let i = fromIndex - 1; i >= 0; i--) {
-      if (!lyrics[i].isInstrumental && lyrics[i].agent) {
-        return lyrics[i].agent;
-      }
-    }
-    return void 0;
-  }
-  function isNearestLyricRtl(lyrics, fromIndex) {
-    for (let i = fromIndex + 1; i < lyrics.length; i++) {
-      if (!lyrics[i].isInstrumental && lyrics[i].words?.trim()) {
-        return testRtl(lyrics[i].words);
-      }
-    }
-    for (let i = fromIndex - 1; i >= 0; i--) {
-      if (!lyrics[i].isInstrumental && lyrics[i].words?.trim()) {
-        return testRtl(lyrics[i].words);
-      }
-    }
-    return false;
-  }
-  function deriveSyncType(lyrics) {
-    const hasTimedParts = !disableRichsync.getBooleanValue() && lyrics.some((item) => !item.isInstrumental && item.parts?.some((part) => part.durationMs !== 0) === true);
-    if (hasTimedParts)
-      return "richsync";
-    return lyrics.every((item) => item.startTimeMs === 0) ? "none" : "synced";
-  }
-  function newPartData(part, span, highlight, wobbleElements, letterElements, highlightLetterElements) {
-    return {
-      time: part.startTimeMs / 1e3,
-      duration: part.durationMs / 1e3,
-      lyricElement: span,
-      highlightElement: highlight,
-      imageLayers: wrapImageHighlight(highlight),
-      letterElements,
-      highlightLetterElements,
-      wobbleElements,
-      animations: [],
-      wordState: WORD_STATE_UPCOMING
-    };
-  }
-  function newLineData(lyricElement, startTimeMs, durationMs) {
-    return {
-      lyricElement,
-      time: startTimeMs / 1e3,
-      duration: durationMs / 1e3,
-      parts: [],
-      isScrolled: false,
-      isAnimationPlayStatePlaying: false,
-      accumulatedOffsetMs: 0,
-      isAnimating: false,
-      lastAnimSetupAt: 0,
-      isSelected: false,
-      height: -1,
-      position: -1,
-      decorations: /* @__PURE__ */ new Map(),
-      animations: []
-    };
-  }
-  function detectDirection(text) {
-    for (const char of text) {
-      if (testRtl(char))
-        return "rtl";
-      if (LTR_SCRIPT_REGEX.test(char))
-        return "ltr";
-    }
-    return "auto";
-  }
-  function applyDirection(element, text) {
-    const direction = detectDirection(text);
-    element.dir = "auto";
-    if (direction === "rtl") {
-      element.classList.add(RTL_CLASS);
-      element.dataset.direction = "rtl";
-    } else if (direction === "ltr") {
-      element.dataset.direction = "ltr";
-    }
-  }
-  function applyBidiSensitivity(element, text) {
-    if (testRtl(text)) {
-      element.classList.add(BIDI_SENSITIVE_CLASS);
-    }
-  }
-  function splitPartIntoTokens(part) {
-    const chunks = part.words.match(/\s+|\S+/gu) ?? [];
-    if (chunks.length === 0)
-      return [];
-    const tokens = [];
-    let spaceChars = 0;
-    for (const chunk of chunks) {
-      if (SPACE_REGEX.test(chunk)) {
-        tokens.push({ kind: "space", text: chunk });
-        spaceChars += chunk.length;
-        continue;
-      }
-      tokens.push({
-        kind: "part",
-        text: chunk,
-        part: {
-          words: chunk,
-          isBackground: part.isBackground,
-          explicit: part.explicit
-        }
-      });
-    }
-    const nonWhiteSpaceChars = part.words.length - spaceChars;
-    let cursor = 0;
-    return tokens.map((t2) => {
-      if (t2.kind === "part") {
-        const startTimeMs = part.startTimeMs + Math.round(part.durationMs * cursor / nonWhiteSpaceChars);
-        const endTimeMs = part.startTimeMs + Math.round(part.durationMs * (cursor + t2.text.length) / nonWhiteSpaceChars);
-        cursor += t2.text.length;
-        return {
-          ...t2,
-          part: {
-            ...t2.part,
-            startTimeMs,
-            durationMs: endTimeMs - startTimeMs
-          }
-        };
-      }
-      return t2;
-    });
-  }
-  function normalizeParts(parts) {
-    return parts.flatMap(splitPartIntoTokens);
-  }
-  function groupTokensByWord(tokens) {
-    const groups = [];
-    let current = null;
-    const flush = () => {
-      if (current && current.tokens.length > 0) {
-        groups.push(current);
-      }
-      current = null;
-    };
-    for (const token of tokens) {
-      if (token.kind === "space") {
-        flush();
-        groups.push(token);
-        continue;
-      }
-      const isBackground = token.part?.isBackground === true;
-      if (!current || current.isBackground !== isBackground) {
-        flush();
-        current = { text: "", isBackground, tokens: [] };
-      }
-      current.text += token.text;
-      current.tokens.push(token);
-    }
-    flush();
-    return groups;
-  }
-  function appendLongWordBreaks(doc, span, text, threshold) {
-    if (text.length <= threshold) {
-      span.textContent = text;
-      return false;
-    }
-    for (let i = 0; i < text.length; i += threshold) {
-      span.appendChild(doc.createTextNode(text.slice(i, i + threshold)));
-      if (i + threshold < text.length) {
-        span.appendChild(doc.createElement("wbr"));
-      }
-    }
-    return true;
-  }
-  function appendLetters(doc, wordElement, text) {
-    const chars = [...graphemeSegmenter.segment(text)].map((segment) => segment.segment);
-    wordElement.style.setProperty("--letters", String(chars.length));
-    wordElement.style.setProperty("--mask-fade", `${10 * chars.length / (chars.length + 2)}%`);
-    return chars.map((char) => {
-      const letter = doc.createElement("span");
-      letter.classList.add(LETTER_CLASS);
-      letter.textContent = char;
-      wordElement.appendChild(letter);
-      return letter;
-    });
-  }
-  function createTimedWordSpan(doc, part, wrapThreshold, perLetter, preserveJoining) {
-    const span = doc.createElement("span");
-    const highlight = doc.createElement("span");
-    highlight.classList.add(WORD_HIGHLIGHT_CLASS);
-    let letters;
-    let highlightLetters;
-    for (const wordElement of [span, highlight]) {
-      wordElement.classList.add(WORD_CLASS);
-      wordElement.dir = "auto";
-      if (part.durationMs === 0) {
-        wordElement.classList.add(ZERO_DURATION_ANIMATION_CLASS);
-        wordElement.classList.add(LINE_SYNCED_WORD_CLASS);
-      }
-      if (testRtl(part.words))
-        wordElement.classList.add(RTL_CLASS);
-      if (part.durationMs > longWordThreshold.getNumberValue())
-        wordElement.dataset.longWord = "true";
-      if (part.isBackground)
-        wordElement.classList.add(BACKGROUND_LYRIC_CLASS);
-      if (part.explicit)
-        wordElement.classList.add(EXPLICIT_WORD_CLASS);
-      if (perLetter) {
-        wordElement.classList.add("blyrics-word--lettered");
-        const collected = appendLetters(doc, wordElement, part.words);
-        if (wordElement === span) {
-          letters = collected;
-        } else {
-          highlightLetters = collected;
-          wordElement.classList.add(WORD_HIGHLIGHT_LETTERED_CLASS);
-        }
-      } else if (preserveJoining) {
-        wordElement.textContent = part.words;
-      } else {
-        appendLongWordBreaks(doc, wordElement, part.words, wrapThreshold);
-      }
-      wordElement.dataset.time = String(part.startTimeMs / 1e3);
-      wordElement.dataset.duration = String(part.durationMs / 1e3);
-      wordElement.dataset.content = part.words;
-      wordElement.setAttribute(WORD_STATE_ATTR, WORD_STATE_UPCOMING);
-      wordElement.style.setProperty("--blyrics-duration", part.durationMs + "ms");
-    }
-    return { span, highlight, letters, highlightLetters };
-  }
-  function createWordGroup(doc, group, lineData) {
-    const wrapThreshold = Math.max(1, longWordWrapThreshold.getNumberValue());
-    const mixedDirection = testRtl(group.text) && [...group.text].some((char) => /[\p{Letter}\p{Number}]/u.test(char) && !testRtl(char));
-    const preserveJoining = testJoiningScript(group.text);
-    const perLetter = letterWave.getBooleanValue() && !preserveJoining && !mixedDirection;
-    const lyricGroup = doc.createElement("span");
-    const highlightGroup = doc.createElement("span");
-    for (const groupElement of [lyricGroup, highlightGroup]) {
-      groupElement.classList.add(WORD_GROUP_CLASS);
-      groupElement.dir = "auto";
-      groupElement.dataset.content = group.text;
-      if (group.text.length > wrapThreshold * 2) {
-        groupElement.classList.add(LONG_WORD_GROUP_CLASS);
-      }
-      if (group.isBackground) {
-        groupElement.classList.add(BACKGROUND_LYRIC_CLASS);
-      }
-    }
-    for (const token of group.tokens) {
-      if (token.kind === "space")
-        continue;
-      const { span, highlight, letters, highlightLetters } = createTimedWordSpan(doc, token.part, wrapThreshold, perLetter, preserveJoining);
-      const wobbleElements = lyricGroup.childNodes.length === 0 ? [lyricGroup, highlightGroup] : [];
-      lineData.parts.push(newPartData(token.part, span, highlight, wobbleElements, letters, highlightLetters));
-      lyricGroup.appendChild(span);
-      highlightGroup.appendChild(highlight);
-    }
-    return { lyricGroup, highlightGroup };
-  }
-  function createContentLine(doc, className, text) {
-    const line = doc.createElement("div");
-    line.classList.add(className);
-    applyDirection(line, text);
-    applyBidiSensitivity(line, text);
-    return line;
-  }
-  function createBidiRun(doc, text) {
-    const run = doc.createElement("span");
-    run.classList.add(BIDI_RUN_CLASS);
-    applyDirection(run, text);
-    return run;
-  }
-  function createHighlightRun(doc, text) {
-    const run = createBidiRun(doc, text);
-    run.classList.add(HIGHLIGHT_RUN_CLASS);
-    run.setAttribute("aria-hidden", "true");
-    return run;
-  }
-  function createSpaceNode(doc, text, isBackground) {
-    if (!isBackground)
-      return doc.createTextNode(text);
-    const span = doc.createElement("span");
-    span.classList.add(BACKGROUND_LYRIC_CLASS);
-    span.textContent = text;
-    return span;
-  }
-  function createLyricsLine(doc, parts, line, lyricElement, options = { splitBackgroundLine: true }) {
-    const lineText = parts.map((part) => part.words).join("");
-    const mainText = options.splitBackgroundLine ? parts.filter((part) => part.isBackground !== true).map((part) => part.words).join("") : lineText;
-    const backgroundText = parts.filter((part) => part.isBackground === true).map((part) => part.words).join("");
-    const main = createContentLine(doc, LINE_MAIN_CLASS, mainText);
-    const mainRun = createBidiRun(doc, mainText);
-    const mainHighlightRun = createHighlightRun(doc, mainText);
-    const groupedTokens = groupTokensByWord(normalizeParts(parts));
-    const backgroundLine = createContentLine(doc, BACKGROUND_LINE_CLASS, backgroundText);
-    const backgroundRun = createBidiRun(doc, backgroundText);
-    const backgroundHighlightRun = createHighlightRun(doc, backgroundText);
-    let hasBackground = false;
-    let pendingForegroundSpace = "";
-    let pendingBackgroundSpace = "";
-    main.appendChild(mainHighlightRun);
-    main.appendChild(mainRun);
-    backgroundLine.appendChild(backgroundHighlightRun);
-    backgroundLine.appendChild(backgroundRun);
-    for (const item of groupedTokens) {
-      if ("kind" in item) {
-        pendingForegroundSpace += item.text;
-        pendingBackgroundSpace += item.text;
-      } else {
-        const shouldUseBackgroundLine = options.splitBackgroundLine && item.isBackground;
-        const target = shouldUseBackgroundLine ? backgroundRun : mainRun;
-        const highlightRun = shouldUseBackgroundLine ? backgroundHighlightRun : mainHighlightRun;
-        const pendingSpace = shouldUseBackgroundLine ? pendingBackgroundSpace : pendingForegroundSpace;
-        if (target.childNodes.length > 0 && pendingSpace.length > 0) {
-          target.appendChild(createSpaceNode(doc, pendingSpace, shouldUseBackgroundLine));
-          highlightRun.appendChild(createSpaceNode(doc, pendingSpace, shouldUseBackgroundLine));
-        }
-        const { lyricGroup, highlightGroup } = createWordGroup(doc, item, line);
-        target.appendChild(lyricGroup);
-        highlightRun.appendChild(highlightGroup);
-        if (shouldUseBackgroundLine) {
-          hasBackground = true;
-          pendingBackgroundSpace = "";
-        } else {
-          pendingForegroundSpace = "";
-        }
-      }
-    }
-    alignImageGlowRun(mainHighlightRun, line.parts);
-    if (hasBackground)
-      alignImageGlowRun(backgroundHighlightRun, line.parts);
-    lyricElement.appendChild(main);
-    if (hasBackground) {
-      lyricElement.appendChild(backgroundLine);
-    }
-    return main;
-  }
-  function buildLineSyncedParts(item) {
-    const parts = [];
-    const tokens = item.words.match(/\s+|\S+/gu) ?? [];
-    let wordIndex = 0;
-    for (const token of tokens) {
-      const isSpace = SPACE_REGEX.test(token);
-      const startTimeMs = item.startTimeMs + wordIndex * lineSyncedAnimationDelay.getNumberValue();
-      parts.push({
-        startTimeMs,
-        words: token,
-        durationMs: 0
-      });
-      if (!isSpace) {
-        wordIndex += 1;
-      }
-    }
-    return parts;
-  }
-  function addSeekHandler(seek, lyricElement, allZero) {
-    if (allZero) {
-      lyricElement.style.cursor = "unset";
-      return;
-    }
-    lyricElement.addEventListener("click", (event) => {
-      const seekTime = getSeekTimeFromClick(event, lyricElement);
-      if (seekTime === null)
-        return;
-      seek(seekTime);
-    });
-  }
-  function repeatsLine(lyricElement, text) {
-    const mainRun = [
-      ...lyricElement.querySelector(`:scope > .${LINE_MAIN_CLASS}`)?.querySelectorAll(`:scope > .${BIDI_RUN_CLASS}`) ?? []
-    ].find((run) => !run.classList.contains(HIGHLIGHT_RUN_CLASS));
-    return mainRun?.textContent != null && isSameText(mainRun.textContent, text);
-  }
-  function injectRomanization(doc, lyricElement, lineData, text, timedRomanization = null) {
-    if (lyricElement.querySelector(`.${ROMANIZED_LYRICS_CLASS}`) || repeatsLine(lyricElement, text))
-      return;
-    const romanizedLine = doc.createElement("div");
-    romanizedLine.classList.add(ROMANIZED_LYRICS_CLASS, CONTENT_LINE_CLASS);
-    romanizedLine.dir = "auto";
-    const language = normalizeLanguage(lyricElement.lang);
-    romanizedLine.lang = `${language ? new Intl.Locale(language).language : "und"}-Latn`;
-    applyDirection(romanizedLine, text);
-    if (timedRomanization && timedRomanization.length > 0 && !disableRichsync.getBooleanValue()) {
-      createLyricsLine(doc, timedRomanization, lineData, romanizedLine, { splitBackgroundLine: false });
-    } else {
-      romanizedLine.textContent = text;
-    }
-    const translation = lyricElement.querySelector(`.${TRANSLATED_LYRICS_CLASS}`);
-    lyricElement.insertBefore(romanizedLine, translation);
-  }
-  function injectTranslation(doc, lyricElement, text, language) {
-    if (lyricElement.querySelector(`.${TRANSLATED_LYRICS_CLASS}`) || repeatsLine(lyricElement, text))
-      return;
-    const translatedLine = doc.createElement("div");
-    translatedLine.classList.add(TRANSLATED_LYRICS_CLASS, CONTENT_LINE_CLASS);
-    translatedLine.dir = "auto";
-    translatedLine.lang = normalizeLanguage(language);
-    applyDirection(translatedLine, text);
-    translatedLine.textContent = text;
-    lyricElement.appendChild(translatedLine);
-  }
 
   // web/node_modules/@braccato/core/dist/view.js
   var INITIAL_SKIP_SCROLLS = 2;
@@ -3506,45 +4090,87 @@
     credits.appendChild(text);
     return credits;
   }
-  function setLyrics(engine, mount, lyrics, options) {
+  var lineSignatures = /* @__PURE__ */ new WeakMap();
+  var decorationKeys = /* @__PURE__ */ new WeakMap();
+  function decorationKey(item) {
+    return JSON.stringify([
+      item.words,
+      item.translation ?? null,
+      item.translations ?? null,
+      item.romanization ?? null,
+      item.timedRomanization ?? null
+    ]);
+  }
+  var builtViews = /* @__PURE__ */ new WeakMap();
+  var builtTimings = /* @__PURE__ */ new WeakMap();
+  function lineTimings(line, parts = line.parts) {
+    return [line.time, line.duration, ...parts.flatMap((part) => [part.time, part.duration])];
+  }
+  function timingsUnchanged(line) {
+    const built = builtTimings.get(line);
+    if (built === void 0)
+      return false;
+    const now = lineTimings(line, line.parts.slice(0, (built.length - 2) / 2));
+    return now.length === built.length && now.every((value, index) => value === built[index]);
+  }
+  function buildContext(engine, lyrics, options) {
+    return {
+      allZero: lyrics.every((item) => item.startTimeMs === 0),
+      languages: resolveLyricLanguages(lyrics, options.language),
+      seek: (timeS) => engine.host.seek(playerTimeForLyricTime(engine, timeS))
+    };
+  }
+  function viewKey(context) {
+    return `${context.allZero}|${lyricBuildSettingsKey()}`;
+  }
+  function lineSignature(lyrics, lineIndex) {
+    const item = lyrics[lineIndex];
+    const parts = item.parts?.map((part) => [
+      part.startTimeMs,
+      part.durationMs,
+      part.words,
+      part.isBackground === true,
+      part.backgroundGroup ?? null,
+      part.explicit === true
+    ]);
+    const neighbours = item.isInstrumental ? [findNearestAgent(lyrics, lineIndex), isNearestLyricRtl(lyrics, lineIndex)] : null;
+    return JSON.stringify([
+      item.startTimeMs,
+      item.durationMs,
+      item.words,
+      item.isInstrumental === true,
+      item.agent ?? null,
+      parts ?? null,
+      neighbours,
+      decorationKey(item)
+    ]);
+  }
+  function buildLine(doc, lyrics, lineIndex, context) {
+    const lyricItem = lyrics[lineIndex];
+    const lyricElement = doc.createElement("div");
+    const line = newLineData(lyricElement, lyricItem.startTimeMs, lyricItem.durationMs);
+    lyricElement.dataset.time = String(line.time);
+    lyricElement.dataset.duration = String(line.duration);
+    lyricElement.dataset.lineNumber = String(lineIndex);
+    lyricElement.classList.add(LINE_CLASS);
+    lyricElement.dir = "auto";
+    applyLyricLanguage(lyricElement, context.languages[lineIndex]);
+    addSeekHandler(context.seek, lyricElement, context.allZero);
+    if (lyricItem.isInstrumental) {
+      buildInstrumentalLine(doc, lyricElement, lyrics, lineIndex);
+    } else {
+      buildSungLine(doc, lyricElement, lyricItem, line);
+      if (!lyricItem.words?.trim())
+        lyricElement.dataset.blank = "true";
+    }
+    lineSignatures.set(line, lineSignature(lyrics, lineIndex));
+    decorationKeys.set(line, decorationKey(lyricItem));
+    builtTimings.set(line, lineTimings(line));
+    return line;
+  }
+  function writeContainerState(engine, container, lyrics, options, creditsBefore = null) {
     const doc = engine.document;
-    const container = doc.createElement("div");
-    container.className = LYRICS_CLASS;
-    if (isGecko())
-      container.dataset.browserEngine = "gecko";
-    mount.replaceChildren(container);
-    const allZero = lyrics.every((item) => item.startTimeMs === 0);
-    const seek = (timeS) => engine.host.seek(playerTimeForLyricTime(engine, timeS));
-    const lines = [];
     const syncType = deriveSyncType(lyrics);
-    const languages = resolveLyricLanguages(lyrics, options.language);
-    for (const [lineIndex, lyricItem] of lyrics.entries()) {
-      const lyricElement = doc.createElement("div");
-      const line = newLineData(lyricElement, lyricItem.startTimeMs, lyricItem.durationMs);
-      lyricElement.dataset.time = String(line.time);
-      lyricElement.dataset.duration = String(line.duration);
-      lyricElement.dataset.lineNumber = String(lineIndex);
-      lyricElement.classList.add(LINE_CLASS);
-      lyricElement.dir = "auto";
-      applyLyricLanguage(lyricElement, languages[lineIndex]);
-      addSeekHandler(seek, lyricElement, allZero);
-      lines.push(line);
-      if (lyricItem.isInstrumental) {
-        buildInstrumentalLine(doc, lyricElement, lyrics, lineIndex);
-      } else {
-        buildSungLine(doc, lyricElement, lyricItem, line);
-        if (!lyricItem.words?.trim())
-          lyricElement.dataset.blank = "true";
-      }
-      container.appendChild(lyricElement);
-    }
-    const songwriters = options.songwriters ?? [];
-    if (songwriters.length > 0 && !options.noLyrics && !hideCredits.getBooleanValue()) {
-      container.appendChild(buildCredits(doc, songwriters));
-    }
-    engine.skipScrolls = INITIAL_SKIP_SCROLLS;
-    engine.skipScrollsDecayTimes = Array.from({ length: INITIAL_SKIP_SCROLLS }, () => Date.now() + SKIP_SCROLL_DECAY_MS);
-    engine.scrollResumeTime = 0;
     container.dataset.sync = syncType;
     if (engine.layout === "stage") {
       container.dataset.layout = "stage";
@@ -3552,19 +4178,177 @@
       const onRight = (item) => item.agent === "v2" || item.agent === "v3";
       if (sung.some(onRight) && sung.some((item) => !onRight(item))) {
         container.dataset.stageDuet = "";
+      } else {
+        delete container.dataset.stageDuet;
       }
     }
     container.dataset.loaderVisible = String(options.loaderVisible);
     if (options.noLyrics) {
       container.dataset.noLyrics = "true";
+    } else {
+      delete container.dataset.noLyrics;
     }
+    container.querySelector(`:scope > .${CREDITS_CLASS}`)?.remove();
+    const songwriters = options.songwriters ?? [];
+    if (songwriters.length > 0 && !options.noLyrics && !hideCredits.getBooleanValue()) {
+      container.insertBefore(buildCredits(doc, songwriters), creditsBefore);
+    }
+    engine.syncType = syncType;
+  }
+  function setLyrics(engine, mount, lyrics, options) {
+    const doc = engine.document;
+    const container = doc.createElement("div");
+    container.className = LYRICS_CLASS;
+    if (isGecko())
+      container.dataset.browserEngine = "gecko";
+    mount.replaceChildren(container);
+    const context = buildContext(engine, lyrics, options);
+    const lines = [];
+    for (const lineIndex of lyrics.keys()) {
+      const line = buildLine(doc, lyrics, lineIndex, context);
+      lines.push(line);
+      container.appendChild(line.lyricElement);
+    }
+    engine.skipScrolls = INITIAL_SKIP_SCROLLS;
+    engine.skipScrollsDecayTimes = Array.from({ length: INITIAL_SKIP_SCROLLS }, () => Date.now() + SKIP_SCROLL_DECAY_MS);
+    engine.scrollResumeTime = 0;
+    writeContainerState(engine, container, lyrics, options);
     engine.lines = lines;
     engine.lyricsContainer = container;
-    engine.syncType = syncType;
+    builtViews.set(engine, { mount, key: viewKey(context), songKey: options.songKey });
     refreshInstrumentalImages(container, engine.window);
     engine.lyricWidth = container.clientWidth;
     engine.lyricHeight = container.clientHeight;
     setupLineCullObserver(engine);
+  }
+  function matchLines(previous, next) {
+    const matches = next.map(() => null);
+    let start = 0;
+    while (start < previous.length && start < next.length && previous[start] === next[start]) {
+      matches[start] = start;
+      start++;
+    }
+    let previousEnd = previous.length;
+    let nextEnd = next.length;
+    while (previousEnd > start && nextEnd > start && previous[previousEnd - 1] === next[nextEnd - 1]) {
+      previousEnd--;
+      nextEnd--;
+      matches[nextEnd] = previousEnd;
+    }
+    const rows = previousEnd - start;
+    const columns = nextEnd - start;
+    if (rows === 0 || columns === 0 || rows * columns > MATCH_SEARCH_LIMIT)
+      return matches;
+    const lengths = new Uint16Array((rows + 1) * (columns + 1));
+    const at2 = (row2, column2) => row2 * (columns + 1) + column2;
+    for (let row2 = rows - 1; row2 >= 0; row2--) {
+      for (let column2 = columns - 1; column2 >= 0; column2--) {
+        lengths[at2(row2, column2)] = previous[start + row2] === next[start + column2] ? lengths[at2(row2 + 1, column2 + 1)] + 1 : Math.max(lengths[at2(row2 + 1, column2)], lengths[at2(row2, column2 + 1)]);
+      }
+    }
+    let row = 0;
+    let column = 0;
+    while (row < rows && column < columns) {
+      if (previous[start + row] === next[start + column]) {
+        matches[start + column] = start + row;
+        row++;
+        column++;
+      } else if (lengths[at2(row + 1, column)] >= lengths[at2(row, column + 1)]) {
+        row++;
+      } else {
+        column++;
+      }
+    }
+    return matches;
+  }
+  var MATCH_SEARCH_LIMIT = 25e4;
+  function takeOverlapping(candidates, line) {
+    const end = line.time + line.duration;
+    const index = candidates.findIndex((old) => {
+      const oldEnd = old.time + old.duration;
+      return old.time === line.time || old.time < end && line.time < oldEnd;
+    });
+    return index === -1 ? void 0 : candidates.splice(index, 1)[0];
+  }
+  function swapLyrics(engine, mount, lyrics, options) {
+    const container = engine.lyricsContainer;
+    const built = builtViews.get(engine);
+    if (container === null || built === void 0 || built.mount !== mount || container.parentElement !== mount) {
+      return null;
+    }
+    if (options.songKey === void 0 || options.songKey !== built.songKey)
+      return null;
+    const previousLines = engine.lines;
+    if (lyrics.length === 0 || previousLines.length === 0)
+      return null;
+    if (previousLines.some((line) => line.lyricElement.parentNode !== container))
+      return null;
+    const context = buildContext(engine, lyrics, options);
+    if (built.key !== viewKey(context))
+      return null;
+    const doc = engine.document;
+    const previousSignatures = previousLines.map((line) => timingsUnchanged(line) ? lineSignatures.get(line) ?? "" : `\0moved:${lineSignatures.get(line)}`);
+    const nextSignatures = lyrics.map((_, lineIndex) => lineSignature(lyrics, lineIndex));
+    const children = Array.from(container.childNodes);
+    const oldCredits = container.querySelector(`:scope > .${CREDITS_CLASS}`);
+    const lastOwned = oldCredits ?? previousLines[previousLines.length - 1].lyricElement;
+    const trailing = children[children.indexOf(lastOwned) + 1] ?? null;
+    const matches = matchLines(previousSignatures, nextSignatures);
+    const kept = /* @__PURE__ */ new Set();
+    const lines = [];
+    const replaced = /* @__PURE__ */ new Map();
+    const positions = /* @__PURE__ */ new Map();
+    let previousCursor = 0;
+    let unmatchedOld = [];
+    const collectUnmatchedUntil = (end) => {
+      unmatchedOld = previousLines.slice(previousCursor, end);
+      previousCursor = end;
+    };
+    for (const [lineIndex, match] of matches.entries()) {
+      if (match !== null) {
+        const line2 = previousLines[match];
+        previousCursor = match + 1;
+        unmatchedOld = [];
+        kept.add(line2);
+        line2.lyricElement.dataset.lineNumber = String(lineIndex);
+        applyLyricLanguage(line2.lyricElement, context.languages[lineIndex]);
+        lines.push(line2);
+        positions.set(line2, { position: line2.position, height: line2.height, motionOffset: 0 });
+        continue;
+      }
+      if (unmatchedOld.length === 0) {
+        const nextMatch = matches.slice(lineIndex).find((value) => value !== null);
+        collectUnmatchedUntil(nextMatch ?? previousLines.length);
+      }
+      const line = buildLine(doc, lyrics, lineIndex, context);
+      const standsFor = takeOverlapping(unmatchedOld, line);
+      if (standsFor !== void 0) {
+        replaced.set(line, standsFor);
+        positions.set(line, {
+          position: standsFor.position,
+          height: standsFor.height,
+          // A kept line finishes its own line scroll; this one starts where the line it replaced was.
+          motionOffset: elementMotionOffsetPx(engine, standsFor.lyricElement)
+        });
+        if (decorationKeys.get(standsFor) === decorationKeys.get(line))
+          moveDecorations(standsFor, line);
+      }
+      lines.push(line);
+    }
+    const dropped = previousLines.filter((line) => !kept.has(line));
+    let following = oldCredits ?? trailing;
+    for (let index = lines.length - 1; index >= 0; index--) {
+      const element = lines[index].lyricElement;
+      if (!kept.has(lines[index]))
+        container.insertBefore(element, following);
+      following = element;
+    }
+    replaceRenderedLines(engine, lines, dropped, replaced);
+    for (const line of dropped)
+      line.lyricElement.remove();
+    writeContainerState(engine, container, lyrics, options, trailing);
+    refreshInstrumentalImages(container, engine.window);
+    return positions;
   }
 
   // web/node_modules/@braccato/core/dist/renderer.js
@@ -3644,9 +4428,10 @@
       }
       refreshImagePaint();
     }
-    function measure(measureLines = true) {
+    function measure2(measureLines = true) {
       forgetScrollElement();
-      relayout(engine, measureLines && areLinesMeasurable(getRenderedLines(engine)));
+      if (relayout(engine, measureLines && areLinesMeasurable(getRenderedLines(engine))))
+        retickAtLastTime(engine);
     }
     function stopObservingContainer() {
       containerResizeObserver?.disconnect();
@@ -3665,8 +4450,8 @@
         const target = entries[entries.length - 1]?.target;
         if (!target)
           return;
-        if (noteContainerResize(engine, target.clientWidth, target.clientHeight))
-          measure();
+        if (hasContainerResized(engine, target.clientWidth, target.clientHeight))
+          measure2();
       });
       observer.observe(container);
       containerResizeObserver = observer;
@@ -3684,12 +4469,12 @@
       rendererDocument.head.appendChild(styleElement);
       createdThemeStyleElement = styleElement;
     }
-    const remeasureForViewport = () => measure();
+    const remeasureForViewport = () => measure2();
     rendererWindow.addEventListener("resize", remeasureForViewport);
     void rendererDocument.fonts.ready.then(() => {
       if (isDestroyed)
         return;
-      measure();
+      measure2();
     }).catch((error) => host.log(FONT_MEASURE_LOG, error));
     return {
       setLyrics(lyrics, options) {
@@ -3701,20 +4486,29 @@
         if (!nextMount) {
           throw new Error("A lyrics renderer needs a mount: give one to createLyricsRenderer or to setLyrics");
         }
-        clearBuiltView();
-        mount = nextMount;
-        setLyrics(engine, nextMount, lyrics, {
+        const viewOptions = {
           language: options?.language,
           loaderVisible: options?.loaderVisible ?? false,
           noLyrics: options?.noLyrics ?? false,
-          songwriters: options?.songwriters
-        });
+          songwriters: options?.songwriters,
+          songKey: options?.songKey
+        };
+        const scrollTopBefore = host.getScrollElement()?.scrollTop ?? 0;
+        const swapped = swapLyrics(engine, nextMount, lyrics, viewOptions);
+        if (swapped === null) {
+          clearBuiltView();
+          mount = nextMount;
+          setLyrics(engine, nextMount, lyrics, viewOptions);
+        }
         syncImagePaint();
         currentLyrics = lyrics;
         currentLanguage = normalizeLanguage(options?.language);
-        measure();
-        if (engine.lyricsContainer)
+        measure2();
+        if (swapped !== null) {
+          settleSwappedLines(engine, swapped, scrollTopBefore);
+        } else if (engine.lyricsContainer) {
           observeContainer(engine.lyricsContainer);
+        }
       },
       setLanguage(language) {
         const normalized = normalizeLanguage(language);
@@ -3723,7 +4517,7 @@
         currentLanguage = normalized;
         const languages = resolveLyricLanguages(currentLyrics, normalized);
         getRenderedLines(engine).forEach((line, index) => applyLyricLanguage(line.lyricElement, languages[index]));
-        measure();
+        measure2();
       },
       setTheme(css) {
         if (isDestroyed)
@@ -3732,7 +4526,7 @@
         adoptThemeStyleSheet(css);
         syncImagePaint();
         clearStyleCaches(engine);
-        measure();
+        measure2();
         return needsLyricRebuild;
       },
       tick(currentTimeS, options) {
@@ -3743,7 +4537,7 @@
       relayout(measureLines = true) {
         if (isDestroyed)
           return;
-        measure(measureLines);
+        measure2(measureLines);
       },
       clear() {
         if (isDestroyed)
@@ -3763,10 +4557,10 @@
         imageMediaQueries = [];
         engine.destroy();
       },
-      noteUserScroll(userInitiated = false) {
+      noteUserScroll() {
         if (isDestroyed)
           return;
-        noteUserScroll(engine, hasUnsyncedLyrics(engine), userInitiated);
+        noteUserScroll(engine, hasUnsyncedLyrics(engine));
       },
       noteVisibilityChange() {
         if (isDestroyed)
@@ -7938,9 +8732,9 @@
   }
 
   // web/node_modules/@braccato/parsers/dist/index.js
-  var _t = /[/、，,]/;
-  var J = /^([^:：]+)[:：]\s*(.+)$/;
-  var j = [
+  var Et = /[/、，,]/;
+  var nt = /^([^:：]+)[:：]\s*(.+)$/;
+  var k = [
     "\u8BCD",
     "\u8A5E",
     "\u4F5C\u8BCD",
@@ -7957,8 +8751,8 @@
     "lyricist",
     "composer"
   ];
-  var tt = [
-    ...j,
+  var et = [
+    ...k,
     "\u7F16\u66F2",
     "\u7DE8\u66F2",
     "\u548C\u58F0",
@@ -7994,40 +8788,40 @@
     "producer",
     "arranger"
   ];
-  var bt = ["\u8BCD", "\u8A5E", "\u66F2", "\u58F0", "\u8072", "\u97F3"];
-  var Et = 4;
-  var yt = /[/&、,，・·]/;
-  function nt(t2) {
+  var yt = ["\u8BCD", "\u8A5E", "\u66F2", "\u58F0", "\u8072", "\u97F3"];
+  var xt = 4;
+  var Nt = /[/&、,，・·]/;
+  function st(t2) {
     return t2.toLowerCase().replace(/\s+/g, "");
   }
-  function Nt(t2) {
-    return tt.includes(t2) ? true : t2.length <= Et && bt.some((n2) => t2.endsWith(n2));
-  }
-  function et(t2) {
-    return t2.replace(/[a-z]+/g, "").split(yt).filter(Boolean);
-  }
-  function z(t2) {
-    const n2 = nt(t2);
-    if (tt.includes(n2)) return true;
-    const r = et(n2);
-    return r.length > 0 && r.every(Nt);
-  }
-  function xt(t2) {
-    const n2 = nt(t2);
-    return j.includes(n2) ? true : z(t2) && et(n2).some((r) => j.includes(r));
-  }
   function Rt(t2) {
-    const n2 = t2.trim().match(J);
-    return n2 !== null && z(n2[1]);
-  }
-  function st(t2) {
-    const n2 = t2.trim().match(J);
-    return !n2 || !xt(n2[1]) ? [] : rt(n2[2]);
+    return et.includes(t2) ? true : t2.length <= xt && yt.some((n2) => t2.endsWith(n2));
   }
   function rt(t2) {
-    return t2.split(_t).map((n2) => n2.trim()).filter(Boolean);
+    return t2.replace(/[a-z]+/g, "").split(Nt).filter(Boolean);
   }
-  function K(t2) {
+  function j(t2) {
+    const n2 = st(t2);
+    if (et.includes(n2)) return true;
+    const r = rt(n2);
+    return r.length > 0 && r.every(Rt);
+  }
+  function wt(t2) {
+    const n2 = st(t2);
+    return k.includes(n2) ? true : j(t2) && rt(n2).some((r) => k.includes(r));
+  }
+  function It(t2) {
+    const n2 = t2.trim().match(nt);
+    return n2 !== null && j(n2[1]);
+  }
+  function ot(t2) {
+    const n2 = t2.trim().match(nt);
+    return !n2 || !wt(n2[1]) ? [] : it(n2[2]);
+  }
+  function it(t2) {
+    return t2.split(Et).map((n2) => n2.trim()).filter(Boolean);
+  }
+  function V(t2) {
     const n2 = /* @__PURE__ */ new Set();
     for (const r of t2) {
       const s2 = r.trim();
@@ -8035,8 +8829,8 @@
     }
     return [...n2];
   }
-  var wt = 5e3;
-  function U(t2, n2, r = wt) {
+  var St = 5e3;
+  function Z(t2, n2, r = St) {
     if (t2.length === 0) return t2;
     const s2 = [], e2 = (i, f) => ({
       startTimeMs: i,
@@ -8054,7 +8848,7 @@
     const o = t2[t2.length - 1], a = o.startTimeMs + o.durationMs, c = n2 - a;
     return c > r && s2.push(e2(a, c)), s2;
   }
-  function X(t2) {
+  function W(t2) {
     if (!t2) return 0;
     if (typeof t2 == "number") return t2;
     const n2 = t2.match(/^([\d.]+)(h|m|s|ms)$/);
@@ -8073,7 +8867,7 @@
       return 0;
     }
   }
-  function It(t2) {
+  function At(t2) {
     var e2, o;
     const n2 = /* @__PURE__ */ new Map();
     if (!t2 || t2.length === 0) return n2;
@@ -8085,65 +8879,85 @@
     }
     return n2;
   }
-  function L(t2) {
+  function z(t2) {
     if (!t2) return "";
     let n2 = "";
     for (const r of t2)
-      typeof r["#text"] == "string" ? n2 += r["#text"] : r.span && (n2 += L(r.span));
+      typeof r["#text"] == "string" ? n2 += r["#text"] : r.span && (n2 += z(r.span));
     return n2;
   }
-  function Z(t2, n2) {
-    var o, a, c, i, f;
-    let r = "", s2 = [], e2 = false;
-    for (const u of t2) {
-      let l = false, p = [u];
-      ((o = u[":@"]) == null ? void 0 : o["@_role"]) === "x-bg" && (l = true, p = u.span ?? []);
-      for (const m of p)
-        if (m["#text"]) {
-          r += m["#text"];
-          const d2 = s2[s2.length - 1];
+  function Q(t2, n2) {
+    var i, f, u, l, h, d2, T;
+    let r = "", s2 = [], e2 = false, o = 0;
+    const a = (m) => {
+      var g;
+      return !!((g = m[":@"]) != null && g["@_begin"]) && z(m.span) !== "";
+    }, c = t2.some(
+      (m) => {
+        var g;
+        return ((g = m[":@"]) == null ? void 0 : g["@_role"]) === "x-bg" ? (m.span ?? []).some(a) : a(m);
+      }
+    );
+    for (const m of t2) {
+      let g = false, p = [m];
+      if (((i = m[":@"]) == null ? void 0 : i["@_role"]) === "x-bg") {
+        g = true, p = m.span ?? [];
+        const _ = p.some((P) => {
+          var G;
+          return (G = P[":@"]) == null ? void 0 : G["@_begin"];
+        }), x = ((f = m[":@"]) == null ? void 0 : f["@_begin"]) && ((u = m[":@"]) == null ? void 0 : u["@_end"]);
+        c && x && !_ && (p = [m]);
+      }
+      const R = g ? { backgroundGroup: o } : {}, v = s2.length;
+      for (const _ of p)
+        if (_["#text"]) {
+          r += _["#text"];
+          const x = s2[s2.length - 1];
           s2.push({
-            startTimeMs: d2 ? d2.startTimeMs + d2.durationMs : n2,
+            startTimeMs: x ? x.startTimeMs + x.durationMs : n2,
             durationMs: 0,
-            words: m["#text"],
-            isBackground: l
+            words: _["#text"],
+            isBackground: g,
+            ...R
           });
-        } else if (m.span) {
-          const d2 = L(m.span);
-          if (!d2) continue;
-          const M = X((a = m[":@"]) == null ? void 0 : a["@_begin"]), _ = X((c = m[":@"]) == null ? void 0 : c["@_end"]), h = ((i = m[":@"]) == null ? void 0 : i["@_explicit"]) === "true" || ((f = m[":@"]) == null ? void 0 : f["@_obscene"]) === "true";
+        } else if (_.span) {
+          const x = z(_.span);
+          if (!x) continue;
+          const P = W((l = _[":@"]) == null ? void 0 : l["@_begin"]), G = W((h = _[":@"]) == null ? void 0 : h["@_end"]), C = ((d2 = _[":@"]) == null ? void 0 : d2["@_explicit"]) === "true" || ((T = _[":@"]) == null ? void 0 : T["@_obscene"]) === "true";
           s2.push({
-            startTimeMs: M,
-            durationMs: _ - M,
-            isBackground: l,
-            words: d2,
-            explicit: h
-          }), r += d2, e2 = true;
+            startTimeMs: P,
+            durationMs: G - P,
+            isBackground: g,
+            ...R,
+            words: x,
+            explicit: C
+          }), r += x, e2 = true;
         }
+      g && s2.length > v && o++;
     }
     return e2 || (s2 = []), { parts: s2, text: r, isWordSynced: e2 };
   }
-  var St = /<\/?([A-Za-z][\w.-]*):/g;
-  var At = /\s([A-Za-z][\w.-]*):[\w.-]+\s*=/g;
-  var Pt = /xmlns:([A-Za-z][\w.-]*)\s*=/g;
+  var Pt = /<\/?([A-Za-z][\w.-]*):/g;
+  var Gt = /\s([A-Za-z][\w.-]*):[\w.-]+\s*=/g;
+  var Ot = /xmlns:([A-Za-z][\w.-]*)\s*=/g;
   var vt = /<tt\b[^>]*>/;
-  function Gt(t2) {
+  function Ct(t2) {
     const n2 = t2.match(vt);
     if (!n2) return t2;
     const r = n2[0], s2 = /* @__PURE__ */ new Set(["xml", "xmlns"]);
-    for (const i of r.matchAll(Pt))
+    for (const i of r.matchAll(Ot))
       s2.add(i[1]);
     const e2 = /* @__PURE__ */ new Set();
-    for (const i of t2.matchAll(St))
+    for (const i of t2.matchAll(Pt))
       e2.add(i[1]);
-    for (const i of t2.matchAll(At))
+    for (const i of t2.matchAll(Gt))
       e2.add(i[1]);
     const o = [...e2].filter((i) => !s2.has(i));
     if (o.length === 0) return t2;
     const a = o.map((i) => ` xmlns:${i}="urn:braccato:unbound:${i}"`).join(""), c = r.replace(/>$/, `${a}>`);
     return t2.replace(r, c);
   }
-  var Ot = {
+  var $t = {
     ignoreAttributes: false,
     attributeNamePrefix: "@_",
     attributesGroupName: false,
@@ -8156,7 +8970,7 @@
     parseTagValue: false,
     htmlEntities: true
   };
-  function k(t2, n2) {
+  function B(t2, n2) {
     const r = t2.find((s2) => n2 in s2);
     if (r != null && r[n2]) return r;
     for (const s2 of t2)
@@ -8167,122 +8981,126 @@
         }
     return null;
   }
-  function ot(t2) {
-    const n2 = new XMLParser(Ot), r = t2.replace(/\\"/g, '"');
+  function at(t2) {
+    const n2 = new XMLParser($t), r = t2.replace(/\\"/g, '"');
     let s2;
     try {
-      s2 = n2.parse(Gt(r));
+      s2 = n2.parse(Ct(r));
     } catch {
       return null;
     }
     return (Array.isArray(s2) ? s2.find((e2) => "tt" in e2) : void 0) ?? null;
   }
-  function it(t2) {
+  function K(t2) {
     var n2, r, s2, e2;
     return ((e2 = (s2 = (r = (n2 = t2 == null ? void 0 : t2.tt) == null ? void 0 : n2.find((o) => o.head)) == null ? void 0 : r.head) == null ? void 0 : s2.find((o) => "metadata" in o)) == null ? void 0 : e2.metadata) ?? [];
   }
-  function Ct(t2) {
-    const n2 = [], r = k(t2, "songwriters");
+  function lt(t2) {
+    const n2 = [], r = B(t2, "songwriters");
     for (const s2 of (r == null ? void 0 : r.songwriters) ?? [])
-      n2.push(L(s2.songwriter));
+      n2.push(z(s2.songwriter));
     for (const s2 of t2) {
       if (!("meta" in s2)) continue;
       const e2 = s2[":@"], o = e2 == null ? void 0 : e2["@_key"];
       (o === "songwriter" || o === "songwriters") && (e2 != null && e2["@_value"]) && n2.push(e2["@_value"]);
     }
-    return K(n2);
+    return V(n2);
   }
-  function $t(t2, n2 = {}) {
-    var S, P, G, O, D, C;
-    const r = ot(t2);
-    if (!r) return { lyrics: [], isWordSynced: false };
+  var D = null;
+  function Ft(t2) {
+    return (D == null ? void 0 : D.xml) === t2 ? [...D.songwriters] : lt(K(at(t2)));
+  }
+  function Xt(t2, n2 = {}) {
+    var _, x, P, G, C, $2;
+    const r = at(t2);
+    if (D = { xml: t2, songwriters: lt(K(r)) }, !r) return { lyrics: [], isWordSynced: false };
     const s2 = r.tt;
     if (!s2) return { lyrics: [], isWordSynced: false };
-    const e2 = s2.find((b) => b.body), o = e2 == null ? void 0 : e2.body, a = e2 == null ? void 0 : e2[":@"], c = ((S = r[":@"]) == null ? void 0 : S["@_lang"]) || (a == null ? void 0 : a["@_lang"]);
+    const e2 = s2.find((E) => E.body), o = e2 == null ? void 0 : e2.body, a = e2 == null ? void 0 : e2[":@"], c = ((_ = r[":@"]) == null ? void 0 : _["@_lang"]) || (a == null ? void 0 : a["@_lang"]);
     if (!o) return { lyrics: [], isWordSynced: false, language: c };
-    const i = /* @__PURE__ */ new Map(), f = {}, u = it(r), l = It(u), p = o.flatMap((b) => b.div ?? []).filter((b) => b != null && "p" in b);
-    if (!(p.length > 0 && p[0][":@"] !== void 0))
+    const i = /* @__PURE__ */ new Map(), f = {}, u = K(r), l = At(u), h = o.flatMap((E) => E.div ?? []).filter((E) => E != null && "p" in E);
+    if (!(h.length > 0 && h[0][":@"] !== void 0))
       return { lyrics: [], isWordSynced: false, language: c };
-    let d2 = false;
-    for (const b of p) {
-      const y = b[":@"];
-      if (!(y != null && y["@_begin"])) continue;
-      const E = X(y["@_begin"]), N = X(y["@_end"]), x = Z(b.p, E);
-      x.isWordSynced && (d2 = true);
-      const R = y["@_agent"], I = R ? l.get(R) ?? R : void 0, g = y["@_key"];
-      let T;
-      if (g) {
-        const $2 = f[g];
-        $2 ? $2.push(`${g}_${$2.length + 1}`) : f[g] = [`${g}_1`];
-        const F = f[g];
-        T = F[F.length - 1];
+    let T = false;
+    for (const E of h) {
+      const N = E[":@"];
+      if (!(N != null && N["@_begin"])) continue;
+      const y = W(N["@_begin"]), w = W(N["@_end"]), I = Q(E.p, y);
+      I.isWordSynced && (T = true);
+      const S = N["@_agent"], A = S ? l.get(S) ?? S : void 0, M = N["@_key"];
+      let b;
+      if (M) {
+        const F = f[M];
+        F ? F.push(`${M}_${F.length + 1}`) : f[M] = [`${M}_1`];
+        const X = f[M];
+        b = X[X.length - 1];
       } else
-        T = String(i.size);
-      i.set(T, {
-        agent: I,
-        durationMs: N - E,
-        parts: x.parts,
-        startTimeMs: E,
-        words: x.text,
-        key: g ?? T
+        b = String(i.size);
+      i.set(b, {
+        agent: A,
+        durationMs: w - y,
+        parts: I.parts,
+        startTimeMs: y,
+        words: I.text,
+        key: M ?? b
       });
     }
-    const M = (b, y) => {
-      const E = f[b];
-      if (E)
-        for (const N of E) {
-          const x = i.get(N);
-          x && y(x);
+    const m = (E, N) => {
+      const y = f[E];
+      if (y)
+        for (const w of y) {
+          const I = i.get(w);
+          I && N(I);
         }
-    }, _ = k(u, "translations");
-    if (_) {
-      const b = (P = _[":@"]) == null ? void 0 : P["@_lang"], y = _.translations ?? [];
-      for (const E of y) {
-        const N = ((G = E[":@"]) == null ? void 0 : G["@_lang"]) ?? b, x = (O = E[":@"]) == null ? void 0 : O["@_for"];
-        for (const R of E.translation ?? []) {
-          const I = ((D = R[":@"]) == null ? void 0 : D["@_for"]) ?? x, g = L(R.text);
-          !N || !g || !I || M(I, (T) => {
-            T.translations || (T.translations = {}), T.translations[N] = g, T.translation || (T.translation = { text: g, lang: N });
+    }, g = B(u, "translations");
+    if (g) {
+      const E = (x = g[":@"]) == null ? void 0 : x["@_lang"], N = g.translations ?? [];
+      for (const y of N) {
+        const w = ((P = y[":@"]) == null ? void 0 : P["@_lang"]) ?? E, I = (G = y[":@"]) == null ? void 0 : G["@_for"];
+        for (const S of y.translation ?? []) {
+          const A = ((C = S[":@"]) == null ? void 0 : C["@_for"]) ?? I, M = z(S.text);
+          !w || !M || !A || m(A, (b) => {
+            b.translations || (b.translations = {}), b.translations[w] = M, b.translation || (b.translation = { text: M, lang: w });
           });
         }
       }
     }
-    const h = k(u, "transliterations");
-    if (h) {
-      const b = h.transliterations ?? [];
-      for (const y of b)
-        for (const E of y.transliteration ?? []) {
-          const N = (C = E[":@"]) == null ? void 0 : C["@_for"], x = E.text;
-          !N || !x || M(N, (R) => {
-            const I = Z(x, R.startTimeMs);
-            R.romanization = I.text, I.parts.length > 0 && (R.timedRomanization = I.parts);
+    const p = B(u, "transliterations");
+    if (p) {
+      const E = p.transliterations ?? [];
+      for (const N of E)
+        for (const y of N.transliteration ?? []) {
+          const w = ($2 = y[":@"]) == null ? void 0 : $2["@_for"], I = y.text;
+          !w || !I || m(w, (S) => {
+            const A = Q(I, S.startTimeMs);
+            S.romanization = A.text, A.parts.length > 0 && (S.timedRomanization = A.parts);
           });
         }
     }
-    const w = a != null && a["@_dur"] ? X(a["@_dur"]) : n2.songDurationMs ?? 0;
-    return { lyrics: U(Array.from(i.values()), w, n2.instrumentalGapMs), isWordSynced: d2, language: c };
+    const R = a != null && a["@_dur"] ? W(a["@_dur"]) : n2.songDurationMs ?? 0;
+    return { lyrics: Z(Array.from(i.values()), R, n2.instrumentalGapMs), isWordSynced: T, language: c };
   }
-  var Ft = {
+  var Dt = {
     detect(t2) {
       return t(t2);
     },
     // The duration is deliberately unused. `@braccato/provider-blyrics` calls this with one argument,
     // and a version that honoured the parameter would hand that call site a 0 song duration.
     parse(t2, n2 = 0) {
-      return $t(t2).lyrics;
+      return Xt(t2).lyrics;
     },
     metadata(t2) {
-      return { songwriters: Ct(it(ot(t2))) };
+      return { songwriters: Ft(t2) };
     }
   };
-  var Xt = ["ti", "ar", "al", "au", "lr", "length", "by", "offset", "re", "tool", "ve", "#"];
-  var Dt = ["au", "lr"];
-  var B = /\[(\d+:\d+\.\d+)\]/g;
-  var W = /<(\d+:\d+\.\d+)>/g;
-  var at = /^\[(\w+):(.*)\]$/;
-  var lt = /\[bg:(.*)\]\s*$/;
-  var Wt = /^[\s♪♫♬♩🎵🎶]*$/u;
-  function Q(t2) {
+  var Wt = ["ti", "ar", "al", "au", "lr", "length", "by", "offset", "re", "tool", "ve", "#"];
+  var zt = ["au", "lr"];
+  var U = /\[(\d+:\d+\.\d+)\]/g;
+  var L = /<(\d+:\d+\.\d+)>/g;
+  var ct = /^\[(\w+):(.*)\]$/;
+  var ut = /\[bg:(.*)\]\s*$/;
+  var Lt = /^[\s♪♫♬♩🎵🎶]*$/u;
+  function Y(t2) {
     if (!t2) return 0;
     if (typeof t2 == "number") return t2;
     const n2 = t2.split(":");
@@ -8302,76 +9120,76 @@
       return 0;
     }
   }
-  function zt(t2, n2, r = {}) {
+  function jt(t2, n2, r = {}) {
     var i, f;
     const s2 = t2.split(`
 `), e2 = [], o = {};
     for (const u of s2) {
-      const l = u.trim(), p = l.match(at);
-      if (p && Xt.includes(p[1])) {
-        o[p[1]] = p[2];
+      const l = u.trim(), h = l.match(ct);
+      if (h && Wt.includes(h[1])) {
+        o[h[1]] = h[2];
         continue;
       }
-      let m = Number.POSITIVE_INFINITY, d2 = Number.NEGATIVE_INFINITY, M = 0;
-      for (const g of l.matchAll(B)) {
-        const T = Q(g[1]);
-        T < m && (m = T), T > d2 && (d2 = T), M++;
+      let d2 = Number.POSITIVE_INFINITY, T = Number.NEGATIVE_INFINITY, m = 0;
+      for (const M of l.matchAll(U)) {
+        const b = Y(M[1]);
+        b < d2 && (d2 = b), b > T && (T = b), m++;
       }
-      if (M === 0) continue;
-      const _ = l.replace(B, "").trim(), h = [];
-      let w = null, v = "";
-      const S = _.match(lt), P = S ? _.slice(0, S.index) : _, G = S ? S[1] : null, O = P.split(W), D = O.some(
-        (g, T) => T % 2 === 0 && T > 0 && T < O.length - 1 && g.length > 0 && g.trim() === ""
-      ), C = (g, T) => {
-        const $2 = h.length;
-        return g.split(W).forEach((F, mt) => {
-          if (mt % 2 === 0) {
-            let A = F;
-            if (D) {
-              const V = A.trim();
-              A = V === "" && A.length > 0 ? " " : V;
+      if (m === 0) continue;
+      const g = l.replace(U, "").trim(), p = [];
+      let R = null, v = "";
+      const _ = g.match(ut), x = _ ? g.slice(0, _.index) : g, P = _ ? _[1] : null, G = x.split(L), C = G.some(
+        (M, b) => b % 2 === 0 && b > 0 && b < G.length - 1 && M.length > 0 && M.trim() === ""
+      ), $2 = (M, b) => {
+        const F = p.length;
+        return M.split(L).forEach((X, gt) => {
+          if (gt % 2 === 0) {
+            let O = X;
+            if (C) {
+              const H = O.trim();
+              O = H === "" && O.length > 0 ? " " : H;
             }
-            v += A, h.length > 0 && (h[h.length - 1].words += A);
+            v += O, p.length > 0 && (p[p.length - 1].words += O);
           } else {
-            const A = Q(F);
-            w !== null && h.length > 0 && (h[h.length - 1].durationMs = A - w), h.push({ startTimeMs: A, words: "", durationMs: 0, isBackground: T }), w = A;
+            const O = Y(X);
+            R !== null && p.length > 0 && (p[p.length - 1].durationMs = O - R), p.push({ startTimeMs: O, words: "", durationMs: 0, isBackground: b }), R = O;
           }
-        }), h.length > $2 ? h[h.length - 1] : void 0;
-      }, b = C(P, false), y = G === null ? void 0 : C(G, true);
-      if (Rt(P.replace(W, ""))) continue;
-      const E = [b, y].filter((g) => (g == null ? void 0 : g.words.trim()) === ""), N = y ?? b, x = N && E.includes(N) ? Math.max(...E.map((g) => g.startTimeMs)) : null, R = h.filter((g) => !E.includes(g)), I = v.trim();
+        }), p.length > F ? p[p.length - 1] : void 0;
+      }, E = $2(x, false), N = P === null ? void 0 : $2(P, true);
+      if (It(x.replace(L, ""))) continue;
+      const y = [E, N].filter((M) => (M == null ? void 0 : M.words.trim()) === ""), w = N ?? E, I = w && y.includes(w) ? Math.max(...y.map((M) => M.startTimeMs)) : null, S = p.filter((M) => !y.includes(M)), A = v.trim();
       e2.push({
         lyric: {
-          startTimeMs: m,
-          words: Wt.test(I) ? "" : I,
-          durationMs: d2 - m,
-          parts: R.length > 0 ? R : void 0
+          startTimeMs: d2,
+          words: Lt.test(A) ? "" : A,
+          durationMs: T - d2,
+          parts: S.length > 0 ? S : void 0
         },
-        statedEnd: x ?? (M > 1 ? d2 : null)
+        statedEnd: I ?? (m > 1 ? T : null)
       });
     }
     e2.sort((u, l) => u.lyric.startTimeMs - l.lyric.startTimeMs);
     const a = e2.map((u) => u.lyric);
     for (let u = 0; u < a.length; u++) {
-      const l = a[u], { statedEnd: p } = e2[u];
-      if (p !== null) {
-        l.durationMs = Math.max(p - l.startTimeMs, 0);
-        const m = (i = l.parts) == null ? void 0 : i[l.parts.length - 1];
-        m && m.durationMs === 0 && (m.durationMs = Math.max(p - m.startTimeMs, 0));
+      const l = a[u], { statedEnd: h } = e2[u];
+      if (h !== null) {
+        l.durationMs = Math.max(h - l.startTimeMs, 0);
+        const d2 = (i = l.parts) == null ? void 0 : i[l.parts.length - 1];
+        d2 && d2.durationMs === 0 && (d2.durationMs = Math.max(h - d2.startTimeMs, 0));
       } else if (u + 1 < a.length) {
-        const m = a[u + 1];
-        if (l.durationMs === 0 && (l.durationMs = Math.max(m.startTimeMs - l.startTimeMs, 0)), l.parts && l.parts.length > 0) {
-          let d2 = m.startTimeMs;
-          for (const _ of l.parts)
-            d2 = Math.max(d2, _.startTimeMs);
-          const M = l.parts[l.parts.length - 1];
-          M.durationMs = Math.max(m.startTimeMs - M.startTimeMs, 0), l.durationMs = Math.max(d2 - l.startTimeMs, 0);
+        const d2 = a[u + 1];
+        if (l.durationMs === 0 && (l.durationMs = Math.max(d2.startTimeMs - l.startTimeMs, 0)), l.parts && l.parts.length > 0) {
+          let T = d2.startTimeMs;
+          for (const g of l.parts)
+            T = Math.max(T, g.startTimeMs);
+          const m = l.parts[l.parts.length - 1];
+          m.durationMs = Math.max(d2.startTimeMs - m.startTimeMs, 0), l.durationMs = Math.max(T - l.startTimeMs, 0);
         }
       } else {
-        const m = n2 - l.startTimeMs;
-        if (l.durationMs === 0 && m > 0 && (l.durationMs = m), l.parts && l.parts.length > 0) {
-          const d2 = l.parts[l.parts.length - 1], M = n2 - d2.startTimeMs;
-          M > 0 && (d2.durationMs = M);
+        const d2 = n2 - l.startTimeMs;
+        if (l.durationMs === 0 && d2 > 0 && (l.durationMs = d2), l.parts && l.parts.length > 0) {
+          const T = l.parts[l.parts.length - 1], m = n2 - T.startTimeMs;
+          m > 0 && (T.durationMs = m);
         }
       }
     }
@@ -8380,13 +9198,13 @@
       let u = Number(o.offset);
       Number.isNaN(u) && (u = 0), u = u * 1e3;
       for (const l of c)
-        l.startTimeMs -= u, (f = l.parts) == null || f.forEach((p) => {
-          p.startTimeMs -= u;
+        l.startTimeMs -= u, (f = l.parts) == null || f.forEach((h) => {
+          h.startTimeMs -= u;
         });
     }
-    return U(c, n2, r.instrumentalGapMs);
+    return Z(c, n2, r.instrumentalGapMs);
   }
-  function Lt(t2) {
+  function kt(t2) {
     for (const s2 of t2)
       if (s2.parts)
         for (let e2 = 1; e2 < s2.parts.length; e2++) {
@@ -8421,29 +9239,29 @@
           }
       }
   }
-  var jt = {
+  var Bt = {
     detect(t2) {
       return d(t2);
     },
     parse(t2, n2 = 0) {
-      const r = zt(t2, n2);
-      return Lt(r), r;
+      const r = jt(t2, n2);
+      return kt(r), r;
     },
     metadata(t2) {
       const n2 = [];
       for (const r of t2.split(`
 `)) {
-        const s2 = r.trim(), e2 = s2.match(at);
-        if (e2 && Dt.includes(e2[1])) n2.push(...rt(e2[2]));
+        const s2 = r.trim(), e2 = s2.match(ct);
+        if (e2 && zt.includes(e2[1])) n2.push(...it(e2[2]));
         else {
-          const o = s2.replace(B, "");
-          o !== s2 && n2.push(...st(o.replace(lt, "").replace(W, "")));
+          const o = s2.replace(U, "");
+          o !== s2 && n2.push(...ot(o.replace(ut, "").replace(L, "")));
         }
       }
-      return { songwriters: K(n2) };
+      return { songwriters: V(n2) };
     }
   };
-  var Bt = {
+  var Ut = {
     detect(t2) {
       return true;
     },
@@ -8459,7 +9277,7 @@
       return { songwriters: [] };
     }
   };
-  var Kt = (t2, n2, r = 2, s2 = false) => {
+  var Vt = (t2, n2, r = 2, s2 = false) => {
     const e2 = s2 ? t2 : t2.toLowerCase(), o = s2 ? n2 : n2.toLowerCase();
     if (e2.length < r || o.length < r) return 0;
     const a = /* @__PURE__ */ new Map();
@@ -8474,7 +9292,7 @@
     }
     return c * 2 / (e2.length + o.length - (r - 1) * 2);
   };
-  function ct(t2) {
+  function ft(t2) {
     if (t2[0] !== "[") return null;
     const n2 = t2.indexOf("]");
     if (n2 === -1) return null;
@@ -8483,11 +9301,11 @@
     const s2 = Number.parseInt(t2.slice(1, r), 10), e2 = Number.parseInt(t2.slice(r + 1, n2), 10);
     return Number.isNaN(s2) || Number.isNaN(e2) ? null : { startTime: s2, duration: e2, rest: t2.slice(n2 + 1) };
   }
-  var Ut = /\((\d+),(\d+)\)/g;
-  function ut(t2) {
+  var Zt = /\((\d+),(\d+)\)/g;
+  function mt(t2) {
     const n2 = [];
     let r = 0;
-    for (const s2 of t2.matchAll(Ut))
+    for (const s2 of t2.matchAll(Zt))
       n2.push({
         text: t2.slice(r, s2.index),
         time: Number.parseInt(s2[1], 10),
@@ -8495,73 +9313,73 @@
       }), r = s2.index + s2[0].length;
     return n2;
   }
-  function H(t2, n2, r) {
+  function J(t2, n2, r) {
     if (!r.aliases[t2]) {
       const s2 = t2.toUpperCase(), e2 = s2 === "\u5408" || s2 === "ALL" || s2 === "\u5408\u5531" ? "group" : "person";
       r.aliases[t2] = e2 === "group" ? "v1000" : `v${r.nextVoiceId++}`;
     }
     n2.agent = r.aliases[t2];
   }
-  function q(t2) {
+  function tt(t2) {
     if (t2.syllables.length > 0) {
       const n2 = t2.syllables[0], r = t2.syllables[t2.syllables.length - 1];
       t2.time = n2.time, t2.duration = r.time + r.duration - n2.time;
     }
   }
-  var Vt = /[^a-z0-9　-鿿가-힯]/g;
-  function Zt(t2, n2, r, s2) {
+  var Ht = /[^a-z0-9　-鿿가-힯]/g;
+  function Qt(t2, n2, r, s2) {
     if (!t2.syllables.length)
       return n2.currentSinger && (t2.agent = n2.currentSinger), true;
     if (r) {
       if (s2 && (s2.title || s2.artist)) {
-        const M = (S) => S.toLowerCase().replace(Vt, ""), _ = M(t2.text), h = M(s2.title ?? ""), w = M(s2.artist ?? "");
-        if (h && _.includes(h) && w && _.includes(w) || h && _.includes(h) && !w && _.length < h.length + 15 || w && _ === w) return false;
+        const m = (_) => _.toLowerCase().replace(Ht, ""), g = m(t2.text), p = m(s2.title ?? ""), R = m(s2.artist ?? "");
+        if (p && g.includes(p) && R && g.includes(R) || p && g.includes(p) && !R && g.length < p.length + 15 || R && g === R) return false;
         const v = `${s2.title ?? ""} ${s2.artist ?? ""}`;
-        if (Kt(t2.text, v) > 0.5) return false;
+        if (Vt(t2.text, v) > 0.5) return false;
       }
-      if (t2.syllables.length > 2 && t2.syllables.every((M, _, h) => Math.abs(M.duration - h[0].duration) < 10)) return false;
+      if (t2.syllables.length > 2 && t2.syllables.every((m, g, p) => Math.abs(m.duration - p[0].duration) < 10)) return false;
     }
     n2.currentSinger && (t2.agent = n2.currentSinger);
     let e2 = "", o = 0;
-    for (const d2 of t2.syllables) {
-      if (e2 += d2.text, o++, e2.includes(":") || e2.includes("\uFF1A")) break;
+    for (const T of t2.syllables) {
+      if (e2 += T.text, o++, e2.includes(":") || e2.includes("\uFF1A")) break;
       if (e2.length > 40) return true;
     }
     const a = e2.match(/^([^:：]+)\s*[:：]\s*$/);
     if (a) {
-      const d2 = a[1].trim();
-      return z(d2) ? false : (d2.length > 30 || (t2.syllables = t2.syllables.slice(o), t2.text = t2.text.substring(e2.length), H(d2, t2, n2), n2.currentSinger = n2.aliases[d2], q(t2)), true);
+      const T = a[1].trim();
+      return j(T) ? false : (T.length > 30 || (t2.syllables = t2.syllables.slice(o), t2.text = t2.text.substring(e2.length), J(T, t2, n2), n2.currentSinger = n2.aliases[T], tt(t2)), true);
     }
     const c = e2.match(/^([^:：]+)\s*[:：]\s*([\s\S]*)$/);
     if (!c) return true;
     const i = c[1].trim();
-    if (z(i)) return false;
+    if (j(i)) return false;
     if (i.length > 20) return true;
-    const f = c[2] || "", u = o - 1, l = t2.syllables[u], p = l.text.match(/[:：]\s*([\s\S]*)$/), m = p ? p[1] : "";
-    return m.length > 0 ? (l.text = m, t2.syllables = t2.syllables.slice(u)) : t2.syllables = t2.syllables.slice(o), H(i, t2, n2), n2.currentSinger = n2.aliases[i], t2.text = f, q(t2), true;
+    const f = c[2] || "", u = o - 1, l = t2.syllables[u], h = l.text.match(/[:：]\s*([\s\S]*)$/), d2 = h ? h[1] : "";
+    return d2.length > 0 ? (l.text = d2, t2.syllables = t2.syllables.slice(u)) : t2.syllables = t2.syllables.slice(o), J(i, t2, n2), n2.currentSinger = n2.aliases[i], t2.text = f, tt(t2), true;
   }
-  var Qt = /LyricContent="([\s\S]*?)"\s*(?:\/?>|[a-zA-Z]+=)/;
-  function ft(t2) {
-    const n2 = t2.match(Qt);
+  var Yt = /LyricContent="([\s\S]*?)"\s*(?:\/?>|[a-zA-Z]+=)/;
+  function dt(t2) {
+    const n2 = t2.match(Yt);
     return n2 ? n2[1].replace(/&quot;/g, '"').replace(/&amp;/g, "&") : t2;
   }
-  function Yt(t2, n2, r) {
+  function qt(t2, n2, r) {
     if (!t2) return [];
-    const s2 = ft(t2), e2 = [], o = { aliases: {}, nextVoiceId: 1, currentSinger: null };
+    const s2 = dt(t2), e2 = [], o = { aliases: {}, nextVoiceId: 1, currentSinger: null };
     for (const c of s2.split(`
 `)) {
       const i = c.trim();
       if (!i || /^\[[a-zA-Z]+:/.test(i)) continue;
-      const f = ct(i);
+      const f = ft(i);
       if (!f) continue;
-      const u = ut(f.rest), l = u.map((m) => m.text).join(""), p = {
+      const u = mt(f.rest), l = u.map((d2) => d2.text).join(""), h = {
         time: f.startTime,
         duration: f.duration,
         text: l,
         syllables: u,
         agent: null
       };
-      Zt(p, o, e2.length < 5, r) && e2.push(p);
+      Qt(h, o, e2.length < 5, r) && e2.push(h);
     }
     if (e2.length === 0) return [];
     const a = e2.map((c, i) => {
@@ -8583,28 +9401,28 @@
         agent: c.agent ?? void 0
       };
     });
-    return U(a, n2);
+    return Z(a, n2);
   }
-  function Ht(t2) {
+  function Jt(t2) {
     const n2 = [];
-    for (const r of ft(t2).split(`
+    for (const r of dt(t2).split(`
 `)) {
-      const s2 = ct(r.trim());
+      const s2 = ft(r.trim());
       if (!s2) continue;
-      const e2 = ut(s2.rest).map((o) => o.text).join("");
-      n2.push(...st(e2));
+      const e2 = mt(s2.rest).map((o) => o.text).join("");
+      n2.push(...ot(e2));
     }
-    return K(n2);
+    return V(n2);
   }
-  var qt = {
+  var tn = {
     detect(t2) {
       return n(t2);
     },
     parse(t2, n2 = 0) {
-      return Yt(t2, n2);
+      return qt(t2, n2);
     },
     metadata(t2) {
-      return { songwriters: t2 ? Ht(t2) : [] };
+      return { songwriters: t2 ? Jt(t2) : [] };
     }
   };
 
@@ -8641,7 +9459,7 @@
     unisonData: void 0
   }) {
     const { richsyncKey, syncedKey, source, sourceHref, cacheAllowed, unisonData } = options;
-    const { lyrics, isWordSynced, language } = $t(responseString, {
+    const { lyrics, isWordSynced, language } = Xt(responseString, {
       songDurationMs: providerParameters.duration * 1e3
     });
     if (lyrics.length === 0) {
@@ -8659,7 +9477,7 @@
       musicVideoSynced: false,
       source,
       sourceHref,
-      songwriters: Ft.metadata(responseString).songwriters,
+      songwriters: Dt.metadata(responseString).songwriters,
       unisonData,
       ...options.contributors ? { contributors: options.contributors } : {}
     };
@@ -8712,11 +9530,11 @@
       }
       if (provider === "musixmatch") {
         if (results.wordByWord) {
-          const lyrics = zt(results.wordByWord, durationMs);
-          Lt(lyrics);
+          const lyrics = jt(results.wordByWord, durationMs);
+          kt(lyrics);
           sourceMap["musixmatch-richsync"].lyricSourceResult = {
             lyrics,
-            songwriters: jt.metadata(results.wordByWord).songwriters,
+            songwriters: Bt.metadata(results.wordByWord).songwriters,
             source: "Musixmatch",
             sourceHref: "https://www.musixmatch.com",
             musicVideoSynced: false,
@@ -8730,10 +9548,10 @@
           resolveWaiter(params2, "musixmatch-richsync");
         }
         if (results.synced) {
-          const lyrics = zt(results.synced, durationMs);
+          const lyrics = jt(results.synced, durationMs);
           sourceMap["musixmatch-synced"].lyricSourceResult = {
             lyrics,
-            songwriters: jt.metadata(results.synced).songwriters,
+            songwriters: Bt.metadata(results.synced).songwriters,
             source: "Musixmatch",
             sourceHref: "https://www.musixmatch.com",
             musicVideoSynced: false
@@ -8744,10 +9562,10 @@
       }
       if (provider === "lrclib") {
         if (results.synced) {
-          const lyrics = zt(results.synced, durationMs);
+          const lyrics = jt(results.synced, durationMs);
           sourceMap["lrclib-synced"].lyricSourceResult = {
             lyrics,
-            songwriters: jt.metadata(results.synced).songwriters,
+            songwriters: Bt.metadata(results.synced).songwriters,
             source: "LRCLib",
             sourceHref: "https://lrclib.net",
             musicVideoSynced: false
@@ -8756,7 +9574,7 @@
           resolveWaiter(params2, "lrclib-synced");
         }
         if (results.plain) {
-          const lyrics = Bt.parse(results.plain);
+          const lyrics = Ut.parse(results.plain);
           sourceMap["lrclib-plain"].lyricSourceResult = {
             lyrics,
             source: "LRCLib",
@@ -8771,10 +9589,10 @@
       if (provider === "kugou") {
         if (results.lyrics) {
           let decodedLyrics = JSON.parse(results.lyrics);
-          const lyrics = zt(decodedLyrics.lyrics, durationMs);
+          const lyrics = jt(decodedLyrics.lyrics, durationMs);
           sourceMap["legato-synced"].lyricSourceResult = {
             lyrics,
-            songwriters: jt.metadata(decodedLyrics.lyrics).songwriters,
+            songwriters: Bt.metadata(decodedLyrics.lyrics).songwriters,
             source: "Better Lyrics Legato",
             sourceHref: HOMEPAGE_URL,
             musicVideoSynced: false
@@ -8786,14 +9604,14 @@
       if (provider === "qq") {
         if (results.lyrics) {
           let decodedLyrics = JSON.parse(results.lyrics);
-          const lyrics = Yt(decodedLyrics.lyrics, durationMs, {
+          const lyrics = qt(decodedLyrics.lyrics, durationMs, {
             title: params2.song,
             artist: params2.artist
           });
           if (lyrics.length > 0) {
             sourceMap["portato-richsynced"].lyricSourceResult = {
               lyrics,
-              songwriters: qt.metadata(decodedLyrics.lyrics).songwriters,
+              songwriters: tn.metadata(decodedLyrics.lyrics).songwriters,
               source: "Better Lyrics Portato",
               sourceHref: HOMEPAGE_URL,
               musicVideoSynced: false,
@@ -9028,6 +9846,18 @@
     return "No lyrics found.";
   }
 
+  // web/src/unison-source.js
+  var origin = "https://unison.betterlyrics.org";
+  function unisonContributors(data) {
+    if (!/^[A-Za-z0-9_-]{11}$/.test(data?.videoId ?? "")) return [];
+    const credits = [{ label: "Lyrics from Unison", url: origin + "/song/" + data.videoId }];
+    const { displayName, keyId } = data.submitter ?? {};
+    if (typeof displayName === "string" && displayName.trim() && /^[A-Za-z0-9_-]{1,128}$/.test(keyId ?? "")) {
+      credits.push({ label: "Submitted by " + displayName.trim().slice(0, 160), url: origin + "/curator/" + keyId });
+    }
+    return credits;
+  }
+
   // web/src/main.js
   var PRIORITY = catalog.providers.map(({ key }) => key);
   var $ = (id) => document.getElementById(id);
@@ -9211,9 +10041,7 @@
     if (event.propertyName === "grid-template-rows") settleDockLayout();
   });
   var enrichmentRequested = /* @__PURE__ */ new Set();
-  var resumeScrollUntil = 0;
   function resumeFollow() {
-    resumeScrollUntil = performance.now() + 120;
     renderer.resumeAutoscroll();
   }
   var renderer = createLyricsRenderer({ document, window, mount: $("lyrics"), host: {
@@ -9242,8 +10070,8 @@
     if (["left", "center", "right"].includes(settings.bgAlignment)) rules.push(`.blyrics-background-line{text-align:${settings.bgAlignment}}`);
     for (const [agent, alignment] of Object.entries(settings.agents || {})) {
       if (!/^v\d+$/.test(agent) || !["left", "center", "right"].includes(alignment)) continue;
-      const origin = alignment === "center" ? "center" : alignment;
-      rules.push(`.blyrics--line[data-agent="${agent}"]{text-align:${alignment};transform-origin:${origin} center}`);
+      const origin2 = alignment === "center" ? "center" : alignment;
+      rules.push(`.blyrics--line[data-agent="${agent}"]{text-align:${alignment};transform-origin:${origin2} center}`);
       rules.push(`.blyrics--line[data-agent="${agent}"]>.blyrics--romanized{margin-left:${alignment === "left" ? "0" : "auto"};margin-right:${alignment === "right" ? "0" : "auto"}}`);
     }
     $("agents").textContent = rules.join("\n");
@@ -9251,11 +10079,11 @@
   }
   function parsePayload(payload) {
     const text = payload.raw;
-    if (payload.format === "ttml") return $t(text, { songDurationMs: params.duration * 1e3 }).lyrics;
-    if (payload.format === "lrc") return zt(text, params.duration * 1e3);
-    if (payload.format === "qrc") return Yt(text, params.duration * 1e3, { title: params.song, artist: params.artist });
+    if (payload.format === "ttml") return Xt(text, { songDurationMs: params.duration * 1e3 }).lyrics;
+    if (payload.format === "lrc") return jt(text, params.duration * 1e3);
+    if (payload.format === "qrc") return qt(text, params.duration * 1e3, { title: params.song, artist: params.artist });
     if (payload.lyrics) return payload.lyrics;
-    return Bt.parse(text || "");
+    return Ut.parse(text || "");
   }
   function put(key, result) {
     if (!params?.sourceMap[key] || !result?.lyrics?.length) return;
@@ -9277,6 +10105,14 @@
       return credit;
     }));
     footer.hidden = !footer.childElementCount;
+  }
+  var chooseFrame = 0;
+  function queueChoice() {
+    if (chooseFrame) return;
+    chooseFrame = requestAnimationFrame(() => {
+      chooseFrame = 0;
+      choose();
+    });
   }
   function choose(force = false) {
     if (!params) return;
@@ -9307,10 +10143,12 @@
     const key = available.includes(pinned) ? pinned : autoPreferred;
     availableKeys = available;
     if (!key) {
+      if (currentResult) {
+        renderer.clear();
+        showCredits(null);
+      }
       selected = "";
       currentResult = null;
-      renderer.clear();
-      showCredits(null);
       updateDock();
       $("sources").value = "";
       if (available.length) {
@@ -9327,17 +10165,19 @@
       updateDock();
       return;
     }
+    const first = !currentResult;
     selected = key;
     currentResult = result;
     updateDock();
-    renderer.setLyrics(result.lyrics, { language: result.language, songwriters: result.songwriters });
+    renderer.setLyrics(result.lyrics, { songKey: params.videoId, language: result.language, songwriters: result.songwriters });
     diagnostics.lines(renderer.lines);
     decorate();
     showCredits(result);
     $("status").textContent = result.source;
     $("status").title = key;
     $("empty").hidden = true;
-    renderer.relayout();
+    if (first && !settings.reducedMotion && !window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+      $("lyrics").animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: "ease-out" });
     native?.displayed(generation, key);
     enrichMissing();
   }
@@ -9393,7 +10233,9 @@
       isPlaying: clock.playing,
       playbackRate: clock.rate,
       passiveScrollEnabled: settings.passive,
-      smoothScroll: !settings.reducedMotion
+      smoothScroll: !settings.reducedMotion,
+      followPausedSeeks: true,
+      countEveryUserScroll: true
     });
     diagnostics.sample(now, position / 1e3, diagnostics.enabled ? performance.now() - before : 0, clock.playing);
     raf = requestAnimationFrame(renderFrame);
@@ -9407,6 +10249,9 @@
       diagnostics.enable(value === true);
     },
     track(track) {
+      cancelAnimationFrame(chooseFrame);
+      chooseFrame = 0;
+      for (const animation of $("lyrics").getAnimations()) animation.cancel();
       reportedMismatches.clear();
       autoPreferred = "";
       seenPayloads = /* @__PURE__ */ new Set();
@@ -9440,7 +10285,6 @@
       resetPlaybackClock();
       renderer.resumeAutoscroll();
       $("resume").hidden = true;
-      resumeScrollUntil = performance.now() + 250;
       closeSources();
       showCredits(null);
       availableKeys = [];
@@ -9482,26 +10326,28 @@
           if (payload.result?.lyrics?.length) put(payload.key, payload.result);
         } else if (payload.kind === "unison") {
           const data = payload.data?.data || payload.data;
-          if (data.format === "ttml") fillTtml(data.lyrics, params, { richsyncKey: "unison-richsynced", syncedKey: "unison-synced", source: "Unison", sourceHref: "https://unison.betterlyrics.org", cacheAllowed: false });
+          const contributors = unisonContributors(data);
+          if (data.format === "ttml") fillTtml(data.lyrics, params, { richsyncKey: "unison-richsynced", syncedKey: "unison-synced", source: "Unison", sourceHref: "https://unison.betterlyrics.org", cacheAllowed: false, contributors });
           else if (data.lyrics) put(
             data.format === "plain" ? "unison-plain" : data.syncType === "richsync" ? "unison-wordsynced" : "unison-synced",
-            { lyrics: data.format === "plain" ? Bt.parse(data.lyrics) : zt(data.lyrics, params.duration * 1e3), source: "Unison" }
+            { lyrics: data.format === "plain" ? Ut.parse(data.lyrics) : jt(data.lyrics, params.duration * 1e3), source: "Unison", contributors }
           );
         } else {
           const lyrics = parsePayload(payload);
           let key = payload.key;
           if (payload.format === "ttml" && key?.endsWith("-richsynced")) {
-            const parsed = $t(payload.raw, { songDurationMs: params.duration * 1e3 });
+            const parsed = Xt(payload.raw, { songDurationMs: params.duration * 1e3 });
             if (!parsed.isWordSynced) key = key.replace("-richsynced", "-synced");
           }
-          put(key, { ...payload, lyrics });
+          const contributors = key?.startsWith("unison-") ? unisonContributors(payload.sourceMetadata) : payload.contributors;
+          put(key, { ...payload, lyrics, contributors });
         }
         for (const [key, result] of previous) if (!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length) expected.sourceMap[key].lyricSourceResult = result;
         if (payload.kind !== "cachedResult") for (const key of PRIORITY) {
           const result = expected.sourceMap[key]?.lyricSourceResult;
           if (!key.startsWith("spicy-") && result?.lyrics?.length && result !== previous.get(key)) native?.cacheResult?.(generation, key, JSON.stringify(result));
         }
-        choose();
+        queueChoice();
       } catch (error) {
         if (cached) {
           cache.delete(payloadKey);
@@ -9509,7 +10355,7 @@
         }
         if (id !== generation || params !== expected) return;
         for (const [key, result] of previous) if (!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length) expected.sourceMap[key].lyricSourceResult = result;
-        choose();
+        queueChoice();
         native?.diagnostic(generation, payload.key || payload.event || payload.kind || "unknown", String(error?.message || error).slice(0, 240));
         decodingFailed = true;
       } finally {
@@ -9605,6 +10451,7 @@
     },
     dispose() {
       cancelAnimationFrame(raf);
+      cancelAnimationFrame(chooseFrame);
       clearTimeout(dockLayoutTimer);
       clearTimeout(slowTimer);
       dockResize.disconnect();
@@ -9680,17 +10527,7 @@
   for (const kind of ["translate", "romanize"]) $(kind).addEventListener("click", () => native?.toggle(kind));
   $("earlier").addEventListener("click", () => native?.offset(generation, -100));
   $("later").addEventListener("click", () => native?.offset(generation, 100));
-  $("scroll").addEventListener("scroll", () => {
-    if (performance.now() >= resumeScrollUntil) renderer.noteUserScroll();
-  }, { passive: true });
-  function userScroll() {
-    resumeScrollUntil = 0;
-    renderer.noteUserScroll(true);
-  }
-  for (const type of ["wheel", "touchmove"]) $("scroll").addEventListener(type, userScroll, { passive: true });
-  $("scroll").addEventListener("keydown", (event) => {
-    if (["ArrowUp", "ArrowDown", "PageUp", "PageDown", "Home", "End", " "].includes(event.key)) userScroll();
-  });
+  $("scroll").addEventListener("scroll", () => renderer.noteUserScroll(), { passive: true });
   document.addEventListener("visibilitychange", () => {
     diagnostics.pause();
     frameBudget.reset(performance.now());

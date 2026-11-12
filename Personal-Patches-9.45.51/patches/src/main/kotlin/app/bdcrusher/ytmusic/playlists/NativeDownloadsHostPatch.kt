@@ -3,6 +3,7 @@ package app.bdcrusher.ytmusic.playlists
 
 import app.morphe.patcher.Fingerprint
 import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.patch.*
 import app.morphe.patcher.util.cloneParameters
 import app.morphe.patcher.util.getReference
@@ -18,6 +19,14 @@ private const val OWNER = "Lapp/morphe/extension/music/patches/downloads/NativeD
 private const val FRAME = "Landroid/widget/FrameLayout;"
 private const val LOADING_FRAME = "Lcom/google/android/apps/youtube/music/ui/components/loading/LoadingFrameLayout;"
 private const val BROWSE_CONTENT = 0x7f0b01d4
+
+private object LibraryBackCallback : Fingerprint(
+    returnType = "V",
+    parameters = emptyList(),
+    strings = listOf("FEmusic_home", "FEmusic_library_landing"),
+    name = "b",
+    custom = { _, owner -> owner.type == "Lgma;" },
+)
 
 private object LibraryFragment : Fingerprint(
     name = "<clinit>",
@@ -97,6 +106,22 @@ internal fun BytecodePatchContext.installNativeDownloadsHost() {
             method.addInstruction(index, "invoke-static/range { p0 .. p0 }, $HOST->changed($OWNER)V")
         }
     }
+    LibraryBackCallback.clearMatch()
+    val nativeBack = LibraryBackCallback.method
+    val backOwner = LibraryBackCallback.classDef.fields.singleOrNull { it.type == library.type }
+        ?: throw PatchException("Downloads: native Library back callback lost its presenter")
+    if (nativeBack.implementation!!.registerCount < 2)
+        throw PatchException("Downloads: native Library back callback has no scratch register")
+    nativeBack.addInstructionsWithLabels(0, """
+        iget-object v0, p0, $backOwner
+        invoke-static { v0 }, $HOST->handleBack($OWNER)Z
+        move-result v0
+        if-eqz v0, :stock_back
+        return-void
+        :stock_back
+        nop
+    """)
+
     for (name in listOf("onStop", "onDestroyView")) {
         library.methods.single { it.name == name }
             .addInstruction(0, "invoke-static/range { p0 .. p0 }, $HOST->release($OWNER)V")

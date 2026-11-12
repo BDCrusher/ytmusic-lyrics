@@ -18,7 +18,11 @@ public final class LocalPlayback {
     private static final Map<String,Long> adoptionAttempted=new java.util.concurrent.ConcurrentHashMap<>();
     private static final Set<String> rejected=java.util.concurrent.ConcurrentHashMap.newKeySet();
     private LocalPlayback(){}
-    public static byte[] streams(String id){byte[] local=response(id);if(local==null||!PlaylistBrowse.offline()&&rejected.contains(id))return null;byte[] online=merged.get(id);return !PlaylistBrowse.offline()&&online!=null?online:local;}
+    public static byte[] streams(String id){
+        byte[] local=response(id);
+        if(local==null||PlaylistBrowse.offline())return local;
+        return rejected.contains(id)?null:merged.get(id);
+    }
 
     static Format network(String id,boolean video){return PlaylistBrowse.offline()||rejected.contains(id)?null:network.get(id+(video?":video":":audio"));}
     static void unreadable(String id){unreadable.add(id);FeatureDiagnostics.record("Downloads-playback","Saved media unavailable; "+(PlaylistBrowse.offline()?"offline item unavailable":"native stream fallback selected"));}
@@ -145,7 +149,7 @@ public final class LocalPlayback {
             // Bound expiring URL references to recent recordings; nothing is written to preferences.
             if(network.size()>64){network.keySet().removeIf(key->!key.startsWith(id+":"));}
             boolean savedVideo=local.getStreamingData().getAdaptiveFormatsList().stream().anyMatch(f->f.getMimeType().startsWith("video/"));
-            StreamingData.Builder media=nativeResponse.getStreamingData().toBuilder().clearAdaptiveFormats().clearFormats().clearServerAbrStreamingUrl();
+            StreamingData.Builder media=nativeResponse.getStreamingData().toBuilder().clearAdaptiveFormats().clearServerAbrStreamingUrl();
             media.addAllAdaptiveFormats(local.getStreamingData().getAdaptiveFormatsList());
             if(!savedVideo)for(Format online:nativeResponse.getStreamingData().getAdaptiveFormatsList())if(online.getMimeType().startsWith("video/"))media.addAdaptiveFormats(online);
             byte[] result=nativeResponse.toBuilder().setStreamingData(media).build().toByteArray();merged.put(id,result);if(merged.size()>32)merged.keySet().removeIf(key->!key.equals(id));return result;

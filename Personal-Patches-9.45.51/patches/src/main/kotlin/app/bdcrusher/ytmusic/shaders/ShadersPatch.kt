@@ -77,7 +77,9 @@ val shadersPatch=bytecodePatch(name="Shaders",description="Animated covers and a
             runtime.methods.remove(old);method.addInstructions(0,"check-cast p0, $panelType\ninvoke-interface { p0 }, ${call.shaderReference()}\nmove-result-object v0\nreturn-object v0");runtime.methods.add(method)
         }
         val assignment=setter.implementation!!.instructions.withIndex().singleOrNull {(_,i)->i.opcode==Opcode.IPUT_OBJECT&&((i as? ReferenceInstruction)?.reference as? FieldReference)?.let {it.definingClass==controller.type&&it.type==panelType}==true}?.index?:throw PatchException("Native current panel assignment missing")
-        setter.addInstruction(assignment+1,"invoke-static { p1 }, $SHADERS->onNativePanel(Ljava/lang/Object;)V")
+        val assignmentRegisters = setter.getInstruction<TwoRegisterInstruction>(assignment)
+        setter.addInstruction(assignment+1,
+            "invoke-static { v${assignmentRegisters.registerB}, v${assignmentRegisters.registerA} }, $SHADERS->onNativePanel(Ljava/lang/Object;Ljava/lang/Object;)V")
     }
     finalize {
         val info=classDefByOrNull("Lapp/morphe/extension/music/shared/VideoInformation;")?:throw PatchException("Select Full Collection settings/defaults for Shaders")
