@@ -8,6 +8,8 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod
+import app.morphe.util.ResourceGroup
+import app.morphe.util.copyResources
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
@@ -25,6 +27,7 @@ private object ShaderPanelController:Fingerprint(strings=listOf("EngagementPanel
 private object ShaderAssets
 private val shaderAssets=resourcePatch {
     execute {
+        copyResources("settings/music",ResourceGroup("drawable","bdcrusher_settings_shaders.xml","bdcrusher_settings_shaders_bold.xml"))
         for(name in listOf("index.html","shaders.js")){
             val target=this["assets/bdcrusher-shaders/$name"];target.parentFile.mkdirs()
             val input=ShaderAssets::class.java.classLoader!!.getResourceAsStream("bdcrusher-shaders/$name")?:throw PatchException("Build Shaders assets before packaging")

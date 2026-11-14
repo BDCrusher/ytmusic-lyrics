@@ -102,7 +102,8 @@ val personalRuntimePatch=bytecodePatch {
         val init=settings.methods.single {it.name=="initialize"&&it.parameterTypes.isEmpty()}
         val index=init.implementation!!.instructions.indexOfFirst {((it as? ReferenceInstruction)?.reference as? MethodReference)?.name=="sortPreferenceGroups"}
         if(index<0)throw PatchException("Morphe Music settings sorting contract missing")
-        init.addInstruction(index,"invoke-static { p0 }, Lapp/bdcrusher/ytmusic/common/PersonalSettings;->install(Landroid/preference/PreferenceFragment;)V")
+        init.addInstruction(index+1,"invoke-static/range { p0 .. p0 }, Lapp/bdcrusher/ytmusic/common/PersonalSettings;->order(Landroid/preference/PreferenceFragment;)V")
+        init.addInstruction(index,"invoke-static/range { p0 .. p0 }, Lapp/bdcrusher/ytmusic/common/PersonalSettings;->install(Landroid/preference/PreferenceFragment;)V")
         // Own the preference content background, rather than exposing the activity below.
         val viewCreated=settings.methods.singleOrNull {it.name=="onViewCreated"&&it.parameterTypes==listOf("Landroid/view/View;","Landroid/os/Bundle;")}
         if(viewCreated==null){

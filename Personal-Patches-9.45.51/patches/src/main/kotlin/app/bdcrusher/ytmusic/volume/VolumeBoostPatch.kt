@@ -2,25 +2,30 @@
 package app.bdcrusher.ytmusic.volume
 
 import app.morphe.patcher.*
-import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.*
+import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import app.morphe.patcher.util.getReference
 import app.morphe.patches.music.misc.settings.settingsPatch
-import com.android.tools.smali.dexlib2.Opcode
+import app.morphe.patches.shared.misc.fix.proto.fixProtoLibraryPatch
+import app.morphe.patches.shared.misc.fix.proto.parseByteArrayWithRegistryMethodRef
+import app.morphe.patches.shared.misc.fix.proto.protoDefaultInstanceFingerprint
+import app.morphe.patches.youtube.interaction.downloads.ResolveCommandFingerprint
+import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
+import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
+import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.instruction.WideLiteralInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 
 private const val BOOST = "Lapp/bdcrusher/ytmusic/common/PlayerVolumeBoost;"
 private const val TRACK = "Landroid/media/AudioTrack;"
-private const val ACTION_ROW = 0x7f0b0e51L
+private const val REGISTRY = "Lcom/google/protobuf/ExtensionRegistryLite;"
+private const val MESSAGE = "Lcom/google/protobuf/MessageLite;"
 
-private object ActionRow : Fingerprint(
-    name = "<init>",
-    filters = listOf(literal(ACTION_ROW)),
-    custom = { _, owner -> owner.type == "Ljmv;" },
+private object ActionPresenter : Fingerprint(
+    strings = listOf("com/google/android/apps/youtube/music/watchpage/VideoActionBarPresenter"),
 )
 
 private object Session : Fingerprint(
@@ -57,23 +62,61 @@ val volumeBoostPatch = bytecodePatch(
     default = true,
 ) {
     category("Full Collection")
-    dependsOn(settingsPatch, audioEffectPermission)
+    dependsOn(settingsPatch, audioEffectPermission, fixProtoLibraryPatch)
     compatibleWith(app.morphe.patches.music.shared.Constants.COMPATIBILITY_YOUTUBE_MUSIC)
 
     execute {
-        ActionRow.clearMatch()
-        val constructor = ActionRow.method
-        val code = constructor.implementation!!.instructions.toList()
-        val id = code.indexOfFirst { (it as? WideLiteralInstruction)?.wideLiteral == ACTION_ROW }
-        val viewLookup = ((id + 1) until minOf(id + 7, code.size)).firstOrNull { i ->
-            val ref = code[i].getReference<MethodReference>()
-            ref?.returnType == "Landroid/view/View;" && ref.parameterTypes == listOf("I") &&
-                ref.name in setOf("findViewById", "requireViewById") &&
-                code.getOrNull(i + 1)?.opcode == Opcode.MOVE_RESULT_OBJECT
-        } ?: throw PatchException("Volume boost: native player action view lookup changed")
-        val view = (code[viewLookup + 1] as OneRegisterInstruction).registerA
-        constructor.addInstruction(viewLookup + 2,
-            "invoke-static/range { v$view .. v$view }, $BOOST->bind(Landroid/view/View;)V")
+        ActionPresenter.clearMatch()
+        val presenter = ActionPresenter.classDef
+        val render = presenter.methods.singleOrNull { method ->
+            method.returnType == "V" && method.parameterTypes.size == 2 &&
+                method.implementation?.instructions?.any { instruction ->
+                    val call = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+                    call?.definingClass == method.parameterTypes[0] &&
+                        call.parameterTypes == listOf(method.parameterTypes[1], "Z")
+                } == true
+        } ?: throw PatchException("Volume boost: native action-bar model renderer changed")
+        val element = render.parameterTypes[1].toString()
+        val defaultInstance = protoDefaultInstanceFingerprint(element).instructionMatches.first().fieldReference
+        val parser = parseByteArrayWithRegistryMethodRef.get()
+            ?: throw PatchException("Volume boost: native model parser is unavailable")
+        val extension = mutableClassDefBy(BOOST)
+        val stub = extension.methods.single { it.name == "nativeModel" }
+        val modelHook = ImmutableMethod(stub.definingClass, stub.name, stub.parameters, stub.returnType,
+            stub.accessFlags, stub.annotations, stub.hiddenApiRestrictions, MutableMethodImplementation(6))
+            .toMutable()
+        modelHook.addInstructionsWithLabels(0, """
+            if-eqz p0, :unchanged
+            check-cast p0, $element
+            invoke-interface { p0 }, $MESSAGE->toByteArray()[B
+            move-result-object v0
+            invoke-static { v0 }, $BOOST->rewriteModel([B)[B
+            move-result-object v1
+            if-eq v0, v1, :unchanged
+            sget-object v2, $defaultInstance
+            invoke-static {}, $REGISTRY->getGeneratedRegistry()$REGISTRY
+            move-result-object v3
+            invoke-static { v2, v1, v3 }, $parser
+            move-result-object v2
+            return-object v2
+            :unchanged
+            return-object p0
+        """)
+        extension.methods.remove(stub)
+        extension.methods.add(modelHook)
+        render.addInstructions(0, """
+            invoke-static/range { p2 .. p2 }, $BOOST->nativeModel(Ljava/lang/Object;)Ljava/lang/Object;
+            move-result-object p2
+            check-cast p2, $element
+        """)
+        ResolveCommandFingerprint.method.addInstructionsWithLabels(0, """
+            invoke-static/range { p1 .. p2 }, $BOOST->handleCommand(Ljava/lang/Object;Ljava/util/Map;)Z
+            move-result v0
+            if-eqz v0, :resolve_command
+            return-void
+            :resolve_command
+            nop
+        """)
 
         for ((fingerprint, replacement, returnType) in listOf(
             Triple(Session, "audioSession", "I"),

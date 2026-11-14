@@ -12,6 +12,9 @@ public final class PersonalSettings {
         app.bdcrusher.ytmusic.playlists.DownloadSettings.install(fragment);
         DiagnosticsPage.install(fragment);
     }
+    public static void order(PreferenceFragment fragment){
+        app.bdcrusher.ytmusic.shaders.ShaderSettingsPage.orderAfterLyrics(fragment.getPreferenceScreen());
+    }
     /** An opaque native list prevents the underlying YouTube settings page bleeding through. */
     public static void bindRoot(View view){
         if(view!=null)view.setBackgroundColor(0xff000000|app.morphe.extension.shared.theme.ThemeUtils.getAppBackgroundColor());

@@ -123,7 +123,7 @@ fun main(args: Array<String>) {
         check(calls.getOrDefault("Lapp/bdcrusher/ytmusic/playlists/LocalNetFetch;->local", 0) >= 1)
         check(calls.getOrDefault("Lapp/bdcrusher/ytmusic/playlists/NativePlayback;->open", 0) >= 1)
         check(seen.none { it.endsWith("/OfflinePlaybackService;") || it.endsWith("/LocalDownloadsFragment;") })
-        check(nativeOfflineHooks.containsAll(setOf("replaceDownloadCommand", "observeAuthorizedOfflineResponse"))) {
+        check(nativeOfflineHooks.containsAll(setOf("handleExternalDownload", "observeAuthorizedOfflineResponse"))) {
             "Native offline hooks missing: $nativeOfflineHooks"
         }
         check(nativeOfflineHooks.intersect(setOf("unlockOfflineability", "replaceDeclinedOfflinePlayerResponse",
@@ -133,7 +133,7 @@ fun main(args: Array<String>) {
         check(nativeOfflineHooks.isEmpty()) { "Native Downloads hooks were installed without Downloads" }
     }
     val volume = "Lapp/bdcrusher/ytmusic/common/PlayerVolumeBoost;"
-    for (hook in listOf("bind", "audioSession", "releaseAudioTrack")) {
+    for (hook in listOf("nativeModel", "handleCommand", "audioSession", "releaseAudioTrack")) {
         check(calls.getOrDefault("$volume->$hook", 0) == if (selected.any { it.name == "Volume boost" }) 1 else 0)
     }
     println("PASS: $mode, ${seen.size} unique classes; retired Library bridge absent")

@@ -1,11 +1,12 @@
 /* Copyright 2026 BDCrusher. GPL-3.0. */
 package app.bdcrusher.ytmusic.lyrics;
 import java.nio.charset.StandardCharsets;
+import app.bdcrusher.ytmusic.common.PlayerVolumeBoost;
 import java.util.ArrayList;
 import java.util.List;
 
 /** Edits the actual video_action_bar model before native Elements rendering. */
-final class NativeActionModel {
+public final class NativeActionModel {
     // Android Music 9.42.52 public native response; guarded by the component URI and VM shape.
     private static final int[] ACTION_PATH={172660663,1,168777401,5,389155117};
     private static final int[] BUTTON_PATH={10,461054335};
@@ -25,6 +26,47 @@ final class NativeActionModel {
         }
         catch(IllegalArgumentException ex){LyricsDiagnostics.record("Lyrics action model","Unsupported native button model: "+ex.getMessage());return element;}
     }
+    /** Adds a button to the native carousel, including its native layout and accessibility. */
+    public static byte[] withVolumeBoost(byte[] element){
+        try {
+            try { return ProtoWire.at(element,ACTION_PATH,0,NativeActionModel::appendVolumeBoost); }
+            catch(IllegalArgumentException unsupported){
+                List<int[]> matches=new ArrayList<>();
+                findRows(element,new ArrayList<>(),matches,new int[]{192},0);
+                return matches.size()==1
+                        ? ProtoWire.at(element,matches.get(0),0,NativeActionModel::appendVolumeBoost) : element;
+            }
+        } catch(IllegalArgumentException unsupported){
+            return element;
+        }
+    }
+
+    private static byte[] appendVolumeBoost(byte[] input){
+        ProtoWire row=new ProtoWire(input);
+        int count=0;
+        boolean like=false;
+        for(ProtoWire.Field field:row.fields){
+            if(field.number!=4)continue;
+            if(field.wire!=2)throw new IllegalArgumentException("action wire type");
+            if(contains(field.data,PlayerVolumeBoost.COMMAND_ID))return input;
+            like|=contains(field.data,"_thumb_up_");
+            count++;
+        }
+        if(!like||count<2||count>32)throw new IllegalArgumentException("unexpected action row");
+        byte[] identity=ProtoWire.message(ProtoWire.number(1,1),
+                ProtoWire.blob(3,PlayerVolumeBoost.COMMAND_ID.getBytes(StandardCharsets.US_ASCII)));
+        byte[] command=ProtoWire.message(ProtoWire.blob(138681778,ProtoWire.message(ProtoWire.blob(10,identity))));
+        byte[] label="Volume boost".getBytes(StandardCharsets.UTF_8);
+        byte[] button=ProtoWire.message(
+                ProtoWire.blob(2,"yt_outline_experimental_volume_max_vd_theme_24".getBytes(StandardCharsets.US_ASCII)),
+                ProtoWire.blob(3,label),ProtoWire.blob(4,ProtoWire.message(ProtoWire.blob(169495254,command))),
+                ProtoWire.blob(5,label),ProtoWire.number(7,9),ProtoWire.number(11,5),
+                ProtoWire.number(13,1),ProtoWire.number(28,1),ProtoWire.number(29,1));
+        row.fields.add(ProtoWire.blob(4,ProtoWire.message(ProtoWire.blob(10,
+                ProtoWire.message(ProtoWire.blob(461054335,button))))));
+        return row.bytes();
+    }
+
     /** Native LikeEndpoint target, when present; do not infer identity from labels or URLs. */
     static String recording(byte[] element){
         java.util.Set<String> ids=new java.util.HashSet<>();

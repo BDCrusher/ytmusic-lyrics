@@ -3,16 +3,45 @@ package app.bdcrusher.ytmusic.shaders;
 import android.content.*;
 import android.preference.*;
 import app.bdcrusher.ytmusic.lyrics.LyricsSliderPreference;
+import app.bdcrusher.ytmusic.lyrics.LyricsSettingsPage;
 import app.bdcrusher.ytmusic.lyrics.StoragePreference;
 import app.bdcrusher.ytmusic.common.PersonalRuntime;
+import app.morphe.extension.shared.ResourceType;
+import app.morphe.extension.shared.ResourceUtils;
+import app.morphe.extension.shared.Utils;
+import app.morphe.extension.shared.settings.SharedSettings;
 
 @SuppressWarnings("deprecation")
 public final class ShaderSettingsPage {
+    private static final String KEY="bdcrusher_shaders_screen";
     private ShaderSettingsPage(){}
     public static void install(PreferenceFragment fragment){
         Context c=fragment.getActivity();if(!PersonalRuntime.installed(c,"shaders"))return;
-        PreferenceScreen root=fragment.getPreferenceScreen();String key="bdcrusher_shaders_screen";
-        if(root.findPreference(key)!=null)return;PreferenceScreen page=fragment.getPreferenceManager().createPreferenceScreen(c);page.setKey(key);page.setTitle("Shaders");page.setSummary("Animated artwork, backgrounds and motion");page.setIcon(android.R.drawable.ic_menu_gallery);page.setOrder(6);root.addPreference(page);populate(c,page);
+        PreferenceScreen root=fragment.getPreferenceScreen();
+        if(root.findPreference(KEY)!=null)return;
+        PreferenceScreen page=fragment.getPreferenceManager().createPreferenceScreen(c);
+        page.setKey(KEY);page.setTitle("Shaders");
+        if(SharedSettings.SHOW_MENU_ICONS.get()){
+            int layout=ResourceUtils.getIdentifier(ResourceType.LAYOUT,"morphe_preference_with_icon");
+            if(layout!=0)page.setLayoutResource(layout);
+            page.setIcon(ResourceUtils.getDrawable(Utils.appIsUsingBoldIcons()?"bdcrusher_settings_shaders_bold":"bdcrusher_settings_shaders"));
+        }
+        root.addPreference(page);populate(c,page);
+    }
+    public static void orderAfterLyrics(PreferenceScreen root){
+        Preference shaders=root.findPreference(KEY);
+        Preference after=root.findPreference(LyricsSettingsPage.KEY);
+        if(after==null)after=root.findPreference("morphe_settings_music_screen_03_general_sort_by_title");
+        if(shaders==null||after==null)return;
+        int order=after.getOrder();
+        java.util.List<Preference> later=new java.util.ArrayList<>();
+        for(int i=0;i<root.getPreferenceCount();i++){
+            Preference sibling=root.getPreference(i);
+            if(sibling!=shaders&&sibling.getOrder()>order&&sibling.getOrder()<Integer.MAX_VALUE)
+                later.add(sibling);
+        }
+        for(Preference sibling:later)sibling.setOrder(sibling.getOrder()+1);
+        shaders.setOrder(order+1);
     }
     private static void populate(Context c,PreferenceScreen page){
         page.removeAll();page.setOrderingAsAdded(true);SharedPreferences p=ArtworkRepository.preferences(c);

@@ -1,7 +1,10 @@
-# Compatibility and acceptance record for 0.10.0-beta.1
+# Compatibility and acceptance record for 0.10.0-beta.2
 
 ## Current release
 
+- Player and long-press download commands now share an external-only interception path. The in-app and default routes keep every native command, including by-products of a download tap. External resolves typed song, playlist and upsell commands before considering a scoped player or menu fallback. Duplicate handoffs are scoped to the same target and entry point. Native account eligibility remains in force.
+- The Volume Boost button is part of YouTube Music’s own horizontal action model, using its volume icon and button styling. Opening the gain slider consumes only the button’s private command. Gain is still off at launch and adjustable up to +12 dB.
+- Personal Lyrics controls now share the original Morphe Lyrics page with the upstream provider, display, panel and sync organization. Shaders follows Lyrics in the Morphe settings list, with a matching 24 dp icon and title-only row. Where only Shaders is selected, it follows General.
 - The exact original target remains Google-signed YouTube Music **9.45.51 / 94551240**, arm64-v8a, minSDK 28. Original SHA-256 `ad8963959890b6b23a0b332cf9829ee7d6ea6f3a0a61e386d7c34c51a2dd99f7`.
 - Official Morphe Patches 2.3.0-dev.3 at `dc84727f1c506af29e72190186bb913ca244a98c`, Patcher 2.3.0 at `d19545e8505e0329cc640723cb8ff91eddd3cd05`, and Patch Library 2.2.0-dev.5 at `b6fbe7e1a97653afd0eb95936c1e913aa6ce969b`. The Gradle plugin and ARSCLib pins in the historical record below also apply.
 - Authorized new downloads use the stock Library and offline engine. The compiled patch preserves Premium, download eligibility and refresh policy handling. Native export and automatic import of existing personal downloads are excluded. The previous files remain accessible under **Morphe → Player → Downloads → Previous personal downloads** when using the same Android package. External mode keeps the existing app selector and chosen-folder support.

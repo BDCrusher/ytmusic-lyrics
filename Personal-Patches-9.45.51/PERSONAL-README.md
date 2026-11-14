@@ -14,7 +14,7 @@ patching with GmsCore support. Shaders remains independently selectable.
 
 New authorized downloads use YouTube Music's quality picker, offline engine and
 **Library → Downloads**. Account and subscription checks stay in place. Configure
-external routing under **Morphe → Player → Downloads**. Use **Previous personal
+external routing under **Morphe → Player → Downloads**. Set **Download mode → External** to send the player and song-menu actions to the selected downloader. Use **Previous personal
 downloads** on that settings page for files and groups from the older downloader
 under the same package, or choose your YTDLnis folder there. Native groups and older
 personal groups retain their own storage. Native export and automatic import of
@@ -29,7 +29,9 @@ The personal source list includes the official provider set. Drag directly from 
 three-line handle to reorder it, or use the accessibility move actions. The existing
 Better Lyrics scroll engine, instrumental notes and permanent lyric storage are used.
 
-Volume boost appears as the speaker button in the player action row. It starts off
+**Morphe → Lyrics** contains the personal and upstream controls in one page. **Shaders** appears directly below it when selected.
+
+Volume boost appears as a speaker button that scrolls with the player actions. It starts off
 on each app launch and offers up to +12 dB for a supported Music audio session.
 New native downloads use YouTube Music's progress and notifications.
 

@@ -17,6 +17,10 @@ public final class DownloadSettings {
         Preference page = fragment.findPreference("morphe_external_downloader_screen");
         if (!(page instanceof PreferenceScreen screen) || screen.findPreference("bd_download_folder") != null) return;
         Context context = fragment.getActivity();
+        Preference mode = screen.findPreference("morphe_download_mode");
+        if (mode != null) {
+            mode.setSummary("In-app uses YouTube Music’s account and Downloads. External opens your selected downloader.");
+        }
         Preference savedFiles = FeaturePreferences.action(context);
         savedFiles.setTitle("Previous personal downloads");
         savedFiles.setSummary("Open songs and playlist groups saved by an earlier version");

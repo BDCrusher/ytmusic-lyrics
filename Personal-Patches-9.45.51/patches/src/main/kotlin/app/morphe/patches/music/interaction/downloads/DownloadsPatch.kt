@@ -20,8 +20,6 @@ import app.morphe.patches.music.misc.settings.settingsPatch
 import app.morphe.patches.music.shared.Constants.COMPATIBILITY_YOUTUBE_MUSIC
 import app.morphe.patches.music.video.information.musicVideoInformationPatch
 import app.morphe.patches.shared.misc.fix.proto.fixProtoLibraryPatch
-import app.morphe.patches.shared.misc.fix.proto.parseByteArrayWithRegistryMethodRef
-import app.morphe.patches.shared.misc.fix.proto.protoDefaultInstanceFingerprint
 import app.morphe.patches.shared.misc.litho.filter.addLithoFilter
 import app.morphe.patches.shared.misc.settings.preference.ListPreference
 import app.morphe.patches.shared.misc.settings.preference.PreferenceScreenPreference
@@ -45,15 +43,6 @@ private const val SONG_MENU_FILTER =
     "Lapp/morphe/extension/music/patches/components/SongMenuFilter;"
 private const val PLAYLIST_PAGE_FILTER =
     "Lapp/morphe/extension/music/patches/components/PlaylistPageFilter;"
-private const val GET_GENERATED_REGISTRY =
-    "Lcom/google/protobuf/ExtensionRegistryLite;->getGeneratedRegistry()Lcom/google/protobuf/ExtensionRegistryLite;"
-
-/**
- * @return The default instance field of a proto message, which the message is parsed with.
- */
-private fun protoDefaultInstance(messageType: String) =
-    protoDefaultInstanceFingerprint(messageType).instructionMatches.first().fieldReference
-
 private val downloadsResourcePatch = app.morphe.patcher.patch.resourcePatch {
     dependsOn(settingsPatch)
 
@@ -111,25 +100,13 @@ val downloadsPatch = patch(
 
         // Route configured external actions. In-app commands still use the native downloader.
         ResolveCommandFingerprint.method.apply {
-            val commandType = parameterTypes.first().toString()
-
             addInstructionsWithLabels(
                 0,
                 """
-                    invoke-static/range { p1 .. p2 }, $EXTENSION_CLASS->replaceDownloadCommand(Lcom/google/protobuf/MessageLite;Ljava/util/Map;)[B
-                    move-result-object v0
+                    invoke-static/range { p1 .. p2 }, $EXTENSION_CLASS->handleExternalDownload(Lcom/google/protobuf/MessageLite;Ljava/util/Map;)Z
+                    move-result v0
                     if-eqz v0, :keep_command
-                    array-length v1, v0
-                    if-nez v1, :parse_command
                     return-void
-                    :parse_command
-                    sget-object v1, ${protoDefaultInstance(commandType)}
-                    invoke-static { }, $GET_GENERATED_REGISTRY
-                    move-result-object v2
-                    invoke-static { v1, v0, v2 }, ${parseByteArrayWithRegistryMethodRef.get()!!}
-                    move-result-object v0
-                    check-cast v0, $commandType
-                    move-object/from16 p1, v0
                     :keep_command
                     nop
                 """
