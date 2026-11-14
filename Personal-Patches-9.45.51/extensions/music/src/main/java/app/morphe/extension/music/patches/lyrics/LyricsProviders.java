@@ -116,7 +116,7 @@ public final class LyricsProviders {
     }
 
     @Nullable
-    private static LyricsProvider providerFor(String id) {
+    public static LyricsProvider providerFor(String id) {
         return switch (id) {
             case "YTMusic" -> new YouTubeMusicProvider();
             case "Captions" -> new CaptionsFetcher.CaptionsProvider();

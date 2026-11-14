@@ -9687,7 +9687,7 @@
   };
 
   // web/src/catalog.js
-  var catalog = { "providers": [{ "key": "bLyrics-richsynced", "name": "Better Lyrics", "type": "syllable" }, { "key": "unison-richsynced", "name": "Unison", "type": "syllable" }, { "key": "binimum-richsynced", "name": "BiniLyrics", "type": "syllable" }, { "key": "unison-wordsynced", "name": "Unison", "type": "word" }, { "key": "portato-richsynced", "name": "Better Lyrics Portato", "type": "word" }, { "key": "spicy-richsynced", "name": "Spicy Lyrics", "type": "syllable" }, { "key": "musixmatch-richsync", "name": "Musixmatch", "type": "word" }, { "key": "bLyrics-synced", "name": "Better Lyrics", "type": "line" }, { "key": "unison-synced", "name": "Unison", "type": "line" }, { "key": "yt-captions", "name": "YouTube Captions", "type": "line" }, { "key": "binimum-synced", "name": "BiniLyrics", "type": "line" }, { "key": "lrclib-synced", "name": "LRCLib", "type": "line" }, { "key": "legato-synced", "name": "Better Lyrics Legato", "type": "line" }, { "key": "spicy-synced", "name": "Spicy Lyrics", "type": "line" }, { "key": "musixmatch-synced", "name": "Musixmatch", "type": "line" }, { "key": "yt-lyrics", "name": "YouTube", "type": "unsynced" }, { "key": "unison-plain", "name": "Unison", "type": "unsynced" }, { "key": "lrclib-plain", "name": "LRCLib", "type": "unsynced" }], "icons": { "syllable": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z" fill-opacity="0.5"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "word": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "line": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "unsynced": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z" fill-opacity="0.5"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z" fill-opacity="0.5"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>' }, "colors": { "syllable": "#fde69b", "word": "#aad1ff", "line": "#c9f8da", "unsynced": "#b3b3b3" } };
+  var catalog = { "providers": [{ "key": "bLyrics-richsynced", "name": "Better Lyrics", "type": "syllable" }, { "key": "unison-richsynced", "name": "Unison", "type": "syllable" }, { "key": "binimum-richsynced", "name": "BiniLyrics", "type": "syllable" }, { "key": "unison-wordsynced", "name": "Unison", "type": "word" }, { "key": "portato-richsynced", "name": "Better Lyrics Portato", "type": "word" }, { "key": "spicy-richsynced", "name": "Spicy Lyrics", "type": "syllable" }, { "key": "musixmatch-richsync", "name": "Musixmatch", "type": "word" }, { "key": "bLyrics-synced", "name": "Better Lyrics", "type": "line" }, { "key": "unison-synced", "name": "Unison", "type": "line" }, { "key": "yt-captions", "name": "YouTube Captions", "type": "line" }, { "key": "binimum-synced", "name": "BiniLyrics", "type": "line" }, { "key": "lrclib-synced", "name": "LRCLib", "type": "line" }, { "key": "legato-synced", "name": "Better Lyrics Legato", "type": "line" }, { "key": "spicy-synced", "name": "Spicy Lyrics", "type": "line" }, { "key": "musixmatch-synced", "name": "Musixmatch", "type": "line" }, { "key": "yt-lyrics", "name": "YouTube", "type": "unsynced" }, { "key": "unison-plain", "name": "Unison", "type": "unsynced" }, { "key": "lrclib-plain", "name": "LRCLib", "type": "unsynced" }, { "key": "morphe-apple", "name": "Apple Music", "type": "provider", "morpheProvider": "Apple" }, { "key": "morphe-lrcred", "name": "LrcRed", "type": "provider", "morpheProvider": "LrcRed" }, { "key": "morphe-lyricify", "name": "Lyricify", "type": "provider", "morpheProvider": "Lyricify" }, { "key": "morphe-petitlyrics", "name": "PetitLyrics", "type": "provider", "morpheProvider": "PetitLyrics" }, { "key": "morphe-amll", "name": "AMLL", "type": "provider", "morpheProvider": "AMLL" }, { "key": "morphe-qq", "name": "QQ Music", "type": "provider", "morpheProvider": "QQ" }, { "key": "morphe-simpmusic", "name": "SimpMusic", "type": "provider", "morpheProvider": "SimpMusic" }, { "key": "morphe-kugou", "name": "KuGou", "type": "provider", "morpheProvider": "KuGou" }, { "key": "morphe-netease", "name": "NetEase", "type": "provider", "morpheProvider": "NetEase" }, { "key": "morphe-luna", "name": "Luna", "type": "provider", "morpheProvider": "Luna" }, { "key": "morphe-lunabeat", "name": "LunaBeat", "type": "provider", "morpheProvider": "LunaBeat" }, { "key": "morphe-spotify", "name": "Spotify", "type": "provider", "morpheProvider": "Spotify" }, { "key": "morphe-deezer", "name": "Deezer", "type": "provider", "morpheProvider": "Deezer" }, { "key": "morphe-rmm", "name": "RMM", "type": "provider", "morpheProvider": "RMM" }, { "key": "morphe-genius", "name": "Genius", "type": "provider", "morpheProvider": "Genius" }, { "key": "morphe-binilyrics", "name": "BiniLyrics direct", "type": "provider", "morpheProvider": "BiniLyrics" }, { "key": "morphe-musixmatch", "name": "Musixmatch direct", "type": "provider", "morpheProvider": "Musixmatch" }], "icons": { "syllable": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z" fill-opacity="0.5"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "word": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "line": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>', "unsynced": '<svg width="14" height="14" viewBox="0 0 1024 1024" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="636" y="239" width="389.981" height="233.271" rx="48" fill-opacity="0.5"/><path d="M0 335C0 289.745 0 267.118 14.0589 253.059C28.1177 239 50.7452 239 96 239H213C243.17 239 258.255 239 267.627 248.373C277 257.745 277 272.83 277 303V408C277 438.17 277 453.255 267.627 462.627C258.255 472 243.17 472 213 472H96C50.7452 472 28.1177 472 14.0589 457.941C0 443.882 0 421.255 0 376V335Z" fill-opacity="0.5"/><path d="M337 304C337 273.83 337 258.745 346.373 249.373C355.745 240 370.83 240 401 240H460C505.255 240 527.882 240 541.941 254.059C556 268.118 556 290.745 556 336V377C556 422.255 556 444.882 541.941 458.941C527.882 473 505.255 473 460 473H401C370.83 473 355.745 473 346.373 463.627C337 454.255 337 439.17 337 409V304Z" fill-opacity="0.5"/><rect y="552.271" width="1024" height="233" rx="48" fill-opacity="0.5"/></svg>' }, "colors": { "syllable": "#fde69b", "word": "#aad1ff", "line": "#c9f8da", "unsynced": "#b3b3b3" } };
   var controls = { "translate": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path fill="currentColor" d="M9 3a1 1 0 0 1 .993.883L10 4v1h4a1 1 0 0 1 .116 1.993L14 7h-1.055c-.223 2.032-1.116 3.99-2.545 5.688q.785.683 1.735 1.266l.386.228l2.067-4.592a1 1 0 0 1 1.763-.115l.06.115l4.5 10a1 1 0 0 1-1.77.924l-.053-.104L18.003 18h-5.007l-1.084 2.41a1 1 0 0 1-1.866-.711l.042-.11l1.61-3.576a15.2 15.2 0 0 1-2.7-1.894c-1.287 1.136-2.848 2.098-4.627 2.81a1 1 0 1 1-.743-1.857c1.557-.623 2.887-1.441 3.972-2.382a11.5 11.5 0 0 1-1.978-3.34a1 1 0 0 1 1.873-.702A9.4 9.4 0 0 0 9 11.244c.989-1.227 1.625-2.576 1.877-3.931L10.928 7H4a1 1 0 0 1-.117-1.993L4 5h4V4a1 1 0 0 1 1-1m8.103 13L15.5 12.437L13.898 16z"/></svg>', "romanize": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"><path fill="currentColor" d="M17 11a1 1 0 0 1 1 1v1h1.5a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5H18v1a1 1 0 1 1-2 0v-1h-1.5a1.5 1.5 0 0 1-1.5-1.5v-3a1.5 1.5 0 0 1 1.5-1.5H16v-1a1 1 0 0 1 1-1M5 15a1 1 0 0 1 1 1v1a1 1 0 0 0 1 1h3a1 1 0 1 1 0 2H7a3 3 0 0 1-3-3v-1a1 1 0 0 1 1-1m14 0h-1v2h1zm-3 0h-1v2h1zM9.5 3a1 1 0 1 1 0 2H5v2h4a1 1 0 0 1 0 2H5v2h5a1 1 0 1 1 0 2H4.1A1.1 1.1 0 0 1 3 11.9V4.1A1.1 1.1 0 0 1 4.1 3ZM17 4a3 3 0 0 1 3 3v2a1 1 0 1 1-2 0V7a1 1 0 0 0-1-1h-3a1 1 0 1 1 0-2Z"/></svg>', "refresh": '<svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4"/><path d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg>', "chevron": '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd"/></svg>' };
 
   // web/src/playback-clock.js
@@ -9892,16 +9892,17 @@
   var slowTimer;
   var lastHealthLabel = "";
   var resultSignatures = /* @__PURE__ */ new WeakMap();
+  var deviceSource = { key: "device-lyrics", name: "Device file", type: "line" };
   var seenPayloads = /* @__PURE__ */ new Set();
   var seenPayloadBytes = 0;
   function signature(result) {
-    if (!resultSignatures.has(result)) resultSignatures.set(result, JSON.stringify([result.source, result.language, result.songwriters, result.contributors, result.lyrics]));
+    if (!resultSignatures.has(result)) resultSignatures.set(result, JSON.stringify([result.source, result.language, result.songwriters, result.contributors, result.sections, result.lyrics]));
     return resultSignatures.get(result);
   }
   function updateHealth() {
     const pending = Math.max(0, sourceHealth.pending || 0) + parsing, found = availableKeys.length > 0;
     const color = pending || sourceHealth.connectionNeeded || found && sourceHealth.failed ? "orange" : found ? "green" : "red";
-    const emptyMessage = lookupMessage(params?.videoId, sourceHealth, parsing, slow, decodingFailed);
+    const emptyMessage = params?.deviceTrack && sourceHealth.deviceError ? "Couldn\u2019t load lyrics. Try refreshing." : lookupMessage(params?.deviceTrack || params?.videoId, sourceHealth, parsing, slow, decodingFailed);
     if (!selected && !found) {
       const empty = $("empty");
       if (empty.textContent !== emptyMessage) empty.textContent = emptyMessage;
@@ -9924,8 +9925,8 @@
   var autoPreferred = "";
   var collapsed = false;
   var reportedMismatches = /* @__PURE__ */ new Set();
-  var icon = (key) => catalog.icons[catalog.providers.find((p) => p.key === key)?.type] || "";
-  var config = (key) => catalog.providers.find((p) => p.key === key);
+  var config = (key) => key === deviceSource.key ? deviceSource : catalog.providers.find((p) => p.key === key);
+  var icon = (key) => catalog.icons[config(key)?.type] || "";
   function svgInto(target, svg) {
     target.replaceChildren();
     if (!svg) return;
@@ -10047,7 +10048,7 @@
   var renderer = createLyricsRenderer({ document, window, mount: $("lyrics"), host: {
     getScrollElement: () => $("scroll"),
     isViewVisible: () => active && !document.hidden,
-    setResumeAffordanceVisible: (visible) => $("resume").hidden = !visible,
+    setResumeAffordanceVisible: (visible) => $("resume").hidden = !visible || settings.jumpToCurrent === false,
     seek: (seconds) => {
       if (settings.tapSeek) {
         native?.seek(generation, Math.round(seconds * 1e3));
@@ -10066,6 +10067,16 @@
     root.setProperty("--bd-bg-opacity", String(settings.bgOpacity));
     document.body.classList.toggle("no-background", !settings.background);
     document.body.classList.toggle("reduce-motion", settings.reducedMotion);
+    document.body.classList.toggle("lyrics-spotlight", settings.spotlight === true);
+    document.body.classList.toggle("lyrics-centered", settings.forceCenter === true);
+    document.body.classList.toggle("lyrics-no-scale", settings.lineScale === false);
+    document.body.classList.toggle("lyrics-hide-info", settings.hideInfo === true);
+    document.body.classList.toggle("lyrics-swap-language", settings.swapTranslation === true);
+    document.body.classList.toggle("lyrics-hide-played", settings.hidePlayed === true);
+    document.body.classList.toggle("lyrics-hide-unplayed", settings.hideUnplayed === true);
+    if (settings.jumpToCurrent === false) $("resume").hidden = true;
+    for (const [id, setting] of Object.entries({ copy: "showCopy", refresh: "showRefresh", translate: "showTranslate", romanize: "showRomanize" }))
+      $(id).hidden = settings[setting] === false;
     const rules = [];
     if (["left", "center", "right"].includes(settings.bgAlignment)) rules.push(`.blyrics-background-line{text-align:${settings.bgAlignment}}`);
     for (const [agent, alignment] of Object.entries(settings.agents || {})) {
@@ -10118,7 +10129,7 @@
     if (!params) return;
     const custom = Array.isArray(settings.priority) ? settings.priority.filter((k2) => PRIORITY.includes(k2)) : [];
     const disabled = new Set(settings.disabled || []);
-    const order = [.../* @__PURE__ */ new Set([...custom, ...PRIORITY])].filter((key2) => !disabled.has(key2));
+    const order = params.deviceTrack ? [deviceSource.key] : [.../* @__PURE__ */ new Set([...custom, ...PRIORITY])].filter((key2) => !disabled.has(key2));
     const baseline = params.sourceMap["yt-lyrics"]?.lyricSourceResult?.lyrics;
     const reference = baseline?.map((line) => line.words).join("\n");
     const available = order.filter((key2) => params.sourceMap[key2]?.lyricSourceResult?.lyrics?.length);
@@ -10136,7 +10147,7 @@
     if (available.join("|") !== availableKeys.join("|")) $("sources").replaceChildren(...available.map((key2) => {
       const option = document.createElement("option");
       option.value = key2;
-      option.textContent = params.sourceMap[key2].lyricSourceResult.source + " \xB7 " + key2.split("-").slice(1).join("-");
+      option.textContent = key2.startsWith("morphe-") ? params.sourceMap[key2].lyricSourceResult.source : params.sourceMap[key2].lyricSourceResult.source + " \xB7 " + key2.split("-").slice(1).join("-");
       return option;
     }));
     autoPreferred = automatic[0] || "";
@@ -10169,7 +10180,19 @@
     selected = key;
     currentResult = result;
     updateDock();
-    renderer.setLyrics(result.lyrics, { songKey: params.videoId, language: result.language, songwriters: result.songwriters });
+    const displayLyrics = settings.stripPunctuation ? result.lyrics.map((line) => {
+      if (line.isInstrumental) return line;
+      const strip = (text) => text.replace(/[.!?,;:…。，、！？；：]+(\s*)$/u, "$1");
+      const words = strip(line.words);
+      if (words === line.words) return line;
+      const parts = line.parts?.map((part, index) => index === line.parts.length - 1 ? { ...part, words: strip(part.words) } : part);
+      return { ...line, words, parts };
+    }) : result.lyrics;
+    renderer.setLyrics(displayLyrics, {
+      songKey: params.videoId,
+      language: result.language,
+      songwriters: settings.hideInfo ? void 0 : result.songwriters
+    });
     diagnostics.lines(renderer.lines);
     decorate();
     showCredits(result);
@@ -10203,9 +10226,24 @@
   }
   function decorate() {
     const lines = $("lyrics").querySelectorAll(".blyrics--line");
+    const sections = new Map((settings.showSection ? currentResult?.sections || [] : []).map((section) => [section.startTimeMs, section.label]));
     currentResult?.lyrics.forEach((lyric, index) => {
       const line = lines[index];
       if (!line) return;
+      line.classList.toggle("bd-capitalize", settings.capitalize === true);
+      const section = sections.get(lyric.startTimeMs);
+      let label = line.querySelector(".bd-section");
+      if (section && !lyric.isInstrumental && !lyric.isBackground) {
+        if (!label) {
+          label = document.createElement("span");
+          label.className = "bd-section";
+          line.prepend(label);
+        }
+        if (label.textContent !== section) label.textContent = section;
+        sections.delete(lyric.startTimeMs);
+      } else {
+        label?.remove();
+      }
       if (settings.translation) {
         const translated = translationFor(lyric, settings.language);
         if (translated) injectTranslation(document, line, translated.text, translated.language);
@@ -10279,7 +10317,8 @@
         album: track.album,
         duration: track.duration,
         videoId: track.videoId,
-        sourceMap: Object.fromEntries([...PRIORITY, "metadata"].map((key) => [key, { filled: false, lyricSourceResult: null }]))
+        deviceTrack: track.deviceTrack,
+        sourceMap: Object.fromEntries([...PRIORITY, deviceSource.key, "metadata"].map((key) => [key, { filled: false, lyricSourceResult: null }]))
       };
       renderer.clear();
       resetPlaybackClock();
@@ -10292,7 +10331,7 @@
       $("sources").replaceChildren();
       $("status").textContent = "";
       const expected = generation;
-      if (track.videoId) slowTimer = setTimeout(() => {
+      if (track.videoId || track.deviceTrack) slowTimer = setTimeout(() => {
         if (expected === generation) {
           slow = true;
           updateHealth();
@@ -10341,6 +10380,7 @@
           }
           const contributors = key?.startsWith("unison-") ? unisonContributors(payload.sourceMetadata) : payload.contributors;
           put(key, { ...payload, lyrics, contributors });
+          if (expected.deviceTrack) sourceHealth = { pending: 0, waiting: 0, found: lyrics.length > 0 };
         }
         for (const [key, result] of previous) if (!expected.sourceMap[key]?.lyricSourceResult?.lyrics?.length) expected.sourceMap[key].lyricSourceResult = result;
         if (payload.kind !== "cachedResult") for (const key of PRIORITY) {
@@ -10394,12 +10434,37 @@
     },
     settings(next) {
       const rebuild = ["translation", "romanization", "language"].some((key) => key in next && next[key] !== settings[key]);
-      const visual = ["fontSize", "letterWave", "wordSync", "background", "bgSize", "bgOpacity", "bgAlignment", "agents", "reducedMotion"];
+      const visual = [
+        "fontSize",
+        "letterWave",
+        "wordSync",
+        "background",
+        "bgSize",
+        "bgOpacity",
+        "bgAlignment",
+        "agents",
+        "reducedMotion",
+        "spotlight",
+        "jumpToCurrent",
+        "showCopy",
+        "showRefresh",
+        "showTranslate",
+        "showRomanize",
+        "lineScale",
+        "hideInfo",
+        "forceCenter",
+        "capitalize",
+        "stripPunctuation",
+        "swapTranslation",
+        "hidePlayed",
+        "hideUnplayed",
+        "showSection"
+      ];
       const changed = visual.some((key) => key in next && JSON.stringify(next[key]) !== JSON.stringify(settings[key]));
       if ("offset" in next && next.offset !== settings.offset) clock.initialized = false;
       settings = { ...settings, ...next };
       const themeRebuild = changed ? theme() : false;
-      choose(rebuild || themeRebuild);
+      choose(rebuild || themeRebuild || changed);
       if (changed || rebuild) renderer.relayout();
       setCollapsed(settings.dockCollapsed);
       for (const [key, url] of Object.entries(next.buttonIcons || {})) {
@@ -10446,8 +10511,12 @@
       sourceHealth = status;
       updateHealth();
     },
-    notice(id, message) {
-      if (id === generation) $("notice").textContent = message;
+    notice(id, message, finished) {
+      if (id !== generation) return;
+      if (params?.deviceTrack && finished) {
+        sourceHealth = { pending: 0, waiting: 0, deviceError: message !== "No lyrics found" };
+        updateHealth();
+      } else $("notice").textContent = message;
     },
     dispose() {
       cancelAnimationFrame(raf);

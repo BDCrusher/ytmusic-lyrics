@@ -12,7 +12,6 @@ import app.morphe.patches.all.misc.fix.spoofsignature.spoofSignaturePatch
 
 @Suppress("unused")
 val spoofSignaturePatch = patch (
-    name = "Spoof signature",
     description = "Spoofs the package signature of the original APK.",
     default = false
 ) {

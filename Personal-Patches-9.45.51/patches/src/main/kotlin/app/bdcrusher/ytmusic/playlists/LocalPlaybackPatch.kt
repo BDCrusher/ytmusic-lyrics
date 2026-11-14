@@ -134,6 +134,5 @@ val localPlaybackPatch=bytecodePatch {
         """)
         installNativeMediaCache(proto.type)
         installOfflineArtwork()
-        installNativeDownloadsHost()
     }
 }

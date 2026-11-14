@@ -1,37 +1,37 @@
 # BDCrusher YouTube Music 9.45.51
 
-Personal Full Collection based on Morphe 2.2.0 at
-`44031c561ea048c8f196877f30a49c13bfd6afb6`.
+Personal Full Collection based on Morphe 2.3.0-dev.3 at
+`dc84727f1c506af29e72190186bb913ca244a98c`.
 
 The maintained source for this target is this worktree. The prior personal release and
 its 9.42.52 and 9.43.51 source remain in the sibling `Personal-Patches` directory.
 
-Select Downloads in Full Collection for Morphe's in-app or external downloading.
-Configure it under Morphe → Player → Downloads. Its existing playlist/album download
-action starts the upstream batch flow. The retired personal Download playlist patch
-is absent from this build. Shaders remains independently selectable.
+Select **Clone YouTube Music** with **GmsCore support**, then choose the
+**BDCrusher side-by-side** package option to use `app.bdcrusher.android.apps.youtube.music`.
+Android gives the new package its own settings, downloaded files and folder grants.
+Leave the clone option at its default to retain the ordinary Morphe package when
+patching with GmsCore support. Shaders remains independently selectable.
 
-The Audio/Video sheet starts on Audio and exposes Video after compatible formats resolve.
-“Ask about video during playlist and album downloads” defaults off. Enabling it asks per
-unique video-capable recording. A cancelled choice skips that recording. Background
-choices wait for the foreground activity. Drag the handle up to expand the quality
-list, or down to collapse or dismiss it. The actions use the window's navigation inset.
-
-In-app downloads live under Library → Downloads. Saved groups appear under Playlists. Their saved rows retain source
-positions, repeated occurrences and unavailable entries. Saved tracks use the native player. The stock Library back action resets the Downloads
-filter after closing the catalogue. Back inside an open saved group returns to the
-catalogue first. See COMPATIBILITY-9.45.51.md for playlist playback limits.
+New authorized downloads use YouTube Music's quality picker, offline engine and
+**Library → Downloads**. Account and subscription checks stay in place. Configure
+external routing under **Morphe → Player → Downloads**. Use **Previous personal
+downloads** on that settings page for files and groups from the older downloader
+under the same package, or choose your YTDLnis folder there. Native groups and older
+personal groups retain their own storage. Native export and automatic import of
+previous files are outside this build.
 
 Spicy Lyrics is available in the Lyrics source list when Better Lyrics returns a
 community sync. Provider and contributor credits appear below the lyrics. Spicy results
 are kept for the current recording session. Confirmed empty lookups show “No lyrics found.”
 in the center of the panel. Unison displays the service and submitter links
 when present in the response. Earlier saved entries pick up credits as they refresh.
+The personal source list includes the official provider set. Drag directly from the
+three-line handle to reorder it, or use the accessibility move actions. The existing
+Better Lyrics scroll engine, instrumental notes and permanent lyric storage are used.
 
 Volume boost appears as the speaker button in the player action row. It starts off
 on each app launch and offers up to +12 dB for a supported Music audio session.
-Download notifications show the song cover and transfer progress when available.
-Batch notifications also show the number of items saved.
+New native downloads use YouTube Music's progress and notifications.
 
 ## Build
 

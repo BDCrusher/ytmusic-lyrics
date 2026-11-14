@@ -1,4 +1,16 @@
-# Compatibility and acceptance record for 0.9.0-beta.3
+# Compatibility and acceptance record for 0.10.0-beta.1
+
+## Current release
+
+- The exact original target remains Google-signed YouTube Music **9.45.51 / 94551240**, arm64-v8a, minSDK 28. Original SHA-256 `ad8963959890b6b23a0b332cf9829ee7d6ea6f3a0a61e386d7c34c51a2dd99f7`.
+- Official Morphe Patches 2.3.0-dev.3 at `dc84727f1c506af29e72190186bb913ca244a98c`, Patcher 2.3.0 at `d19545e8505e0329cc640723cb8ff91eddd3cd05`, and Patch Library 2.2.0-dev.5 at `b6fbe7e1a97653afd0eb95936c1e913aa6ce969b`. The Gradle plugin and ARSCLib pins in the historical record below also apply.
+- Authorized new downloads use the stock Library and offline engine. The compiled patch preserves Premium, download eligibility and refresh policy handling. Native export and automatic import of existing personal downloads are excluded. The previous files remain accessible under **Morphe → Player → Downloads → Previous personal downloads** when using the same Android package. External mode keeps the existing app selector and chosen-folder support.
+- The native quality picker owns new downloads. The earlier personal sheet now pads from window insets without recalculating padding on every global layout. Its device behavior, native quality options, download progress, saved covers, offline SponsorBlock and native playlist order still need phone checks. There is no verified zero-network playback claim for native-managed downloads.
+- The personal lyric catalogue includes the official provider set. The additional adapters share the personal four-worker repository and keep Better Lyrics rendering and stored winners. Some providers require user-supplied credentials. Drag starts from the grip, and accessibility move actions remain available. Added controls include Morphe translation and romanization provider choices, spotlight, jump to current, display of supplied section labels, and the media-session and miniplayer lyric options. Native player tabs and device-file lyrics are connected to Better Lyrics. The full upstream retimed hold behavior and AI section workflow still need integration. Native tabs and the greyed-out Lyrics action require device acceptance.
+- The upstream playback, miniplayer, stream-spoof, settings and layout changes are rebased. Better Lyrics scrolling and instrumental notes are retained. Universal patch selections are omitted. The Music-only clone option uses GmsCore support to assign `app.bdcrusher.android.apps.youtube.music` and distinct app authorities. Phone install and coexistence remain untested. Each Android package has separate app-private files and folder permissions.
+- Desktop checks use unsigned APKs and are recorded in `verification.json`. Build, SDK DEX checks, bridge/receiver analysis, layout resource validation and fixtures are separate from phone acceptance.
+
+## Historical record for 0.9.0-beta.3
 
 ## Exact inputs
 

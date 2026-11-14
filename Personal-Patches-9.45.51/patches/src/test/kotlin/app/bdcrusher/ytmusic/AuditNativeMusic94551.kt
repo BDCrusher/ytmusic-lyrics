@@ -134,14 +134,7 @@ fun main(args: Array<String>) {
         own + "lyrics/LyricsEntryButton;->capturePresenter"
     )
     val libraryHost = "Lapp/morphe/extension/music/patches/downloads/NativeDownloadsHost;"
-    val libraryCallbacks = setOf("$libraryHost->changed", "$libraryHost->release")
-    val host = classes.getValue(libraryHost)
-    check(host.methods.count {
-        it.name in setOf("changed", "release") && it.returnType == "V" &&
-            it.parameterTypes == listOf("Lapp/morphe/extension/music/patches/downloads/NativeDownloadsHost\$Owner;") &&
-            AccessFlags.PUBLIC.isSet(it.accessFlags) && AccessFlags.STATIC.isSet(it.accessFlags)
-    } == 2) { "Missing or inaccessible Library callback" }
-    var libraryReceiverSites = 0
+    check(libraryHost !in classes) { "Retired Library host is still bundled" }
     for (owner in classes.values.filter { !it.type.startsWith("Lapp/") }) {
         for (method in owner.methods) {
             val called = method.implementation?.instructions?.any {
@@ -150,19 +143,14 @@ fun main(args: Array<String>) {
             if (called && method.name == "<init>") {
                 receiverSites += receiver44(method) { "${it.definingClass}->${it.name}" in callbacks }
             }
-            if (method.implementation?.instructions?.any {
-                    it.call44()?.let { ref -> "${ref.definingClass}->${ref.name}" in libraryCallbacks } == true
-                } == true) {
-                libraryReceiverSites += receiver44(method) { "${it.definingClass}->${it.name}" in libraryCallbacks }
-            }
         }
     }
     check(classes.values.none { own + "playlists/DownloadsHost" in it.type }) { "Retired Library bridge exists" }
-    check(methods.isNotEmpty() && returns > 0 && libraryReceiverSites >= 6)
+    check(methods.isNotEmpty() && returns > 0)
     check(failures.isEmpty()) { failures.joinToString("\n") }
     val report = org.json.JSONObject().put("passed", true).put("apkSha256", hash45(apk))
         .put("bridgeMethods", methods.size).put("referenceReturns", returns).put("receiverSites", receiverSites)
-        .put("libraryReceiverSites", libraryReceiverSites).put("retiredLibraryBridgeAbsent", true).put("phoneVerified", false)
+        .put("nativeLibraryHost", true).put("retiredLibraryBridgeAbsent", true).put("phoneVerified", false)
     apk.parentFile.resolve("native-receiver-return-audit.json").writeText(report.toString(2) + "\n")
-    println("PASS: ${methods.size} bridge methods, $returns typed returns, $receiverSites constructor receiver sites, $libraryReceiverSites Library receiver sites")
+    println("PASS: ${methods.size} bridge methods, $returns typed returns, $receiverSites constructor receiver sites")
 }

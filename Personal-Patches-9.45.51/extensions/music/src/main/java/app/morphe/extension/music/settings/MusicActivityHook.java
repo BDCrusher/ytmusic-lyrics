@@ -65,7 +65,6 @@ public class MusicActivityHook extends BaseActivityHook {
      */
     @SuppressWarnings("unused")
     public static void initialize(Activity parentActivity) {
-
         // Prevent opening multiple settings activities if menu is double tapped quickly.
         if (Utils.isFastClick()) {
             parentActivity.finish();

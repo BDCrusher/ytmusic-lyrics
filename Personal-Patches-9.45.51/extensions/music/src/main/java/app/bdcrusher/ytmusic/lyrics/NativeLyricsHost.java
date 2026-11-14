@@ -54,12 +54,16 @@ public final class NativeLyricsHost {
             if(original==null&&nativeDefinition(owner,"music-related-panel")==null)continue;
             if(original!=null&&videoId.equals(prepared.get(owner))){ready=true;continue;}
             boolean supplied=original!=null&&!prepared.containsKey(owner);
-            if(supplied&&original.length<=1_000_000){nativeLyricsPresentation=NativePanelWire.presentation(original);presentationRecording=videoId;}
-            byte[] definition=supplied?original:nativeLyricsPresentation!=null&&videoId.equals(presentationRecording)
+            if(supplied){
+                nativeRoutes.put(owner,true);
+                ready=true;
+                continue;
+            }
+            byte[] definition=nativeLyricsPresentation!=null&&videoId.equals(presentationRecording)
                 ?nativeLyricsPresentation:NativePanelWire.lyricsProfile(ResourceUtils.getString("lyrics_tab_title"));
             installing.set(true);try{registerNative(owner,definition);}finally{installing.set(false);}
-            prepared.put(owner,videoId);ready=true;nativeRoutes.put(owner,supplied);
-            LyricsDiagnostics.record("Lyrics panel",supplied?"Preserved supplied native Lyrics presentation":"Prepared native Lyrics factory presentation");
+            prepared.put(owner,videoId);ready=true;nativeRoutes.put(owner,false);
+            LyricsDiagnostics.record("Lyrics panel","Prepared native Lyrics factory presentation");
         }catch(Exception ex){LyricsDiagnostics.record("Lyrics panel","Native Music setup failed: "+ex.getClass().getSimpleName());}
         }
         if(!ready)LyricsDiagnostics.record("Lyrics panel","Native Music presentation is not ready; retrying without blocking the action model");

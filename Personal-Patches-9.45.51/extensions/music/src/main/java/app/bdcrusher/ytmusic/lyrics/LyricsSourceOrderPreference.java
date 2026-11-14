@@ -19,7 +19,7 @@ public final class LyricsSourceOrderPreference extends Preference {
     public LyricsSourceOrderPreference(Context c){super(c);setKey("bdcrusher_source_order");setSelectable(false);setPersistent(false);
         JSONObject catalog=LyricsConfig.catalog(c);JSONArray all=catalog.optJSONArray("providers"),order=LyricsConfig.order(c);
         for(int i=0;i<order.length();i++)for(int j=0;j<all.length();j++)if(order.optString(i).equals(all.optJSONObject(j).optString("key")))items.add(all.optJSONObject(j));
-        try{JSONArray d=new JSONArray(LyricsConfig.preferences(c).getString("disabled","[]"));for(int i=0;i<d.length();i++)disabled.add(d.optString(i));}catch(Exception ignored){}
+        try{JSONArray d=LyricsConfig.disabledSources(c);for(int i=0;i<d.length();i++)disabled.add(d.optString(i));}catch(JSONException ignored){}
     }
     private int dp(int n){return Math.round(n*getContext().getResources().getDisplayMetrics().density);}
     // This preference owns its entire row; stock Preference layout/widget inflation is unused.
@@ -28,7 +28,17 @@ public final class LyricsSourceOrderPreference extends Preference {
         LinearLayout box=new LinearLayout(getContext());box.setOrientation(LinearLayout.VERTICAL);box.setPadding(dp(16),dp(6),dp(16),dp(6));
         TextView hint=new TextView(getContext());hint.setText("Source priority\nDrag the handle to reorder. Top is most preferred.");hint.setTextColor(ThemeUtils.getAppForegroundColor());hint.setPadding(0,dp(8),0,dp(12));box.addView(hint);
         rows=new LinearLayout(getContext());rows.setOrientation(LinearLayout.VERTICAL);box.addView(rows);rebuild();
-        Button reset=new Button(getContext());reset.setText("Reset Better Lyrics defaults");reset.setOnClickListener(v->{items.clear();JSONArray all=LyricsConfig.catalog(getContext()).optJSONArray("providers");for(int i=0;i<all.length();i++)items.add(all.optJSONObject(i));disabled.clear();save();rebuild();});box.addView(reset);
+        Button reset=new Button(getContext());reset.setText("Reset source defaults");reset.setOnClickListener(v->{
+            items.clear();disabled.clear();
+            JSONArray all=LyricsConfig.catalog(getContext()).optJSONArray("providers");
+            for(int i=0;i<all.length();i++){
+                JSONObject provider=all.optJSONObject(i);items.add(provider);
+                String providerId=provider.optString("morpheProvider");
+                if(!providerId.isEmpty()&&app.morphe.extension.music.settings.Settings.DEFAULT_LYRICS_ORDER.contains("-"+providerId+","))
+                    disabled.add(provider.optString("key"));
+            }
+            save();rebuild();
+        });box.addView(reset);
         app.bdcrusher.ytmusic.common.FeaturePreferences.card(box,false);return box;
     }
     private Drawable icon(String type){try(var in=getContext().getAssets().open("bdcrusher-lyrics/bd_lyrics_"+type+".xml")){org.xmlpull.v1.XmlPullParser p=Xml.newPullParser();p.setInput(in,"UTF-8");return Drawable.createFromXml(getContext().getResources(),p,getContext().getTheme());}catch(Exception ex){return null;}}
@@ -37,14 +47,24 @@ public final class LyricsSourceOrderPreference extends Preference {
             LinearLayout row=new LinearLayout(getContext());row.setGravity(Gravity.CENTER_VERTICAL);row.setMinimumHeight(dp(64));row.setPadding(0,dp(4),0,dp(4));
             TextView handle=new TextView(getContext());handle.setText("☰");handle.setTextColor(ThemeUtils.getAppForegroundColor());handle.setGravity(Gravity.CENTER);handle.setContentDescription("Drag "+name+" "+type);
             row.addView(handle,new LinearLayout.LayoutParams(dp(40),dp(48)));
-            handle.setOnLongClickListener(v->{dragging=index;v.startDragAndDrop(ClipData.newPlainText("lyrics-provider",id),new View.DragShadowBuilder(row),LyricsSourceOrderPreference.this,0);return true;});
+            handle.setOnTouchListener((view,event)->{
+                if(event.getActionMasked()!=MotionEvent.ACTION_DOWN)return true;
+                dragging=index;
+                lastScroll=0;
+                boolean started=view.startDragAndDrop(ClipData.newPlainText("lyrics-provider",id),
+                        new View.DragShadowBuilder(row),LyricsSourceOrderPreference.this,0);
+                if(!started)dragging=-1;
+                return started;
+            });
             row.setOnDragListener((v,event)->{if(event.getLocalState()!=this)return false;if(event.getAction()==DragEvent.ACTION_DRAG_LOCATION){
                 android.view.ViewParent parent=row.getParent();while(parent!=null&&!(parent instanceof android.widget.ListView))parent=parent.getParent();
                 if(parent instanceof android.widget.ListView list){int[] a=new int[2],b=new int[2];row.getLocationOnScreen(a);list.getLocationOnScreen(b);float y=a[1]+event.getY()-b[1];long now=android.os.SystemClock.uptimeMillis();
                     if(now-lastScroll>100&&(y<dp(48)||y>list.getHeight()-dp(48))){list.smoothScrollBy(y<dp(48)?-dp(48):dp(48),100);lastScroll=now;}}
-            }if(event.getAction()==DragEvent.ACTION_DROP){move(dragging,index);dragging=-1;}return true;});
+            }if(event.getAction()==DragEvent.ACTION_DROP){int from=dragging;dragging=-1;move(from,index);}
+                if(event.getAction()==DragEvent.ACTION_DRAG_ENDED)dragging=-1;
+                return true;});
             ImageView image=new ImageView(getContext());image.setImageDrawable(icon(type));image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);row.addView(image,new LinearLayout.LayoutParams(dp(24),dp(24)));
-            TextView label=new TextView(getContext());label.setText(name+"\n"+type);label.setTextSize(14);label.setTextColor(ThemeUtils.getAppForegroundColor());label.setPadding(dp(10),0,dp(8),0);row.addView(label,new LinearLayout.LayoutParams(0,-2,1));
+            TextView label=new TextView(getContext());label.setText("provider".equals(type)?name:name+"\n"+type);label.setTextSize(14);label.setTextColor(ThemeUtils.getAppForegroundColor());label.setPadding(dp(10),0,dp(8),0);row.addView(label,new LinearLayout.LayoutParams(0,-2,1));
             Switch toggle=new Switch(getContext());toggle.setChecked(!disabled.contains(id));toggle.setContentDescription(name+" "+type+" enabled");
             toggle.setOnCheckedChangeListener((v,on)->{if(on)disabled.remove(id);else disabled.add(id);save();});row.addView(toggle);
             row.setAccessibilityDelegate(new View.AccessibilityDelegate(){
@@ -54,6 +74,6 @@ public final class LyricsSourceOrderPreference extends Preference {
         }
     }
     private void move(int from,int to){if(from<0||to<0||from>=items.size()||to>=items.size()||from==to)return;items.add(to,items.remove(from));save();rebuild();rows.announceForAccessibility("Source moved to position "+(to+1));}
-    private void save(){JSONArray order=new JSONArray(),off=new JSONArray();for(JSONObject item:items)order.put(item.optString("key"));for(String id:disabled)off.put(id);LyricsConfig.preferences(getContext()).edit().putInt("catalogSchema",2).putString("priority",LyricsSettingsPage.join(order)).putString("disabled",off.toString()).apply();}
+    private void save(){JSONArray order=new JSONArray(),off=new JSONArray();for(JSONObject item:items)order.put(item.optString("key"));for(String id:disabled)off.put(id);LyricsConfig.preferences(getContext()).edit().putInt("catalogSchema",3).putString("priority",LyricsSettingsPage.join(order)).putString("disabled",off.toString()).apply();}
 }
 

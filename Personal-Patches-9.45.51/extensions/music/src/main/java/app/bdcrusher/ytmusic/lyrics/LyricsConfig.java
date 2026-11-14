@@ -27,9 +27,37 @@ public final class LyricsConfig {
         JSONArray defaults=catalog(c).optJSONArray("providers");for(int i=0;i<defaults.length();i++)ids.add(defaults.optJSONObject(i).optString("key"));
         for(String id:ids)result.put(id);return result;
     }
+    public static String nativeSources(Context context){
+        if(context==null)return "YTMusic,Captions";
+        String yt=enabled(context,"yt-lyrics")?"YTMusic":"-YTMusic";
+        String captions=enabled(context,"yt-captions")?"Captions":"-Captions";
+        return yt+","+captions;
+    }
+    public static String sessionSource(Context context,java.util.Set<String> available){
+        if(context==null||available.isEmpty())return null;
+        JSONArray ordered=order(context);
+        for(int i=0;i<ordered.length();i++){
+            String key=ordered.optString(i);
+            if(available.contains(key)&&enabled(context,key))return key;
+        }
+        return null;
+    }
     static boolean enabled(Context c,String... keys){
-        try{JSONArray disabled=new JSONArray(preferences(c).getString("disabled","[]"));java.util.Set<String> off=new java.util.HashSet<>();for(int i=0;i<disabled.length();i++)off.add(disabled.optString(i));for(String key:keys)if(!off.contains(key))return true;return false;}
+        try{JSONArray disabled=disabledSources(c);java.util.Set<String> off=new java.util.HashSet<>();for(int i=0;i<disabled.length();i++)off.add(disabled.optString(i));for(String key:keys)if(!off.contains(key))return true;return false;}
         catch(JSONException invalid){return true;}
+    }
+    static JSONArray disabledSources(Context c)throws JSONException{
+        SharedPreferences p=preferences(c);
+        JSONArray disabled=new JSONArray(p.getString("disabled","[]"));
+        if(p.getInt("catalogSchema",0)>=3)return disabled;
+        JSONArray providers=catalog(c).optJSONArray("providers");
+        for(int i=0;i<providers.length();i++){
+            JSONObject provider=providers.optJSONObject(i);
+            String id=provider.optString("morpheProvider");
+            if(!id.isEmpty()&&app.morphe.extension.music.settings.Settings.DEFAULT_LYRICS_ORDER.contains("-"+id+","))
+                disabled.put(provider.optString("key"));
+        }
+        return disabled;
     }
     static boolean brokerEnabled(Context c){return enabled(c,"bLyrics-richsynced","bLyrics-synced","binimum-richsynced","binimum-synced","portato-richsynced","spicy-richsynced","spicy-synced","musixmatch-richsync","musixmatch-synced","legato-synced","lrclib-synced","lrclib-plain");}
     public static JSONObject read(Context c){
@@ -41,10 +69,26 @@ public final class LyricsConfig {
              .put("wordSync",p.getBoolean("wordSync",true)).put("background",p.getBoolean("background",true))
              .put("bgSize",p.getInt("bgSize",65)/100.0).put("bgOpacity",p.getInt("bgOpacity",70)/100.0)
              .put("bgAlignment",p.getString("backgroundAlignment","auto")).put("translation",p.getBoolean("translation",false))
-             .put("romanization",p.getBoolean("romanization",false)).put("language",p.getString("language",Locale.getDefault().getLanguage()))
+             .put("romanization",p.getBoolean("romanization",false))
+             .put("language",app.morphe.extension.music.patches.lyrics.requests.LyricsRequests.translationLanguage())
+             .put("spotlight",app.morphe.extension.music.settings.Settings.LYRICS_FOCUS_SPOTLIGHT.get())
+             .put("jumpToCurrent",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_CURRENT_BUTTON.get())
+             .put("showCopy",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_COPY_BUTTON.get())
+             .put("showRefresh",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_REFRESH_BUTTON.get())
+             .put("showTranslate",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_TRANSLATE_BUTTON.get())
+             .put("showRomanize",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_ROMANIZE_BUTTON.get())
+             .put("lineScale",app.morphe.extension.music.settings.Settings.LYRICS_LINE_SCALE.get())
+             .put("hidePlayed",app.morphe.extension.music.settings.Settings.LYRICS_HIDE_PLAYED.get())
+             .put("hideUnplayed",app.morphe.extension.music.settings.Settings.LYRICS_HIDE_UNPLAYED.get())
+             .put("hideInfo",app.morphe.extension.music.settings.Settings.LYRICS_HIDE_INFO.get())
+             .put("showSection",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_SECTION.get())
+             .put("forceCenter",app.morphe.extension.music.settings.Settings.LYRICS_FORCE_CENTER.get())
+             .put("capitalize",app.morphe.extension.music.settings.Settings.LYRICS_FORCE_CAPITALIZE.get())
+             .put("stripPunctuation",app.morphe.extension.music.settings.Settings.LYRICS_STRIP_TRAILING_PUNCTUATION.get())
+             .put("swapTranslation",app.morphe.extension.music.settings.Settings.LYRICS_SWAP_TRANS_ROMA.get())
              .put("passive",p.getBoolean("passive",false)).put("tapSeek",p.getBoolean("tapSeek",true))
              .put("reducedMotion",p.getBoolean("reducedMotion",false)).put("dockCollapsed",p.getBoolean("dockCollapsed",false))
-             .put("priority",order(c)).put("disabled",new JSONArray(p.getString("disabled","[]")))
+             .put("priority",order(c)).put("disabled",disabledSources(c))
              .put("textColor",String.format(Locale.ROOT,"#%06x",ThemeUtils.getAppForegroundColor()&0xffffff));
         }catch(Exception ex){throw new IllegalStateException("Invalid personal lyric configuration",ex);}
         return r;

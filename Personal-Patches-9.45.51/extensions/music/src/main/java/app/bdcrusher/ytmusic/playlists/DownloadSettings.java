@@ -17,6 +17,14 @@ public final class DownloadSettings {
         Preference page = fragment.findPreference("morphe_external_downloader_screen");
         if (!(page instanceof PreferenceScreen screen) || screen.findPreference("bd_download_folder") != null) return;
         Context context = fragment.getActivity();
+        Preference savedFiles = FeaturePreferences.action(context);
+        savedFiles.setTitle("Previous personal downloads");
+        savedFiles.setSummary("Open songs and playlist groups saved by an earlier version");
+        savedFiles.setOnPreferenceClickListener(ignored -> {
+            app.morphe.extension.music.patches.downloads.LocalDownloadsView.showSavedFiles(fragment.getActivity());
+            return true;
+        });
+        screen.addPreference(savedFiles);
         Preference folder = FeaturePreferences.action(context);
         folder.setKey("bd_download_folder");
         folder.setTitle("Choose YTDLnis download folder");

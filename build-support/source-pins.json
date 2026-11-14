@@ -1,6 +1,6 @@
 {
   "morphe-patcher-2.3.0": "d19545e8505e0329cc640723cb8ff91eddd3cd05",
-  "morphe-patches-library-2.2.0-dev.3": "538d9a6574cbacb4ca66d8b687c44d93b2d8d470",
+  "morphe-patches-library-2.2.0-dev.5": "b6fbe7e1a97653afd0eb95936c1e913aa6ce969b",
   "morphe-patches-gradle-plugin-2.1.0": "5b7e4619931a8c78b7858e598e002222d37021b9",
   "ARSCLib-675bed2de3": "675bed2de397097400ba6f0c808e28005ae5aa53",
   "smali-patcher210": "ac700e1942"

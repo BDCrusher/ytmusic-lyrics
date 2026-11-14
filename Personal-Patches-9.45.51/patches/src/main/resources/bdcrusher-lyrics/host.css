@@ -92,6 +92,16 @@ button svg,button img{width:24px;height:24px;display:block;flex:none;margin:0}
 /* Disable Android's rectangular touch flash and selection, retaining Braccato's text highlight. */
 
 #lyrics{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}#lyrics ::selection{background:transparent}#lyrics .blyrics--line:focus{outline:none}
+.lyrics-spotlight #lyrics .blyrics--line:not(.blyrics--active) { filter: brightness(.80); }
+.lyrics-spotlight #lyrics .blyrics--active + .blyrics--line { filter: brightness(.95); }
+.lyrics-centered #lyrics .blyrics--line { text-align:center; }
+.lyrics-no-scale { --blyrics-animate-line-scale:0; }
+.lyrics-hide-info #lyrics .blyrics-footer { display:none; }
+.lyrics-swap-language .blyrics--line > .blyrics--translated { order:2; }
+.lyrics-swap-language .blyrics--line > .blyrics--romanized { order:1; }
+.bd-capitalize .blyrics-line-main { text-transform:capitalize; }
+.lyrics-hide-played #lyrics .blyrics--line:not(.blyrics--active):has(~ .blyrics--active),
+.lyrics-hide-unplayed #lyrics .blyrics--active ~ .blyrics--line:not(.blyrics--active) { visibility:hidden; }
 
 .blyrics-background-line{font-size:calc(1em * var(--bd-bg-size));opacity:var(--bd-bg-opacity)}.blyrics-background-line .blyrics-background-lyric{font-size:1em!important}.no-background .blyrics-background-line{display:none}
 
@@ -101,3 +111,10 @@ button svg,button img{width:24px;height:24px;display:block;flex:none;margin:0}
 
 .reduce-motion{--blyrics-animate-word-wobble:0;--blyrics-animate-line-scale:0;--blyrics-animate-scroll:0;--blyrics-animate-highlight-glow:0}.reduce-motion #dock-content,.reduce-motion #collapse,.reduce-motion #source-menu,.reduce-motion button{transition:none}
 
+.bd-section {
+    display: block;
+    margin-block-end: 0.25em;
+    font-size: 0.52em;
+    font-weight: 600;
+    opacity: 0.72;
+}

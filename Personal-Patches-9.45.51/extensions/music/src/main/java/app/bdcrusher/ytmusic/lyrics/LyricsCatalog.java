@@ -111,6 +111,13 @@ final class LyricsCatalog implements AutoCloseable {
         if(!metadataReady(t))return;
         String q=query(t);if(requested.size()>=4||!requested.add(q)||closed)return;
         String cacheKey="v2|"+videoId+"|"+q;
+        JSONArray sources=LyricsConfig.catalog(context).optJSONArray("providers");
+        for(int i=0;i<sources.length();i++){
+            JSONObject entry=sources.optJSONObject(i);
+            String providerId=entry.optString("morpheProvider"), key=entry.optString("key");
+            if(providerId.isEmpty()||!LyricsConfig.enabled(context,key))continue;
+            task(entry.optString("name"),()->officialProvider(t,providerId,key));
+        }
         if(LyricsConfig.enabled(context,"bLyrics-richsynced","bLyrics-synced"))task("Better Lyrics",()->{
             JSONObject cached=cache.migrate(cacheKey+"|ttml");if(cached!=null){LyricsDiagnostics.record("Better Lyrics","Migrating positive cache; checking for updates");send(cached);}
             String relaxed="s="+LyricsNetwork.encode(t.title())+"&a="+LyricsNetwork.encode(t.artist());
@@ -141,6 +148,23 @@ final class LyricsCatalog implements AutoCloseable {
             }
             if(!data.isNull("plainLyrics")&&!data.optString("plainLyrics").isEmpty())send(new JSONObject().put("key","lrclib-plain").put("source","LRCLib").put("format","plain").put("raw",data.getString("plainLyrics")));
         });
+    }
+    private void officialProvider(TrackInfo track,String id,String key)throws Exception{
+        if(closed||!videoId.equals(app.morphe.extension.music.shared.VideoInformation.getVideoId()))return;
+        var provider=app.morphe.extension.music.patches.lyrics.LyricsProviders.providerFor(id);
+        if(provider==null)throw new IllegalStateException("Unknown Morphe lyric provider");
+        var result=provider.fetch(track);
+        if(closed||!videoId.equals(app.morphe.extension.music.shared.VideoInformation.getVideoId()))return;
+        if(result==null||result.lyrics()==null||result.lyrics().isEmpty())throw new NotFound();
+        JSONObject payload=NativeLyricPayload.from(result.lyrics(),track,key);
+        if(!result.isHighMatch(track))payload.put("relaxedMetadata",true);
+        send(payload);
+        if(result.isHighMatch(track)&&result.lyrics().synced()){
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{
+                if(!closed)app.morphe.extension.music.patches.lyrics.LyricsManager.getInstance()
+                        .offerSessionLyrics(videoId,key,result.lyrics());
+            });
+        }
     }
     interface Work {void run()throws Exception;}
     private static final class NotFound extends Exception {}
@@ -219,6 +243,7 @@ final class LyricsCatalog implements AutoCloseable {
     static boolean hasLyricsPayload(JSONObject payload){
         if("cachedResult".equals(payload.optString("kind"))){JSONObject result=payload.optJSONObject("result");return result!=null&&result.optJSONArray("lyrics")!=null&&result.optJSONArray("lyrics").length()>0;}
         if(lyricText(payload.opt("raw")))return true;
+        if(payload.optJSONArray("lyrics")!=null&&payload.optJSONArray("lyrics").length()>0)return true;
         if("unison".equals(payload.optString("kind"))){JSONObject data=payload.optJSONObject("data");if(data!=null&&data.optJSONObject("data")!=null)data=data.optJSONObject("data");return data!=null&&lyricText(data.opt("lyrics"));}
         if(!"provider".equals(payload.optString("event")))return false;
         JSONObject data=payload.optJSONObject("data"),results=data==null?null:data.optJSONObject("results");if(results==null)return false;

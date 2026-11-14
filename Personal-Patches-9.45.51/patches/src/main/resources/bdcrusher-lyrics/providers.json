@@ -89,6 +89,108 @@
       "key": "lrclib-plain",
       "name": "LRCLib",
       "type": "unsynced"
+    },
+    {
+      "key": "morphe-apple",
+      "name": "Apple Music",
+      "type": "provider",
+      "morpheProvider": "Apple"
+    },
+    {
+      "key": "morphe-lrcred",
+      "name": "LrcRed",
+      "type": "provider",
+      "morpheProvider": "LrcRed"
+    },
+    {
+      "key": "morphe-lyricify",
+      "name": "Lyricify",
+      "type": "provider",
+      "morpheProvider": "Lyricify"
+    },
+    {
+      "key": "morphe-petitlyrics",
+      "name": "PetitLyrics",
+      "type": "provider",
+      "morpheProvider": "PetitLyrics"
+    },
+    {
+      "key": "morphe-amll",
+      "name": "AMLL",
+      "type": "provider",
+      "morpheProvider": "AMLL"
+    },
+    {
+      "key": "morphe-qq",
+      "name": "QQ Music",
+      "type": "provider",
+      "morpheProvider": "QQ"
+    },
+    {
+      "key": "morphe-simpmusic",
+      "name": "SimpMusic",
+      "type": "provider",
+      "morpheProvider": "SimpMusic"
+    },
+    {
+      "key": "morphe-kugou",
+      "name": "KuGou",
+      "type": "provider",
+      "morpheProvider": "KuGou"
+    },
+    {
+      "key": "morphe-netease",
+      "name": "NetEase",
+      "type": "provider",
+      "morpheProvider": "NetEase"
+    },
+    {
+      "key": "morphe-luna",
+      "name": "Luna",
+      "type": "provider",
+      "morpheProvider": "Luna"
+    },
+    {
+      "key": "morphe-lunabeat",
+      "name": "LunaBeat",
+      "type": "provider",
+      "morpheProvider": "LunaBeat"
+    },
+    {
+      "key": "morphe-spotify",
+      "name": "Spotify",
+      "type": "provider",
+      "morpheProvider": "Spotify"
+    },
+    {
+      "key": "morphe-deezer",
+      "name": "Deezer",
+      "type": "provider",
+      "morpheProvider": "Deezer"
+    },
+    {
+      "key": "morphe-rmm",
+      "name": "RMM",
+      "type": "provider",
+      "morpheProvider": "RMM"
+    },
+    {
+      "key": "morphe-genius",
+      "name": "Genius",
+      "type": "provider",
+      "morpheProvider": "Genius"
+    },
+    {
+      "key": "morphe-binilyrics",
+      "name": "BiniLyrics direct",
+      "type": "provider",
+      "morpheProvider": "BiniLyrics"
+    },
+    {
+      "key": "morphe-musixmatch",
+      "name": "Musixmatch direct",
+      "type": "provider",
+      "morpheProvider": "Musixmatch"
     }
   ],
   "icons": {

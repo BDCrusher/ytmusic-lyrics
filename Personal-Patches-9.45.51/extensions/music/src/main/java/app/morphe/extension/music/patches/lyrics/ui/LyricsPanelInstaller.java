@@ -40,6 +40,7 @@ import app.morphe.extension.shared.settings.Setting;
  * <p>It is laid over the built-in content rather than replacing it, so that a track
  * without third party lyrics still shows the built-in ones.
  */
+@SuppressWarnings("unused")
 public final class LyricsPanelInstaller {
 
     /** Container the built-in panel content lives in. */
@@ -47,6 +48,12 @@ public final class LyricsPanelInstaller {
 
     /** Panel heading, which tells the lyrics panel from the other engagement panels. */
     private static final String PANEL_TITLE_ID = "modern_title";
+
+    /** Holds the tab strip and the pages of the player tabs. */
+    private static final String TABBED_VIEW_ID = "bottom_sheet_tabbed_view";
+
+    static final int TAB_CONTENT_ID = ResourceUtils.getIdentifier(
+            ResourceType.ID, "elements_component_holder");
 
     private static final String LYRICS_TITLE_RESOURCE = "lyrics_tab_title";
 
@@ -65,8 +72,10 @@ public final class LyricsPanelInstaller {
     private static WeakReference<BetterLyricsPanelView> panelReference = new WeakReference<>(null);
 
     /** Panel the app currently has in the engagement panel container. */
-    private static WeakReference<Object> currentPanelReference = new WeakReference<>(null);
-
+    private static volatile WeakReference<Object> currentPanelReference = new WeakReference<>(null);
+    /** Identifier of the current panel, or null when it has none, or it could not be read. */
+    @Nullable
+    private static volatile String currentPanelIdentifier;
     /** Panel the lyrics were last built into, kept to recognize it when it comes back. */
     private static WeakReference<Object> lyricsPanelReference = new WeakReference<>(null);
 
@@ -80,7 +89,9 @@ public final class LyricsPanelInstaller {
                 if (key == null || !key.startsWith("morphe_music_lyrics")) {
                     return;
                 }
-                Utils.runOnMainThreadNowOrLater(() -> onLyricsSettingChanged(key));
+                // Posted, because the settings screen may only update the setting values in
+                // its own listener, which can be called after this one.
+                Utils.runOnMainThread(() -> onLyricsSettingChanged(key));
             };
 
     public static void registerSettingsListener() {
@@ -102,6 +113,7 @@ public final class LyricsPanelInstaller {
                     LyricsManager.getInstance().reloadAfterSettingsChange();
                 } else {
                     uninstallLyricsPanel();
+                    DeviceLyricsTab.removeTabs();
                 }
                 MiniplayerLyrics.onSettingsChanged();
                 return;
@@ -139,6 +151,8 @@ public final class LyricsPanelInstaller {
                 panelView.applyLyricLayoutSettings();
             } else if (Settings.LYRICS_WORD_SYNC.key.equals(key)) {
                 panelView.applyWordSyncSetting();
+            } else if (Settings.LYRICS_FOCUS_SPOTLIGHT.key.equals(key)) {
+                panelView.applySettings();
             } else if (Settings.LYRICS_HIDE_INFO.key.equals(key)) {
                 panelView.applyHideInfo();
             } else if (Settings.LYRICS_SHOW_SECTION.key.equals(key)) {
@@ -181,6 +195,23 @@ public final class LyricsPanelInstaller {
     }
 
     /**
+     * Part of the identifier the app gives the lyrics engagement panel, which is
+     * "music_watch_lyrics_panel". The other panels, such as "music-comment-panel", lack it.
+     */
+    private static final String LYRICS_PANEL_IDENTIFIER_PART = "lyrics";
+
+    /**
+     * Method is modified during patching to read the identifier through the app's own helper.
+     *
+     * @return Identifier of the panel, or null when it has none or the patch did not find the helper.
+     */
+    @Nullable
+    @SuppressWarnings("SameReturnValue")
+    private static String getPanelIdentifier(Object panel) {
+        return null;
+    }
+
+    /**
      * Injection point.
      *
      * <p>Some accounts get the panel without a heading, and then the app's own bookkeeping
@@ -189,9 +220,9 @@ public final class LyricsPanelInstaller {
      *
      * @param panel Panel put in the engagement panel container, or null when it was given up.
      */
-    @SuppressWarnings("unused")
     public static void onEngagementPanelChanged(@Nullable Object panel) {
         try {
+            currentPanelIdentifier = panel == null ? null : getPanelIdentifier(panel);
             currentPanelReference = new WeakReference<>(panel);
 
             final boolean isLyricsPanel = isCurrentPanelLyrics();
@@ -312,7 +343,7 @@ public final class LyricsPanelInstaller {
         }
 
         View root = activity.getWindow().getDecorView();
-        ViewGroup panel = findLyricsPanelContent(root);
+        ViewGroup panel = findLyricsTabContent(root);
         if (panel == null) {
             return false;
         }
@@ -340,6 +371,7 @@ public final class LyricsPanelInstaller {
         }
 
         BetterLyricsPanelView panelView = new BetterLyricsPanelView(panel.getContext());
+        panelView.useNativeTab();
         panelView.setKeepScreenOn(Settings.LYRICS_KEEP_SCREEN_ON.get());
         panel.addView(panelView, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT,
@@ -350,17 +382,140 @@ public final class LyricsPanelInstaller {
 
     private static boolean isCurrentPanelLyrics() {
         Object current = currentPanelReference.get();
-        return current != null && current == lyricsPanelReference.get();
+        return current != null && (current == lyricsPanelReference.get()
+                || currentPanelIdentifier != null && currentPanelIdentifier.contains(LYRICS_PANEL_IDENTIFIER_PART));
     }
 
     /**
-     * All engagement panels are built into the same content container, so the heading
-     * is what tells the lyrics panel from the comments or the live chat one. A panel
-     * shown without a heading falls back to the panel the app itself put there.
-     *
-     * @return Whether the engagement panel currently on screen is the lyrics panel.
+     * Injection point. Called for every tabbed view of the app.
+     */
+    public static void onTabSelected(ViewGroup tabbedView) {
+        try {
+            if (!Settings.LYRICS_ENABLED.get()
+                    || tabbedView.getId() != ResourceUtils.getIdentifier(ResourceType.ID, TABBED_VIEW_ID)
+                    || !isLyricsTabSelected(tabbedView)) {
+                return;
+            }
+            // Lyrics are in a tab, so an engagement panel tagged before this is not the lyrics one.
+            lyricsPanelReference.clear();
+            // The page of the previous tab fills the view until the pager starts to scroll,
+            // so the first attempt is delayed to not install into that page.
+            scheduleTabInstall(INSTALL_DELAY_MILLISECONDS);
+        } catch (Exception ex) {
+            Logger.printException(() -> "onTabSelected failure", ex);
+        }
+    }
+
+    /**
+     * A track change replaces the page of the lyrics tab while the tab stays selected,
+     * and the replacement may not build anything that signals a lyrics panel.
+     */
+    public static void onTabPanelDetached(BetterLyricsPanelView panelView) {
+        Activity activity = Utils.getActivity();
+        if (activity != null && Settings.LYRICS_ENABLED.get() && panelReference.get() == panelView
+                && findLyricsTabbedView(activity.getWindow().getDecorView()) != null) {
+            scheduleTabInstall(0);
+        }
+    }
+
+    private static void scheduleTabInstall(long delay) {
+        if (!installPending) {
+            installPending = true;
+            scheduleInstall(SystemClock.uptimeMillis() + INSTALL_TIMEOUT_MILLISECONDS, delay);
+        }
+    }
+
+    /**
+     * Keeping the screen on follows the page being on screen, because the page stays attached
+     * with the player sheet collapsed or another tab selected, and neither calls the panel.
+     */
+    private static boolean isTabContent(View view) {
+        return view.getId() == TAB_CONTENT_ID;
+    }
+
+    /**
+     * Tab pages do not share a container, so a panel in one stays in place when another
+     * tab or an engagement panel is shown, and scrolls away along with its page.
+     */
+    public static boolean isNativeTabVisible(BetterLyricsPanelView panelView) {
+        Activity activity = Utils.getActivity();
+        return activity != null && panelView.getParent() instanceof ViewGroup content
+                && content == findLyricsTabContent(activity.getWindow().getDecorView());
+    }
+
+    /**
+     * The tab strip is hidden while the player sheet is expanded, so its visibility says nothing.
+     */
+    private static boolean isLyricsTabSelected(ViewGroup tabbedView) {
+        String title = lyricsTitle(tabbedView.getContext());
+        return title != null && tabbedView.getChildCount() > 0
+                && hasSelectedTitle(tabbedView.getChildAt(0), title);
+    }
+
+    private static boolean hasSelectedTitle(View view, String title) {
+        if (view instanceof TextView text) {
+            return text.isSelected() && title.equalsIgnoreCase(String.valueOf(text.getText()));
+        }
+        if (view instanceof ViewGroup group) {
+            for (int i = 0, count = group.getChildCount(); i < count; i++) {
+                if (hasSelectedTitle(group.getChildAt(i), title)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @return The player tabs, or null when the lyrics tab is not the selected one.
+     */
+    @Nullable
+    private static ViewGroup findLyricsTabbedView(View root) {
+        return root.findViewById(ResourceUtils.getIdentifier(ResourceType.ID, TABBED_VIEW_ID))
+                instanceof ViewGroup tabbedView && isLyricsTabSelected(tabbedView)
+                ? tabbedView : null;
+    }
+
+    /**
+     * @return The container of the lyrics tab page, or null when the lyrics tab is not selected
+     * or its page is not settled yet.
+     */
+    @Nullable
+    private static ViewGroup findLyricsTabContent(View root) {
+        ViewGroup tabbedView = findLyricsTabbedView(root);
+        return tabbedView == null
+                ? null
+                : findFullWidthTabContent(tabbedView, tabbedView.getWidth(), new Rect());
+    }
+
+    /**
+     * Pages next to the selected one can be attached too, so the page must fill the width.
+     */
+    @Nullable
+    private static ViewGroup findFullWidthTabContent(View view, int width, Rect rect) {
+        if (view.getVisibility() != View.VISIBLE) {
+            return null;
+        }
+        if (view instanceof ViewGroup group) {
+            if (isTabContent(group)) {
+                return group.getGlobalVisibleRect(rect) && rect.width() == width ? group : null;
+            }
+            for (int i = 0, count = group.getChildCount(); i < count; i++) {
+                ViewGroup found = findFullWidthTabContent(group.getChildAt(i), width, rect);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @return Whether the lyrics panel or the lyrics tab is the one on screen.
      */
     public static boolean isLyricsPanelOpen() {
+        BetterLyricsPanelView tab = panelReference.get();
+        if (tab != null && isNativeTabVisible(tab)) return true;
         // Asked first because it is answered by identity, which does not move with the language;
         // the heading is read only when there is no panel to go by.
         if (isCurrentPanelLyrics()) {
@@ -521,7 +676,7 @@ public final class LyricsPanelInstaller {
      * calls either, since a language change would leave a stale answer behind.
      */
     @Nullable
-    private static String lyricsTitle(@Nullable Context context) {
+    static String lyricsTitle(Context context) {
         final int id = ResourceUtils.getStringIdentifier(LYRICS_TITLE_RESOURCE);
         if (id == 0) {
             Logger.printException(() -> "App is missing: " + LYRICS_TITLE_RESOURCE);

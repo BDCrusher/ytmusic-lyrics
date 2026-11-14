@@ -24,7 +24,7 @@ public final class LyricsSettingsPage {
         Preference existing=root.findPreference(KEY);PreferenceScreen page;
         if(existing instanceof PreferenceScreen)page=(PreferenceScreen)existing;
         else{page=fragment.getPreferenceManager().createPreferenceScreen(c);page.setKey(KEY);page.setTitle("Lyrics");page.setOrder(5);page.setIcon(ResourceUtils.getDrawable("morphe_settings_screen_14_lyrics"));root.addPreference(page);}
-        if(page.findPreference("bdcrusher_lyrics_inline_ready")==null)populate(c,page);
+        if(page.findPreference("bdcrusher_lyrics_personal")==null)populate(c,page);
         latest=new java.lang.ref.WeakReference<>(page);
         if(fragment.getActivity().getIntent().getBooleanExtra("bdcrusher_open_lyrics",false)){
             fragment.getActivity().getIntent().removeExtra("bdcrusher_open_lyrics");
@@ -32,56 +32,98 @@ public final class LyricsSettingsPage {
         }
     }
     static void populate(Context c,PreferenceScreen page){
-        page.removeAll();page.setOrderingAsAdded(true);
+        PreferenceCategory personal=(PreferenceCategory)page.findPreference("bdcrusher_lyrics_personal");
+        if(personal!=null)page.removePreference(personal);
+        // The personal controls and the upstream processing/session controls share one screen.
+        // Remove equivalent native controls so each setting has one owner.
+        for(String key:new String[]{"morphe_music_lyrics_source",
+                "morphe_music_lyrics_source_advice","morphe_music_lyrics_clear_cache",
+                "morphe_music_lyrics_word_sync","morphe_music_lyrics_text_size",
+                "morphe_music_lyrics_tap_to_seek","morphe_music_lyrics_dynamic_background",
+                "morphe_music_lyrics_dynamic_background_animated"}){
+            Preference duplicate=page.findPreference(key);
+            if(duplicate!=null)removePreference(page,duplicate);
+        }
+        personal=new PreferenceCategory(c);
+        personal.setKey("bdcrusher_lyrics_personal");
+        personal.setTitle("Better Lyrics");
+        personal.setOrder(-100);
+        page.addPreference(personal);
+        populatePersonal(c,page,personal);
+    }
+    private static boolean removePreference(PreferenceGroup group,Preference item){
+        if(group.removePreference(item))return true;
+        for(int i=0;i<group.getPreferenceCount();i++){
+            if(group.getPreference(i) instanceof PreferenceGroup child&&removePreference(child,item))return true;
+        }
+        return false;
+    }
+    private static void populatePersonal(Context c,PreferenceScreen screen,PreferenceGroup page){
         SharedPreferences p=LyricsConfig.preferences(c);
         if(p.getInt("catalogSchema",0)<2)p.edit().putString("legacyPriority",p.getString("priority","")).putString("priority",join(LyricsConfig.order(c))).putInt("catalogSchema",2).apply();
-        SwitchPreference enabled=app.bdcrusher.ytmusic.common.FeaturePreferences.toggle(c);enabled.setTitle("Third-party lyrics");enabled.setKey("bdcrusher_lyrics_inline_ready");enabled.setPersistent(false);enabled.setChecked(Settings.LYRICS_ENABLED.get());
-        enabled.setOnPreferenceChangeListener((pref,v)->{Settings.LYRICS_ENABLED.save((Boolean)v);return true;});page.addPreference(enabled);
         category(c,page,"Rendering");
         toggle(c,page,p,"wordSync","Word and syllable highlighting",true);toggle(c,page,p,"letterWave","Letter wave",true);
         number(c,page,p,"fontSize","Lyrics text size",20,44,28);toggle(c,page,p,"reducedMotion","Reduce motion",false);
         toggle(c,page,p,"tapSeek","Tap lyrics to seek",true);toggle(c,page,p,"passive","Slow scroll for untimed lyrics",false);
-        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"rendering",()->populate(c,page),"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive");
+        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"rendering",()->populate(c,screen),"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive");
         category(c,page,"Background vocals and singers");toggle(c,page,p,"background","Show background vocals",true);
         number(c,page,p,"bgSize","Background vocal size",40,90,65);number(c,page,p,"bgOpacity","Background vocal opacity",30,100,70);
         alignment(c,page,p,"backgroundAlignment","Background vocal placement");
         for(String a:new String[]{"v1","v2","v3","v1000"})alignment(c,page,p,a,"Singer "+a+" placement");
         text(c,page,p,"extraAgents","Additional singer positions","For example: v4=center,v5=right","");
-        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"vocals and singers",()->populate(c,page),"background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents");
+        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"vocals and singers",()->populate(c,screen),"background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents");
         category(c,page,"Translation and romanization");toggle(c,page,p,"translation","Translate lyrics",false);toggle(c,page,p,"romanization","Romanize lyrics",false);
-        text(c,page,p,"language","Translation language","Language code",java.util.Locale.getDefault().getLanguage());
-        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"translation",()->populate(c,page),"translation","romanization","language");
+        app.bdcrusher.ytmusic.common.PersonalCredits.reset(c,page,p,"translation",()->populate(c,screen),"translation","romanization");
         category(c,page,"Sources");page.addPreference(new LyricsSourceOrderPreference(c));
+        credential(c,page,"Apple Music token",Settings.APPLE_MUSIC_TOKEN);
+        credential(c,page,"Spotify token",Settings.SPOTIFY_TOKEN);
+        credential(c,page,"Deezer ARL",Settings.DEEZER_ARL);
+        credential(c,page,"Musixmatch token",Settings.MUSIXMATCH_TOKEN);
         category(c,page,"Saved lyrics and storage");
         ListPreference policy=app.bdcrusher.ytmusic.common.FeaturePreferences.choice(c);policy.setTitle("Choose the saved version");policy.setKey("bdcrusher_cache_policy");policy.setPersistent(false);
         policy.setEntries(new String[]{"Best timing, then source order","Source order first"});policy.setEntryValues(new String[]{"quality","source"});policy.setValue(p.getString("cachePolicy","quality"));policy.setSummary(policy.getEntry());
         policy.setOnPreferenceChangeListener((pref,value)->{p.edit().putString("cachePolicy",value.toString()).apply();policy.setValue(value.toString());policy.setSummary(policy.getEntry());return true;});page.addPreference(policy);
         page.addPreference(new StoragePreference(c,true));
         Preference clear=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);clear.setTitle("Clear saved lyrics");clear.setSummary("Lyrics remain saved until you clear them; no automatic expiry");
-        clear.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Clear saved lyrics?").setMessage("Remove your saved lyric library. Rendering settings, source connections and downloaded music are kept.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->new LyricsLibrary(c).clear(()->populate(c,page))).show();return true;});page.addPreference(clear);
+        clear.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Clear saved lyrics?").setMessage("Remove your saved lyric library. Rendering settings, source connections and downloaded music are kept.").setNegativeButton("Cancel",null).setPositiveButton("Clear",(d,w)->new LyricsLibrary(c).clear(()->populate(c,screen))).show();return true;});page.addPreference(clear);
         Preference connection=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);connection.setTitle("Source connection");
         String jwt=p.getString("serviceJwt","");connection.setSummary(jwt.isEmpty()?"Additional providers verify automatically while the app is active. Tap if interaction is needed.":ServiceConnection.expired(jwt)?"Additional-provider verification expired · tap to renew":"Additional providers connected · tap to reconnect");
         connection.setOnPreferenceClickListener(pref->{ServiceConnection.show(c);return true;});page.addPreference(connection);
 
         Preference license=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);license.setTitle("Credits and licenses");license.setOnPreferenceClickListener(pref->{showNotice(c);return true;});page.addPreference(license);
-        Preference reset=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);reset.setTitle("Reset rendering settings");reset.setSummary("Restore visual defaults without changing sources, saved lyrics or connections");reset.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Reset rendering settings?").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{SharedPreferences.Editor e=p.edit();for(String key:new String[]{"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive","background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents"})e.remove(key);e.apply();populate(c,page);}).show();return true;});page.addPreference(reset);
+        Preference reset=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);reset.setTitle("Reset rendering settings");reset.setSummary("Restore visual defaults without changing sources, saved lyrics or connections");reset.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Reset rendering settings?").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{SharedPreferences.Editor e=p.edit();for(String key:new String[]{"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive","background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents"})e.remove(key);e.apply();populate(c,screen);}).show();return true;});page.addPreference(reset);
+    }
+    private static void credential(Context c,PreferenceGroup page,String title,
+            app.morphe.extension.shared.settings.StringSetting setting){
+        EditTextPreference input=app.bdcrusher.ytmusic.common.FeaturePreferences.text(c);
+        input.setTitle(title);input.setDialogTitle(title);input.setKey(setting.key);
+        input.setPersistent(false);input.setText(setting.get());
+        input.getEditText().setInputType(android.text.InputType.TYPE_CLASS_TEXT
+                |android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        input.setSummary(setting.get().isBlank()?"Optional provider credential":"Configured");
+        input.setOnPreferenceChangeListener((pref,value)->{
+            String token=value.toString().trim();
+            setting.save(token);input.setSummary(token.isEmpty()?"Optional provider credential":"Configured");
+            return true;
+        });
+        page.addPreference(input);
     }
     static String join(org.json.JSONArray a){java.util.List<String> v=new java.util.ArrayList<>();for(int i=0;i<a.length();i++)v.add(a.optString(i));return android.text.TextUtils.join(",",v);}
-    private static void category(Context c,PreferenceScreen page,String title){PreferenceCategory category=app.bdcrusher.ytmusic.common.FeaturePreferences.heading(c);category.setTitle(title);page.addPreference(category);}
-    private static void toggle(Context c,PreferenceScreen page,SharedPreferences p,String key,String title,boolean def){
+    private static void category(Context c,PreferenceGroup page,String title){Preference heading=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);heading.setTitle(title);heading.setSelectable(false);page.addPreference(heading);}
+    private static void toggle(Context c,PreferenceGroup page,SharedPreferences p,String key,String title,boolean def){
         SwitchPreference control=app.bdcrusher.ytmusic.common.FeaturePreferences.toggle(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setPersistent(false);control.setChecked(p.getBoolean(key,def));
         control.setOnPreferenceChangeListener((pref,value)->{p.edit().putBoolean(key,(Boolean)value).apply();return true;});page.addPreference(control);
     }
-    private static void text(Context c,PreferenceScreen page,SharedPreferences p,String key,String title,String help,String def){
+    private static void text(Context c,PreferenceGroup page,SharedPreferences p,String key,String title,String help,String def){
         EditTextPreference control=app.bdcrusher.ytmusic.common.FeaturePreferences.text(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);control.setText(p.getString(key,def));control.setSummary(help+" · "+p.getString(key,def));
         control.setOnPreferenceChangeListener((pref,value)->{String v=value.toString().trim();p.edit().putString(key,v).apply();control.setSummary(help+" · "+v);return true;});page.addPreference(control);
     }
-    private static void alignment(Context c,PreferenceScreen page,SharedPreferences p,String key,String title){
+    private static void alignment(Context c,PreferenceGroup page,SharedPreferences p,String key,String title){
         ListPreference control=app.bdcrusher.ytmusic.common.FeaturePreferences.choice(c);control.setKey("bdcrusher_"+key);control.setTitle(title);control.setDialogTitle(title);control.setPersistent(false);
         control.setEntries(new String[]{"Better Lyrics default","Left","Center","Right"});control.setEntryValues(new String[]{"auto","left","center","right"});control.setValue(p.getString(key,"auto"));control.setSummary(control.getEntry());
         control.setOnPreferenceChangeListener((pref,value)->{p.edit().putString(key,value.toString()).apply();control.setValue(value.toString());control.setSummary(control.getEntry());return true;});page.addPreference(control);
     }
-    private static void number(Context c,PreferenceScreen page,SharedPreferences p,String key,String title,int min,int max,int def){
+    private static void number(Context c,PreferenceGroup page,SharedPreferences p,String key,String title,int min,int max,int def){
         page.addPreference(new LyricsSliderPreference(c,p,key,title,min,max,1,def,"fontSize".equals(key)?" sp":"%"));
     }
     private static void showNotice(Context c){try(var in=c.getAssets().open("bdcrusher-lyrics/NOTICE.txt")){

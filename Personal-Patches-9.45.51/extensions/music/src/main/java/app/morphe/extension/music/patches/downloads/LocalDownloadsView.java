@@ -82,7 +82,7 @@ import app.morphe.extension.shared.ui.CustomDialog;
  * in the background. Doing any of this for every track while the screen opens blocks the app long
  * enough for the system to close it.
  */
-final class LocalDownloadsView {
+public final class LocalDownloadsView {
     private final Activity activity;
 
     private static final int SEARCH_BAR_HEIGHT_DP = 46;
@@ -198,6 +198,21 @@ final class LocalDownloadsView {
         root.addView(mainContainer, new FrameLayout.LayoutParams(-1, -1));
 
         LocalDownloadManager.addSavedListener(onTrackSaved);
+    }
+
+    /** Access existing personal files without taking over the native Downloads destination. */
+    public static void showSavedFiles(Activity activity) {
+        LocalDownloadsView savedFiles = new LocalDownloadsView(activity);
+        android.app.AlertDialog dialog = new android.app.AlertDialog.Builder(activity)
+                .setTitle("Previous personal downloads")
+                .setView(savedFiles.view())
+                .setNegativeButton("Close", null)
+                .create();
+        dialog.setOnDismissListener(ignored -> savedFiles.release());
+        dialog.setOnKeyListener((ignored, keyCode, event) -> keyCode == android.view.KeyEvent.KEYCODE_BACK
+                && event.getAction() == android.view.KeyEvent.ACTION_UP && savedFiles.handleBack());
+        dialog.show();
+        savedFiles.refreshCatalogue();
     }
 
     View view() { return root; }

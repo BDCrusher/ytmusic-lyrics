@@ -289,7 +289,6 @@ public final class DownloadPrompt {
                 root.post(this::applyNavigationPadding);
                 return insets;
             });
-            root.getViewTreeObserver().addOnGlobalLayoutListener(this::applyNavigationPadding);
             dialog.setContentView(root);
         }
 
@@ -317,16 +316,10 @@ public final class DownloadPrompt {
         }
 
         private void applyNavigationPadding() {
-            if (!root.isAttachedToWindow() || root.getHeight() == 0) return;
+            if (!root.isAttachedToWindow()) return;
             int inset = Math.max(dispatchedBottom, navigationBottom(root.getRootWindowInsets()));
             View activityDecor = activity.getWindow().getDecorView();
             inset = Math.max(inset, navigationBottom(activityDecor.getRootWindowInsets()));
-            if (android.os.Build.VERSION.SDK_INT >= 30) {
-                int[] location = new int[2];
-                root.getLocationOnScreen(location);
-                int displayBottom = activity.getWindowManager().getCurrentWindowMetrics().getBounds().bottom;
-                inset = Math.min(inset, Math.max(0, location[1] + root.getHeight() - (displayBottom - inset)));
-            }
             int padding = dp(16) + inset;
             if (root.getPaddingBottom() != padding) root.setPadding(dp(20), dp(10), dp(20), padding);
         }

@@ -68,6 +68,7 @@ public final class LyricsEntryButton {
         // Panel definitions can be registered after provider results arrive.
         preparePanel();
         pending=false;unavailable=false;available=true;refresh();
+        app.morphe.extension.music.patches.lyrics.ui.LyricsPanelInstaller.enableLyricsButton();
     }
     void orderWhilePending(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=true;available=false;unavailable=false;preparePanel();refresh();}
     void notFound(String key){if(!key.equals(identity))trackChanged(key);if(!isCurrent())return;pending=false;available=false;unavailable=true;refresh();}

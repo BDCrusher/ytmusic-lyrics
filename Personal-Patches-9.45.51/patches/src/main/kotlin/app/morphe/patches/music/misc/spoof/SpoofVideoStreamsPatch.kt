@@ -26,6 +26,7 @@ import app.morphe.patches.shared.misc.spoof.spoofVideoStreamsPatch
 
 val spoofVideoStreamsPatch = spoofVideoStreamsPatch(
     extensionClass = "Lapp/morphe/extension/music/patches/spoof/SpoofVideoStreamsPatch;",
+    mainActivityFingerprint = MusicActivityOnCreateFingerprint,
     mainActivityOnCreateFingerprints = listOf(
         MusicActivityOnCreateFingerprint,
         YouTubeMusicApplicationInitFingerprint
@@ -65,7 +66,7 @@ val spoofVideoStreamsPatch = spoofVideoStreamsPatch(
                         key = "morphe_spoof_video_streams_sign_in_android_vr_about",
                         tag = "app.morphe.extension.music.settings.preference.SpoofVideoStreamsSignInPreference",
                         selectable = true,
-                    ),
+                    )
                 )
             )
         )

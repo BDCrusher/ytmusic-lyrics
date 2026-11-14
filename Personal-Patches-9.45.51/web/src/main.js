@@ -23,12 +23,14 @@ const frameBudget = new FrameBudget();
 const diagnostics=new RenderDiagnostics((source,message)=>native?.diagnostic(generation,source,message));
 let sourceHealth={pending:1,waiting:0},parsing=0,slow=false,decodingFailed=false,slowTimer,lastHealthLabel='';
 const resultSignatures=new WeakMap();
+const deviceSource={key:'device-lyrics',name:'Device file',type:'line'};
 let seenPayloads=new Set(),seenPayloadBytes=0;
-function signature(result){if(!resultSignatures.has(result))resultSignatures.set(result,JSON.stringify([result.source,result.language,result.songwriters,result.contributors,result.lyrics]));return resultSignatures.get(result);}
+function signature(result){if(!resultSignatures.has(result))resultSignatures.set(result,JSON.stringify([result.source,result.language,result.songwriters,result.contributors,result.sections,result.lyrics]));return resultSignatures.get(result);}
 function updateHealth(){
  const pending=Math.max(0,sourceHealth.pending||0)+parsing,found=availableKeys.length>0;
  const color=pending||sourceHealth.connectionNeeded||found&&sourceHealth.failed?'orange':found?'green':'red';
- const emptyMessage=lookupMessage(params?.videoId,sourceHealth,parsing,slow,decodingFailed);
+ const emptyMessage=params?.deviceTrack&&sourceHealth.deviceError?'Couldn’t load lyrics. Try refreshing.'
+   :lookupMessage(params?.deviceTrack||params?.videoId,sourceHealth,parsing,slow,decodingFailed);
  if(!selected&&!found){
    const empty=$('empty');
    if(empty.textContent!==emptyMessage)empty.textContent=emptyMessage;
@@ -46,8 +48,8 @@ function updateHealth(){
 let active = true, raf = 0, enrichmentGeneration = 0;
 let availableKeys = [], autoPreferred='', collapsed = false;
 const reportedMismatches=new Set();
-const icon = (key) => catalog.icons[catalog.providers.find(p=>p.key===key)?.type] || '';
-const config = key => catalog.providers.find(p=>p.key===key);
+const config = key => key===deviceSource.key?deviceSource:catalog.providers.find(p=>p.key===key);
+const icon = key => catalog.icons[config(key)?.type] || '';
 function svgInto(target,svg){target.replaceChildren();if(!svg)return;const doc=new DOMParser().parseFromString(svg,'image/svg+xml');if(!doc.querySelector('parsererror'))target.appendChild(document.importNode(doc.documentElement,true));}
 for(const [key,svg] of Object.entries(controls)){if($(key))svgInto($(key),svg);}
 svgInto($('collapse'),controls.chevron);
@@ -96,7 +98,7 @@ function resumeFollow(){renderer.resumeAutoscroll();}
 let renderer = createLyricsRenderer({document,window,mount:$('lyrics'),host:{
   getScrollElement:()=>$('scroll'),
   isViewVisible:()=>active && !document.hidden,
-  setResumeAffordanceVisible:visible=>$('resume').hidden=!visible,
+  setResumeAffordanceVisible:visible=>$('resume').hidden=!visible||settings.jumpToCurrent===false,
   seek:seconds=>{if(settings.tapSeek){native?.seek(generation,Math.round(seconds*1000));resumeFollow();}},
   log:message=>native?.diagnostic(generation,'Renderer',String(message).slice(0,240)),
 }});
@@ -111,6 +113,16 @@ function theme() {
   root.setProperty('--bd-bg-opacity',String(settings.bgOpacity));
   document.body.classList.toggle('no-background',!settings.background);
   document.body.classList.toggle('reduce-motion',settings.reducedMotion);
+  document.body.classList.toggle('lyrics-spotlight',settings.spotlight===true);
+  document.body.classList.toggle('lyrics-centered',settings.forceCenter===true);
+  document.body.classList.toggle('lyrics-no-scale',settings.lineScale===false);
+  document.body.classList.toggle('lyrics-hide-info',settings.hideInfo===true);
+  document.body.classList.toggle('lyrics-swap-language',settings.swapTranslation===true);
+  document.body.classList.toggle('lyrics-hide-played',settings.hidePlayed===true);
+  document.body.classList.toggle('lyrics-hide-unplayed',settings.hideUnplayed===true);
+  if(settings.jumpToCurrent===false)$('resume').hidden=true;
+  for(const [id,setting] of Object.entries({copy:'showCopy',refresh:'showRefresh',translate:'showTranslate',romanize:'showRomanize'}))
+    $(id).hidden=settings[setting]===false;
   const rules=[];
   if(['left','center','right'].includes(settings.bgAlignment))rules.push(`.blyrics-background-line{text-align:${settings.bgAlignment}}`);
   for(const [agent,alignment] of Object.entries(settings.agents||{})) {
@@ -159,7 +171,7 @@ function choose(force=false) {
   if(!params)return;
   const custom=Array.isArray(settings.priority)?settings.priority.filter(k=>PRIORITY.includes(k)):[];
   const disabled=new Set(settings.disabled||[]);
-  const order=[...new Set([...custom,...PRIORITY])].filter(key=>!disabled.has(key));
+  const order=params.deviceTrack?[deviceSource.key]:[...new Set([...custom,...PRIORITY])].filter(key=>!disabled.has(key));
   const baseline=params.sourceMap['yt-lyrics']?.lyricSourceResult?.lyrics;
   const reference=baseline?.map(line=>line.words).join('\n');
   const available=order.filter(key=>params.sourceMap[key]?.lyricSourceResult?.lyrics?.length);
@@ -173,7 +185,8 @@ function choose(force=false) {
   });
   if(available.join('|')!==availableKeys.join('|'))$('sources').replaceChildren(...available.map(key=>{
     const option=document.createElement('option');option.value=key;
-    option.textContent=params.sourceMap[key].lyricSourceResult.source+' · '+key.split('-').slice(1).join('-');
+    option.textContent=key.startsWith('morphe-')?params.sourceMap[key].lyricSourceResult.source
+      :params.sourceMap[key].lyricSourceResult.source+' · '+key.split('-').slice(1).join('-');
     return option;
   }));
   autoPreferred=automatic[0]||'';
@@ -193,7 +206,17 @@ function choose(force=false) {
   selected=key;currentResult=result;
   
   updateDock();
-  renderer.setLyrics(result.lyrics,{songKey:params.videoId,language:result.language,songwriters:result.songwriters});
+  const displayLyrics=settings.stripPunctuation?result.lyrics.map(line=>{
+    if(line.isInstrumental)return line;
+    const strip=text=>text.replace(/[.!?,;:…。，、！？；：]+(\s*)$/u,'$1');
+    const words=strip(line.words);
+    if(words===line.words)return line;
+    const parts=line.parts?.map((part,index)=>index===line.parts.length-1
+      ?{...part,words:strip(part.words)}:part);
+    return {...line,words,parts};
+  }):result.lyrics;
+  renderer.setLyrics(displayLyrics,{songKey:params.videoId,language:result.language,
+    songwriters:settings.hideInfo?undefined:result.songwriters});
   
   diagnostics.lines(renderer.lines);
   decorate();
@@ -234,8 +257,19 @@ function enrichMissing(){
 
 function decorate() {
   const lines=$('lyrics').querySelectorAll('.blyrics--line');
+  const sections=new Map((settings.showSection?currentResult?.sections||[]:[]).map(section=>[section.startTimeMs,section.label]));
   currentResult?.lyrics.forEach((lyric,index)=>{
     const line=lines[index];if(!line)return;
+    line.classList.toggle('bd-capitalize',settings.capitalize===true);
+    const section=sections.get(lyric.startTimeMs);
+    let label=line.querySelector('.bd-section');
+    if(section&&!lyric.isInstrumental&&!lyric.isBackground){
+      if(!label){label=document.createElement('span');label.className='bd-section';line.prepend(label);}
+      if(label.textContent!==section)label.textContent=section;
+      sections.delete(lyric.startTimeMs);
+    }else{
+      label?.remove();
+    }
     if(settings.translation){
       const translated=translationFor(lyric,settings.language);
       if(translated)injectTranslation(document,line,translated.text,translated.language);
@@ -272,11 +306,12 @@ window.BDC = {
     reportedMismatches.clear();autoPreferred='';seenPayloads=new Set();seenPayloadBytes=0;clock.reset();frameBudget.reset(performance.now());sourceHealth={pending:1,waiting:0};parsing=0;slow=false;decodingFailed=false;lastHealthLabel='';clearTimeout(slowTimer);$('notice').textContent='';$('connection').hidden=true;$('source-health').setAttribute('aria-expanded','false');
     generation=track.generation;selected='';pinned=track.preferredSource||'';currentResult=null;enrichmentGeneration++;enrichmentRequested.clear();
     params={song:track.title,artist:track.artist,album:track.album,duration:track.duration,
-      videoId:track.videoId,sourceMap:Object.fromEntries([...PRIORITY,'metadata'].map(key=>[key,{filled:false,lyricSourceResult:null}]))};
+      videoId:track.videoId,deviceTrack:track.deviceTrack,
+      sourceMap:Object.fromEntries([...PRIORITY,deviceSource.key,'metadata'].map(key=>[key,{filled:false,lyricSourceResult:null}]))};
     renderer.clear();resetPlaybackClock();renderer.resumeAutoscroll();$('resume').hidden=true;
     closeSources();showCredits(null);availableKeys=[];updateDock();$('sources').replaceChildren();$('status').textContent='';
     const expected=generation;
-    if(track.videoId)slowTimer=setTimeout(()=>{if(expected===generation){slow=true;updateHealth();}},12000);
+    if(track.videoId||track.deviceTrack)slowTimer=setTimeout(()=>{if(expected===generation){slow=true;updateHealth();}},12000);
     $('track').textContent=track.title+' · '+track.artist;
   },
   metadata(track){
@@ -314,6 +349,7 @@ window.BDC = {
         }
         const contributors=key?.startsWith('unison-')?unisonContributors(payload.sourceMetadata):payload.contributors;
         put(key,{...payload,lyrics,contributors});
+        if(expected.deviceTrack)sourceHealth={pending:0,waiting:0,found:lyrics.length>0};
       }
       // A slower provider response may be empty or less detailed than an earlier
       // public result. Only a track change or explicit refresh clears good lyrics.
@@ -342,10 +378,12 @@ window.BDC = {
   },
   settings(next) {
     const rebuild=['translation','romanization','language'].some(key=>key in next&&next[key]!==settings[key]);
-    const visual=['fontSize','letterWave','wordSync','background','bgSize','bgOpacity','bgAlignment','agents','reducedMotion'];
+    const visual=['fontSize','letterWave','wordSync','background','bgSize','bgOpacity','bgAlignment','agents','reducedMotion',
+      'spotlight','jumpToCurrent','showCopy','showRefresh','showTranslate','showRomanize','lineScale',
+      'hideInfo','forceCenter','capitalize','stripPunctuation','swapTranslation','hidePlayed','hideUnplayed','showSection'];
     const changed=visual.some(key=>key in next&&JSON.stringify(next[key])!==JSON.stringify(settings[key]));
     if('offset' in next&&next.offset!==settings.offset)clock.initialized=false;
-    settings={...settings,...next};const themeRebuild=changed?theme():false;choose(rebuild||themeRebuild);
+    settings={...settings,...next};const themeRebuild=changed?theme():false;choose(rebuild||themeRebuild||changed);
     if(changed||rebuild)renderer.relayout();
     
     setCollapsed(settings.dockCollapsed);
@@ -376,8 +414,10 @@ window.BDC = {
     choose(true);
   },
   health(id,status){if(id!==generation)return;sourceHealth=status;updateHealth();},
-  notice(id,message){
-    if(id===generation)$('notice').textContent=message;
+  notice(id,message,finished){
+    if(id!==generation)return;
+    if(params?.deviceTrack&&finished){sourceHealth={pending:0,waiting:0,deviceError:message!=='No lyrics found'};updateHealth();}
+    else $('notice').textContent=message;
   },
   dispose(){cancelAnimationFrame(raf);cancelAnimationFrame(chooseFrame);clearTimeout(dockLayoutTimer);clearTimeout(slowTimer);dockResize.disconnect();renderer.destroy();},
 };

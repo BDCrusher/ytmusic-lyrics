@@ -37,6 +37,8 @@ import app.morphe.patcher.patch.packageMetadata
 import app.morphe.patcher.patch.patch
 import app.morphe.patcher.patch.resourceXml
 import app.morphe.patcher.patch.stringOption
+import app.morphe.patcher.patch.PatchException
+import app.morphe.patches.music.shared.Constants.COMPATIBILITY_YOUTUBE_MUSIC
 import app.morphe.patcher.util.matchAllMethodIndicesForEach
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
@@ -67,6 +69,7 @@ fun setOrGetFallbackPackageName(fallbackPackageName: String): String {
 /**
  * Selectively changes usage of Context.getPackageName() to the original package name.
  */
+@Suppress("SameParameterValue")
 private fun applyGetPackageName(oldPackageName: String, classToChange: String) {
     val filter = methodCall(
         opcode = Opcode.INVOKE_VIRTUAL,
@@ -98,19 +101,17 @@ private fun applyGetPackageName(oldPackageName: String, classToChange: String) {
     }
 }
 
-@Suppress("unused")
 val cloneAppPatch = patch(
-    name = "Clone app",
-    description = "Changes the app package name to allow installing the same app multiple times. " +
-            "By default \".morphe\" is appended to the package name. Each cloned install must " +
-            "use a unique package name. Cloning does not work with all apps and using this patch " +
-            "may cause app crashes or other unexpected behavior.",
+    name = "Clone YouTube Music",
+    description = "Choose the BDCrusher package to install alongside official Morphe. Requires GmsCore support.",
     default = false
 ) {
+    compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
+    category("Full Collection")
     packageNameOption = stringOption(
         key = "packageName",
         default = "Default",
-        values = mapOf("Default" to "Default"),
+        values = mapOf("Default" to "Default", "BDCrusher side-by-side" to "app.bdcrusher.android.apps.youtube.music"),
         title = "Package name",
         description = "Package name to use for the cloned app.",
         required = true,
@@ -211,6 +212,11 @@ val cloneAppPatch = patch(
         val providerStringResources = mutableSetOf<String>()
 
         resourceXml("AndroidManifest.xml").use { manifest ->
+            if (packageName == "com.google.android.apps.youtube.music" &&
+                manifest.root.attribute("package") != newPackageName
+            ) {
+                throw PatchException("Clone YouTube Music requires GmsCore support. Select both patches.")
+            }
             manifest.root.setAttribute("package", newPackageName)
 
             if (applyUpdatePermissions) {

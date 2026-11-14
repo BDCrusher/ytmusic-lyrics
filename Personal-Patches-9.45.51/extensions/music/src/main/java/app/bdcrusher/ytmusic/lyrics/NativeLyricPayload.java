@@ -10,21 +10,35 @@ final class NativeLyricPayload {
                 case "YTMusic"->"yt-lyrics";case "Captions"->"yt-captions";default->null;
             };
             if(key==null)return null;
+            return from(lyrics,track,key);
+ }
+ static JSONObject from(Lyrics lyrics,TrackInfo track,String key)throws JSONException {
+            String name=lyrics.providerName();
             JSONObject payload=new JSONObject().put("key",key).put("source",name);
             if(lyrics.sourceUrl()!=null)payload.put("sourceHref",lyrics.sourceUrl());
             if(lyrics.songwriters()!=null)payload.put("songwriters",new JSONArray(lyrics.songwriters()));
+            if(lyrics.credits()!=null)payload.put("providerCredits",new JSONArray(lyrics.credits()));
+            if(lyrics.agentNames()!=null)payload.put("agentNames",new JSONObject(lyrics.agentNames()));
             if(lyrics.about()!=null)payload.put("about",lyrics.about());
             // Retain native translations and romanizations in the saved payload even if a
             // particular renderer option is currently disabled.
             if(lyrics.translations()!=null)payload.put("nativeTranslations",auxiliary(lyrics.translations()));
             if(lyrics.romanizations()!=null)payload.put("nativeRomanizations",auxiliary(lyrics.romanizations()));
             if(lyrics.romanization()!=null)payload.put("nativeRomanization",texts(lyrics.romanization()));
+            JSONArray sections=new JSONArray();
+            for(LyricsLine line:lyrics.lines()){
+                if(line.songPart()!=null&&!line.songPart().isBlank())
+                    sections.put(new JSONObject().put("startTimeMs",line.startTimeMs()).put("label",line.songPart()));
+            }
+            if(sections.length()>0)payload.put("sections",sections);
             if(lyrics.rawFormat()!=null&&!lyrics.rawFormat().isEmpty()&&java.util.Arrays.asList("ttml","lrc","qrc","txt","plain").contains(lyrics.formatType()))payload.put("raw",lyrics.rawFormat()).put("format",lyrics.formatType());
             else{
                 JSONArray lines=new JSONArray();List<LyricsLine> source=lyrics.lines();
+                var retimed=lyrics.synced()?LyricsRetiming.retimeLyrics(source,null,null):List.<LyricsRetiming.RetimedEntry>of();
                 for(int i=0;i<source.size();i++){
                     LyricsLine line=source.get(i);long start=Math.max(0,line.startTimeMs());
-                    long end=line.endTimeMs()>start?line.endTimeMs():i+1<source.size()?Math.max(start,source.get(i+1).startTimeMs()):track.durationSeconds()*1000L;
+                    long end=line.endTimeMs()>start?line.endTimeMs():retimed.isEmpty()?start:retimed.get(i).actualEndTimeMs();
+                    if(end<=start&&lyrics.synced())end=track.durationSeconds()*1000L;
                     JSONObject item=new JSONObject().put("startTimeMs",start).put("durationMs",lyrics.synced()?Math.max(0,end-start):0).put("words",line.text());
                     if(line.agentId()!=null)item.put("agent",line.agentId());
                     item.put("isBackground",line.isBG());

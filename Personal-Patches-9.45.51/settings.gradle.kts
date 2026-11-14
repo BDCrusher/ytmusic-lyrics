@@ -53,7 +53,7 @@ mapOf(
 
 // Include morphe-patches-library as composite build if it exists locally.
 // It is a multi-module project, so each artifact maps to a specific subproject.
-file("../BuildSources/morphe-patches-library-2.2.0-dev.3").let { libDir ->
+file("../BuildSources/morphe-patches-library-2.2.0-dev.5").let { libDir ->
     if (libDir.exists()) {
         includeBuild(libDir) {
             dependencySubstitution {
