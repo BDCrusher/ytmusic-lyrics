@@ -1,6 +1,6 @@
 ## Current prerelease
 
-[0.9.0-beta.3](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.9.0-beta.3) targets original YouTube Music **9.45.51 / 94551240** arm64. It improves Library Downloads, updates the lyrics renderer and Unison attribution, and adds a player volume boost control. See the release for verification and remaining device checks. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.9.0-beta.3).
+[0.10.0-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.10.0-beta.1) targets original YouTube Music **9.45.51 / 94551240** arm64. It incorporates Morphe Patches 2.3.0-dev.3, adds the official lyric sources to Better Lyrics, and uses the native Library for authorized downloads. The **Clone YouTube Music** option creates a separate package when used with **GmsCore support**. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.10.0-beta.1).
 
 Enable **Pre-release patches** and **Experimental app versions** for this source in Morphe Manager, then refresh it and patch the supported original APK. The records below cover earlier releases and APK targets.
 
