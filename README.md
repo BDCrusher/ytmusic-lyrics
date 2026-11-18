@@ -1,8 +1,10 @@
 ## Current prerelease
 
-[0.10.0-beta.2](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.10.0-beta.2) targets original YouTube Music **9.45.51 / 94551240** arm64. It fixes Download command routing, puts Volume Boost inside the scrolling player actions, and consolidates Lyrics and Shaders in Morphe settings. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.10.0-beta.2).
+[0.11.0-beta.1](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.11.0-beta.1) targets original YouTube Music **9.45.51 / 94551240** and **9.46.51 / 94651240** arm64. One bundle has two sections in Morphe Manager. **Full Collection** contains the complete personal setup. **Singles** contains Shaders, Volume Boost, Better Lyrics and Downloads to use with official Morphe 2.3.0. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.11.0-beta.1).
 
-Enable **Pre-release patches** and **Experimental app versions** for this source in Morphe Manager, then refresh it and patch the supported original APK. The records below cover earlier releases and APK targets.
+Use **Expert mode** for individual patch selection. Enable **Pre-release patches** and **Experimental app versions** for this source, then refresh it and patch the supported original APK. Enable official **Third-party lyrics** with Better Lyrics (Single) and official **Downloads** with Downloads (Single).
+
+The records below cover earlier releases and APK targets.
 
 # BDCrusher YT-Music personal patches
 
