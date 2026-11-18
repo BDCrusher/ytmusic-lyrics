@@ -1,6 +1,6 @@
 ## Current prerelease
 
-[0.11.0-beta.3](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.11.0-beta.3) targets original YouTube Music **9.45.51 / 94551240** and **9.46.51 / 94651240** arm64. This release fixes the Singles logging crash and adds **Diagnostics (Single)** and **Crash diagnostics** in Full Collection. After a crash, reopen Music and go to **Settings → Morphe → Crash diagnostics → Save crash report**. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.11.0-beta.3).
+[0.11.0-beta.4](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.11.0-beta.4) targets original YouTube Music **9.45.51 / 94551240** and **9.46.51 / 94651240** arm64. It fixes a Better Lyrics crash that could occur after a song started and keeps **Diagnostics (Single)** and **Crash diagnostics** in Full Collection. After a crash, reopen Music and go to **Settings → Morphe → Crash diagnostics → Save crash report**. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.11.0-beta.4).
 
 Use **Expert mode** for individual patch selection. Enable **Pre-release patches** and **Experimental app versions**, refresh the source, and patch the supported original APK. Select official **Third-party lyrics** with Better Lyrics (Single) and official **Downloads** with Downloads (Single). With official Morphe 2.4.0-dev.1, list the official source first. Stable Morphe Patches 2.3.0 passed in either order.
 
