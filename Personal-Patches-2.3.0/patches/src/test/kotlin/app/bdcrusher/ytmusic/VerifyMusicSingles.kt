@@ -163,6 +163,7 @@ fun main(args: Array<String>) {
     check(calls.getOrDefault(OWN + "diagnostics/CrashDiagnosticsSettings;->install", 0) == diagnosticsCount)
     println("PASS: $callbacks executable personal Logger callbacks in the patched APK")
     check(calls.keys.none { "PersonalRuntime;->attach" in it || "TaskDismissal;" in it }) { "Full Collection hooks in Singles" }
+    if (lyrics) verifyLyricsProviderAccess(result)
     println("PASS: ${selectedPersonal.map { it.name }} compatible with ${selectedOfficial.size} official patches, ${types.size} distinct classes")
     println("Patched unsigned APK ${sha(result)}")
 }

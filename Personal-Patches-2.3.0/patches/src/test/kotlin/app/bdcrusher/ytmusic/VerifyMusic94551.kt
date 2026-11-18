@@ -155,6 +155,7 @@ fun main(args: Array<String>) {
     }
     check(calls.getOrDefault("Lapp/bdcrusher/ytmusic/diagnostics/CrashDiagnosticsSettings;->install", 0) == if (diagnostics) 1 else 0)
     println("PASS: $callbacks executable personal Logger callbacks in the patched APK")
+    if (selected.any { it.name == "Third-party lyrics" }) verifyLyricsProviderAccess(result)
     println("PASS: $mode, ${seen.size} unique classes; retired Library bridge absent")
     println("Patched unsigned APK ${hash(result)}")
 }

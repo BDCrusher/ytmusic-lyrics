@@ -8,6 +8,7 @@ import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.*;
+import app.morphe.extension.music.patches.lyrics.LyricsProviders;
 import app.morphe.extension.music.patches.lyrics.model.TrackInfo;
 
 /** Native transport for the extension provider pipeline; all outcomes have bounded diagnostics. */
@@ -151,9 +152,10 @@ final class LyricsCatalog implements AutoCloseable {
     }
     private void officialProvider(TrackInfo track,String id,String key)throws Exception{
         if(closed||!videoId.equals(app.morphe.extension.music.shared.VideoInformation.getVideoId()))return;
-        var provider=app.morphe.extension.music.patches.lyrics.LyricsProviders.providerFor(id);
-        if(provider==null)throw new IllegalStateException("Unknown Morphe lyric provider");
-        var result=provider.fetch(track);
+        // Morphe treats an order without a comma as a request for its default provider list.
+        var providers = LyricsProviders.providersInOrder(id + ",");
+        if (providers.size() != 1) throw new IllegalStateException("Unknown Morphe lyric provider");
+        var result = providers.get(0).fetch(track);
         if(closed||!videoId.equals(app.morphe.extension.music.shared.VideoInformation.getVideoId()))return;
         if(result==null||result.lyrics()==null||result.lyrics().isEmpty())throw new NotFound();
         JSONObject payload=NativeLyricPayload.from(result.lyrics(),track,key);
@@ -188,6 +190,13 @@ final class LyricsCatalog implements AutoCloseable {
             if(!"Saved lyrics".equals(source)&&!LyricsRetry.active(context)){schedule(10000);return;}
             attempts++;
             try{work.run();recovered(source);finish();}
+            catch (LinkageError failure) {
+                if (!closed) {
+                    failed(source);
+                    LyricsDiagnostics.record(source, "Provider unavailable: " + failure.getClass().getSimpleName());
+                }
+                finish();
+            }
             catch(Exception failure){
                 if(closed||Thread.currentThread().isInterrupted()){finish();return;}
                 if(failure instanceof LyricsNetwork.TransportBusy){attempts--;schedule(250);return;}

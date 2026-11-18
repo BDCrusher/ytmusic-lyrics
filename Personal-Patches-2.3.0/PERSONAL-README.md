@@ -75,8 +75,8 @@ account data, URLs, song titles, video IDs, lyrics and raw debug logs.
 Use **Record playback steps** to pause new capture. Previously saved crash and
 previous-session records remain available. The file identifies Java crashes captured
 after installing the patch and can show recent Android exit records for the same
-app package. The earlier crash that occurred before debug logging was enabled remains
-undiagnosed.
+app package. On 0.11.0-beta.3, two phone reports recorded the same Better Lyrics
+provider access error after audio started. The 0.11.0-beta.4 build fixes that call.
 
 ## Build
 
@@ -91,7 +91,8 @@ outputs into the app home.
 The app-home `Verification/music-parity-01` directory contains exact-bundle patch logs,
 desktop fixtures and compiled audit reports. The test entry points are
 `verifyMusicSingles`, `verifyMusic94551`, `auditNativeMusic94551`, `PlaylistOccurrencesTest` and
-`DownloadQualityTest`. The 0.11.0-beta.3 crash regression, original and patched DEX
+`DownloadQualityTest`. `VerifyLyricsProviderAccessKt` checks Better Lyrics method
+access against the actual bundled Morphe extension. The 0.11.0-beta.3 crash regression, original and patched DEX
 checks, and crash history tests are retained in `Verification/music-crash-01`.
 
 Device acceptance is separate from SDK checks. Run the renderer's status and provider

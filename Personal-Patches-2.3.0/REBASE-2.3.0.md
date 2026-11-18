@@ -18,6 +18,18 @@ The worktree starts at the tracked personal 9.45.51 source and merges official M
 
 The app-home build entry point is build-music-230.ps1. The parity run is retained under Verification/music-parity-01.
 
+## 0.11.0-beta.4 Better Lyrics provider access
+
+Two crash exports from Music 9.46.51 with Morphe 2.4.0-dev.1 and personal
+0.11.0-beta.3 Singles recorded `IllegalAccessError` at `LyricsCatalog.officialProvider`
+after audio output started. The final beta.3 APKs show that Better Lyrics called a
+private `LyricsProviders.providerFor` on both inspected official bundles. Full
+Collection's locally compiled method had been public. Both categories now call
+Morphe's public `providersInOrder` with an explicit single-provider list.
+An unexpected provider linkage failure is recorded as a failed source so the
+remaining providers and player can continue. The verifier checks method
+visibility and invoke kind in the final APKs and detects the beta.3 call.
+
 ## 0.11.0-beta.3 playback crash and diagnostics
 
 The supplied exception was `AbstractMethodError` at `Logger.LogMessage.buildMessageString()`
