@@ -1,8 +1,8 @@
 ## Current prerelease
 
-[0.11.0-beta.5](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.11.0-beta.5) targets original YouTube Music **9.45.51 / 94551240** and **9.46.51 / 94651240** arm64. It fixes stale lyrics during song switches and includes **Crash diagnostics** in Full Collection and as **Diagnostics (Single)**. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.11.0-beta.5).
+[0.11.0-beta.6](https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.11.0-beta.6) targets original YouTube Music **9.45.51 / 94551240** and **9.46.51 / 94651240** arm64. It improves the album-art backdrop, lyric timing when playback pauses or resumes, search completion, and credential setup for protected lyric sources. [Current source](https://github.com/BDCrusher/ytmusic-lyrics/tree/v0.11.0-beta.6).
 
-Use **Expert mode** for individual patch selection. Enable **Pre-release patches** and **Experimental app versions**, refresh the source, and patch the supported original APK. Select official **Third-party lyrics** with Better Lyrics (Single) and official **Downloads** with Downloads (Single). With official Morphe 2.4.0-dev.1, list the official source first.
+Enable **Pre-release patches** and **Experimental app versions** and refresh the source. Select official **Third-party lyrics** with Better Lyrics (Single) and official **Downloads** with Downloads (Single). With official Morphe 2.4.0-dev.1, list the official source first.
 
 The records below cover earlier releases and APK targets.
 
