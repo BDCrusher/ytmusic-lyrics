@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+    Strings with new lines must be raw strings where they're wrapped in quotes and new lines are not encoded.
+    Raw strings still require escaping embedded double quotes but escaping embedded single quotes is optional.
+
+    Raw strings are required because Crowdin AI translations regularly gets confused and
+    replace \n with an encoded new line character.
+
+    Bad:
+        <string name="summary_key">First \'item\' text\nSecond \"item\" text</string>
+
+    Good:
+        <string name="summary_key">"First 'item' text
+Second \"item\" text"</string>
+
+-->
+<resources>
+  <!-- misc.androidauto.androidAutoPatch -->
+  <!-- app.morphe.patches.music.interaction.jam -->
+  <!-- layout.branding.customBrandingPatch -->
+  <!-- layout.branding.header.changeHeaderPatch -->
+  <!-- misc.album.albumMusicVideoPatch -->
+  <!-- 'Spoof video streams' should match the language used in 'morphe_spoof_video_streams_screen_title' -->
+  <!-- misc.audiovideoswitch.enableAudioVideoSwitchPatch -->
+  <string name="morphe_music_auto_song_version_title">எப்போதும் பாடல் பதிப்பையே இயக்கு</string>
+  <string name="morphe_music_auto_song_version_summary">வரிசையில் உள்ள அதிகாரப்பூர்வ இசை வீடியோக்களை அதற்குப் பொருத்தமான பாடலால் மாற்றும். இதற்கு செயலியின் அமைப்பில் \'இசை வீடியோக்களை இயக்காதே\' என்பது ஆன் செய்யப்பட வேண்டும். சரியான பொருத்தம் இல்லாத பாடல்கள் மாற்றப்படாமல் இருக்கும்</string>
+  <!-- interaction.downloads.downloadsPatch -->
+  <!-- 'Download' should be translated using the same localized wording YouTube displays for the menu. -->
+  <string name="morphe_export_download_folder_title">பதிவிறக்கங்களை ஏற்றுமதி செய்</string>
+  <string name="morphe_export_download_folder_summary">"ஆப்-இன் டவுன்லோட்கள் flyout மெனுவைப் பயன்படுத்தி ஆப்பில் சேமிக்கப்பட்ட பாடல்கள் மற்றும் வீடியோக்களை உங்கள் சாதனச் சேமிப்பகத்திற்கு ஏற்றுமதி செய்யவும். ஏற்றுமதி
+
+ஏற்றுமதி கோப்புறையை மாற்ற தட்டவும்: %s"</string>
+  <string name="morphe_export_download_started">பதிவிறக்கத்தை ஏற்றுமதி செய்கிறது</string>
+  <string name="morphe_export_download_progress">பதிவிறக்கத்தை ஏற்றுமதி செய்கிறது: %s%%</string>
+  <string name="morphe_export_download_notification_channel">பதிவிறக்க ஏற்றுமதிகள்</string>
+  <string name="morphe_export_download_saved">பதிவிறக்கம் %s-க்கு ஏற்றுமதி செய்யப்பட்டது</string>
+  <string name="morphe_export_download_failed">பதிவிறக்கத்தை ஏற்றுமதி செய்ய முடியவில்லை</string>
+  <string name="morphe_export_download_all_flyout_title">அனைத்தையும் சாதனத்திற்கு ஏற்றுமதி செய்</string>
+  <string name="morphe_export_download_all_started">அனைத்துப் பதிவிறக்கங்களையும் ஏற்றுமதி செய்கிறது</string>
+  <string name="morphe_export_download_all_running">பதிவிறக்கங்கள் ஏற்கனவே ஏற்றுமதி செய்யப்படுகின்றன</string>
+  <string name="morphe_export_download_all_saved">%2$s பதிவிறக்கங்களில் %1$s பதிவிறக்கங்கள் %3$s-க்கு ஏற்றுமதி செய்யப்பட்டன</string>
+  <!-- misc.medianotification.mediaNotificationControlsPatchMusic -->
+  <string name="morphe_music_replace_shuffle_with_loop_button_title">Shuffle பொத்தானுக்குப் பதிலாக Loop பொத்தானை மாற்றவும்</string>
+  <string name="morphe_music_replace_shuffle_with_loop_button_summary">மீடியா அறிவிப்பு மற்றும் லாக் ஸ்கிரீனில் Shuffle பொத்தானுக்குப் பதிலாக Loop பொத்தானைக் காட்டுகிறது</string>
+  <!-- misc.settings.settingsPatch -->
+  <!-- In languages where "About" is ambiguous, translate this as "About Morphe" (i.e., About this app). -->
+  <string name="morphe_settings_music_screen_00_about_title">Morphe பற்றி</string>
+  <string name="morphe_settings_music_screen_01_ads_title">விளம்பரங்கள்</string>
+  <string name="morphe_settings_music_screen_02_feed_title">ஃபீட்</string>
+  <string name="morphe_settings_music_screen_03_general_title">பொதுவானவை</string>
+  <string name="morphe_settings_music_screen_04_lyrics_title">பாடல் வரிகள்</string>
+  <string name="morphe_settings_music_screen_05_misc_title">இதரவை</string>
+  <string name="morphe_settings_music_screen_06_player_title">பிளேயர்</string>
+  <string name="morphe_settings_music_screen_10_video_title">வீடியோ</string>
+  <!-- ad.hideAdsPatch -->
+  <!-- layout.hide.general.hideLayoutComponentsPatch -->
+  <string name="morphe_music_hide_you_may_also_like_section_title">\'உங்களுக்கு இதுவும் பிடிக்கலாம்\' பகுதியை மறைக்கவும்</string>
+  <string name="morphe_music_hide_your_downloads_shelf_title">\'உங்கள் பதிவிறக்கங்கள்\' அலமாரியை மறைக்கவும்</string>
+  <string name="morphe_music_hide_comments_gif_button_title">GIF பொத்தானை மறைக்கவும்</string>
+  <string name="morphe_music_hide_comments_gifs_and_images_title">GIF-கள் மற்றும் படங்களை மறைக்கவும்</string>
+  <string name="morphe_music_hide_comments_gifs_and_images_summary">கருத்துகள் மற்றும் பதில்களில் இணைக்கப்பட்டுள்ள GIF-கள் மற்றும் படங்களை மறைக்கும்</string>
+  <!-- interaction.crossfade.crossfadePatch -->
+  <!-- Empty string because custom preference handles the title itself -->
+  <!-- interaction.remember.repeatstate.rememberRepeatStatePatch-->
+  <!-- interaction.remember.shufflestate.rememberShuffleStatePatch -->
+  <!-- interaction.pausewhenmuted.pauseWhenMutedPatch -->
+  <string name="morphe_music_pause_when_muted_title">முடக்கப்படும்போது நிறுத்து</string>
+  <string name="morphe_music_pause_when_muted_summary">சிஸ்டம் வால்யூம் முடக்கப்படும்போது ஒலியீர்ப்பை நிறுத்தும் மற்றும் வால்யூம் உயர்த்தப்படும்போது மீண்டும் தொடங்கும்</string>
+  <!-- video.speed.playbackSpeedPatch -->
+  <!-- layout.captions.disableAutoCaptionsPatch -->
+  <string name="morphe_music_disable_auto_captions_title">தானியங்கி தலைப்புகளை முடக்கவும்</string>
+  <string name="morphe_music_disable_auto_captions_summary">வீடியோ இயங்கும்போது, வீடியோவில் இயல்பாகவே இருக்கும் தலைப்புகள் உட்பட, தலைப்புகள் தானாகவே இயக்கப்படாது</string>
+  <!-- interaction.audioducking.disableAudioDuckingPatch -->
+  <string name="morphe_music_disable_audio_ducking_title">ஆடியோ டக்கிங்கை முடக்கு</string>
+  <string name="morphe_music_disable_audio_ducking_summary">அறிவிப்பு போன்ற சிறிய ஒலியை மற்றொரு ஆப் இயக்கும்போது, வால்யூம் குறைக்கப்படாது</string>
+  <!-- interaction.dislikeredirection.disableDislikeRedirectionPatch -->
+  <!-- interaction.loop.loopVideoPatch -->
+  <string name="morphe_music_ab_loop_title">A-B லூப்</string>
+  <string name="morphe_music_ab_loop_summary">லூப் தொடக்கத்தை அமைக்க சீக் பாரை நீண்ட நேரம் அழுத்தவும், லூப் முடிவை அமைக்க மீண்டும் அழுத்தவும், மேலும் லூப்பை நீக்க மீண்டும் அழுத்தவும்</string>
+  <string name="morphe_music_ab_loop_toast_start">லூப் தொடக்கம் %s என அமைக்கப்பட்டது</string>
+  <string name="morphe_music_ab_loop_toast_end">லூப் முடிவு %s என அமைக்கப்பட்டது</string>
+  <string name="morphe_music_ab_loop_toast_cleared">லூப் நீக்கப்பட்டது</string>
+  <!-- interaction.playlisttracktap.playlistTrackTapPatch -->
+  <!-- 'Added to queue' should be translated using the same localized wording YouTube Music displays for the toast. -->
+  <!-- layout.playlisttags.playlistTagsPatch -->
+  <string name="morphe_music_playlist_tags_screen_title">பிளேலிஸ்ட் குறிச்சொற்கள்</string>
+  <string name="morphe_music_playlist_tags_screen_summary">பிளேலிஸ்ட்களுக்குக் குறிச்சொற்களை இடுங்கள் மற்றும் குறிச்சொற்களைக் கொண்டு லைப்ரரியை வடிகட்டுங்கள்</string>
+  <string name="morphe_music_playlist_tags_title">பிளேலிஸ்ட் குறிச்சொற்களைச் செயல்படுத்தவும்</string>
+  <string name="morphe_music_playlist_tags_summary">பிளேலிஸ்ட்களின் மெனுவில் \'குறிச்சொற்கள்\' என்ற உருப்படியையும், லைப்ரரியின் வரிசைப்படுத்தும் பொத்தானுக்கு அருகில் \'குறிச்சொற்கள்\' வடிகட்டி பொத்தானையும் சேர்க்கிறது</string>
+  <string name="morphe_music_playlist_tags_manage_title">பிளேலிஸ்ட் குறிச்சொற்களை நிர்வகிக்கவும்</string>
+  <string name="morphe_music_playlist_tags_manage_summary">குறிச்சொற்களை உருவாக்கவும், பெயர் மாற்றவும் மற்றும் நீக்கவும், மேலும் உங்கள் லைப்ரரியில் உள்ள பிளேலிஸ்ட்களுக்குக் குறிச்சொற்களை இடுங்கள்</string>
+  <!-- Title of the row added to the menu of a playlist. -->
+  <string name="morphe_music_playlist_tags_menu_item">குறிச்சொற்கள்</string>
+  <string name="morphe_music_playlist_tags_menu_item_none">குறிச்சொற்கள் இல்லை</string>
+  <string name="morphe_music_playlist_tags_filter_button">குறிச்சொற்கள்</string>
+  <!-- %s is the name of the tag. -->
+  <string name="morphe_music_playlist_tags_filter_button_only">குறிச்சொல்: %s</string>
+  <!-- %s is the number of hidden tags. -->
+  <string name="morphe_music_playlist_tags_filter_button_hidden">குறிச்சொற்கள் (%s மறைக்கப்பட்டவை)</string>
+  <!-- %s is the name of the playlist. -->
+  <string name="morphe_music_playlist_tags_assign_title">%s க்கான குறிச்சொற்கள்</string>
+  <string name="morphe_music_playlist_tags_new_tag_hint">புதிய குறிச்சொல்</string>
+  <string name="morphe_music_playlist_tags_playlist_count_one">1 இயக்கப் பட்டியல்</string>
+  <!-- %s is the number of playlists that have the tag. -->
+  <string name="morphe_music_playlist_tags_playlist_count">%s இயக்கப் பட்டியல்கள்</string>
+  <!-- %s is the name of the tag. -->
+  <string name="morphe_music_playlist_tags_tag_exists">%s என்ற பெயரில் குறிச்சொல் ஏற்கனவே உள்ளது</string>
+  <string name="morphe_music_playlist_tags_filter_title">குறிச்சொல் மூலம் வடிகட்டவும்</string>
+  <string name="morphe_music_playlist_tags_filter_show_only">காட்டு மட்டும்</string>
+  <string name="morphe_music_playlist_tags_filter_all">அனைத்து இயக்கப் பட்டியல்களும்</string>
+  <string name="morphe_music_playlist_tags_filter_visible">தெரியக்கூடிய குறிச்சொற்கள்</string>
+  <string name="morphe_music_playlist_tags_manage">நிர்வகி</string>
+  <string name="morphe_music_playlist_tags_none">இன்னும் குறிச்சொற்கள் இல்லை. ஒரு பிளேலிஸ்ட்டை நீண்ட நேரம் அழுத்தி, ஒன்றை உருவாக்க குறிச்சொற்களைத் தேர்ந்தெடுக்கவும்</string>
+  <string name="morphe_music_playlist_tags_section_tags">குறிச்சொற்கள்</string>
+  <string name="morphe_music_playlist_tags_section_playlists">பிளேலிஸ்ட்கள்</string>
+  <string name="morphe_music_playlist_tags_no_playlists">உங்கள் பிளேலிஸ்ட்கள் இங்கே தோன்றுவதற்கு லைப்ரரியை ஒருமுறை திறக்கவும்</string>
+  <string name="morphe_music_playlist_tags_new_tag">புதிய குறிச்சொல்</string>
+  <string name="morphe_music_playlist_tags_edit_tag_title">குறிச்சொல்லைத் திருத்து</string>
+  <string name="morphe_music_playlist_tags_rename">பெயரை மாற்று</string>
+  <string name="morphe_music_playlist_tags_delete">நீக்கு</string>
+  <string name="morphe_music_playlist_tags_hidden">மறைக்கப்பட்டது</string>
+  <!-- layout.buttons.hideButtonsPatch -->
+  <!-- layout.hide.actionbuttons.hideActionButtonsPatch -->
+  <!-- 'Live chat replay' should be translated using the same localized wording YouTube Music displays for the button. -->
+  <!-- 'Lyrics' should be translated using the same localized wording YouTube Music displays for the button. -->
+  <!-- 'Share' should be translated using the same localized wording YouTube Music displays for the button. -->
+  <!-- 'Save' should be translated using the same localized wording YouTube Music displays for the button. -->
+  <!-- 'Download' should be translated using the same localized wording YouTube Music displays for the button. -->
+  <!-- 'Start radio' should be translated using the same localized wording YouTube Music displays for the button. -->
+  <!-- flyoutmenu.components.hideFlyoutMenuComponentsPatch -->
+  <!-- layout.startpage.changeStartPagePatch -->
+  <!-- layout.orientation.forcePortraitOrientationPatch -->
+  <!-- layout.miniplayer.changeMiniplayerColorPatch -->
+  <!-- layout.miniplayer.miniplayerNextPreviousButtonsPatch -->
+  <!-- layout.miniplayer.enableForcedMiniplayerPatch -->
+  <!-- layout.miniplayer.enableSwipeToDismissMiniplayerPatch -->
+  <!-- layout.navigationbar.navigationBarPatch -->
+  <!-- 'Home' should be translated using the same localized wording YouTube Music displays for the tab. -->
+  <!-- 'Samples' should be translated using the same localized wording YouTube Music displays for the tab. -->
+  <!-- 'Explore' should be translated using the same localized wording YouTube Music displays for the tab. -->
+  <!-- 'Library' should be translated using the same localized wording YouTube Music displays for the tab. -->
+  <!-- 'Upgrade' should be translated using the same localized wording YouTube Music displays for the tab. -->
+  <string name="morphe_music_navigation_bar_glass_title">கிளாஸ் நேவிகேஷன் பாரை இயக்கவும்</string>
+  <string name="morphe_music_navigation_bar_glass_summary">வழிசெலுத்தல் பட்டையை மிதக்கும், உருண்டையான, ஒளிபுகும் கேப்சூலாகக் காட்டுகிறது</string>
+  <string name="morphe_music_navigation_bar_glass_size_title">கண்ணாடி நேவிகேஷன் பார் அளவு மற்றும் பாணி</string>
+  <string name="morphe_music_navigation_bar_glass_size_summary">கிளாஸ் நேவிகேஷன் பாரின் உயரம், அகலம், பொத்தான்களின் இடைவெளி, ஒளிபுகும் தன்மை மற்றும் விளிம்பின் பிரகாசம் ஆகியவற்றை முன்கூட்டியே பார்த்து சரிசெய்யவும். திரையின் அகலத்திற்குள் பொருந்தாத பொத்தான்கள் மறைக்கப்படும்</string>
+  <string name="morphe_music_navigation_bar_glass_size_height">உயரம்</string>
+  <string name="morphe_music_navigation_bar_glass_size_width">அதிகபட்ச அகலம்</string>
+  <string name="morphe_music_navigation_bar_glass_size_button_spacing">பொத்தான்களின் இடைவெளி</string>
+  <string name="morphe_music_navigation_bar_glass_size_buttons_shown">காட்டப்படும் பொத்தான்கள்: %2$s இல் %1$s</string>
+  <string name="morphe_music_navigation_bar_glass_opacity_title">ஒளிபுகும் தன்மை</string>
+  <string name="morphe_music_navigation_bar_glass_rim_title">விளிம்பின் பிரகாசம்</string>
+  <string name="morphe_music_navigation_bar_glass_blur_title">கிளாஸ் மங்கலான தன்மை</string>
+  <string name="morphe_music_navigation_bar_glass_blur_summary">கிளாஸ் நேவிகேஷன் பாரிற்கு பின்னால் உள்ள பக்கம் எவ்வளவு மங்கலாக இருக்க வேண்டும் (Android 14 மற்றும் அதற்குப் பிறகு). 0-இல் பக்கம் தெளிவாகத் தெரியும், Android 14-க்கு முன்பு பக்கம் மறைக்கப்பட்டிருக்கும்</string>
+  <string name="morphe_music_navigation_bar_glass_light_title">லேட் கிளாஸ்</string>
+  <string name="morphe_music_navigation_bar_glass_light_summary">லேசான மற்றும் தெளிவான கிளாஸுக்காக, கிளாஸ் வழிசெலுத்தல் பட்டையை இருண்ட நிறத்திற்குப் பதிலாக வெள்ளை நிறத்தில் மாற்றுகிறது</string>
+  <string name="morphe_music_navigation_bar_glass_album_tint_title">ஆல்பம் கலை வண்ணம்</string>
+  <string name="morphe_music_navigation_bar_glass_album_tint_summary">இயங்கும் பாடலின் ஆல்பம் கலை நிறத்தைக் கொண்டு கிளாஸ் நேவிகேஷன் பாரை வண்ணப்படுத்துகிறது</string>
+  <string name="morphe_music_navigation_bar_glass_hide_indicator_title">தேர்ந்தெடுக்கப்பட்ட பொத்தான் குறீயை மறை</string>
+  <string name="morphe_music_navigation_bar_glass_hide_indicator_summary">கிளாஸ் நேவிகேஷன் பாரின் தேர்ந்தெடுக்கப்பட்ட பட்டனுக்குப் பின்னால் உள்ள வட்ட வடிவ ஹைலைட்டை மறைக்கிறது</string>
+  <string name="morphe_music_miniplayer_screen_title">மினிப்ளேயர்</string>
+  <string name="morphe_music_miniplayer_screen_summary">மினிப்ளேயரின் ஸ்டைல், பட்டன்கள் மற்றும் ஜஸ்டர்களை மாற்றவும்</string>
+  <string name="morphe_music_miniplayer_glass_title">கிளாஸ் மினிப்ளேயரை எனேபிள் செய்யவும்</string>
+  <string name="morphe_music_miniplayer_glass_summary">மிதக்கும் மினிப்ளேயரை வட்ட வடிவ, ஒளிஊடுருவும் கிளாஸ் கார்டாகக் காண்பிக்கிறது</string>
+  <string name="morphe_music_miniplayer_glass_style_title">கிளாஸ் மினிபிளேயர் ஸ்டைல்</string>
+  <string name="morphe_music_miniplayer_glass_style_summary">கிளாஸ் மினிபிளேயரின் மூலை ஆரம், கலைப்படைப்பு இடைவெளி, விளிம்பு பிரகாசம் மற்றும் ஒளிபுகும் தன்மை ஆகியவற்றை முன்னோட்டத்துடன் சரிசெய்யவும்</string>
+  <string name="morphe_music_miniplayer_glass_corner_radius_title">மூலை ஆரம்</string>
+  <string name="morphe_music_miniplayer_glass_artwork_padding_title">கலைப்படைப்பு இடைவெளி</string>
+  <string name="morphe_music_miniplayer_glass_rim_title">விளிம்பு பிரகாசம்</string>
+  <string name="morphe_music_miniplayer_glass_opacity_title">ஒளிபுகும் தன்மை</string>
+  <string name="morphe_music_miniplayer_glass_blur_title">கிளாஸ் மங்கலாக்கம்</string>
+  <string name="morphe_music_miniplayer_glass_blur_summary">கண்ணாடி மினிப்ளேயருக்குப் பின்னால் உள்ள பக்கம் எவ்வளவு மங்கலாக உள்ளது (Android 14 மற்றும் அதற்குப் பிறகு). 0-இல் பக்கம் தெளிவாகத் தெரியும், Android 14-க்கு முன் பக்கம் மறைக்கப்படும்</string>
+  <string name="morphe_music_miniplayer_glass_light_title">லேசான கண்ணாடி</string>
+  <string name="morphe_music_miniplayer_glass_light_summary">லேசான மற்றும் தெளிவான கண்ணாடிக்கு, கண்ணாடி மினிப்ளேயரை இருண்ட நிறத்திற்குப் பதிலாக வெள்ளை நிறத்தில் மாற்றுகிறது</string>
+  <string name="morphe_music_miniplayer_glass_album_tint_title">ஆல்பம் கலை வண்ணம்</string>
+  <string name="morphe_music_miniplayer_glass_album_tint_summary">இயங்கும் பாடலின் ஆல்பம் கலை வண்ணத்தைக் கொண்டு கண்ணாடி மினிப்ளேயரை வண்ணப்படுத்துகிறது</string>
+  <string name="morphe_music_miniplayer_glass_spinning_artwork_title">சுழலும் கலைப்படைப்பு</string>
+  <string name="morphe_music_miniplayer_glass_spinning_artwork_summary">கிளாஸ் மினிப்ளேயரின் கலைப்படைப்பை வட்டமாக்கி, பாடல் இயங்கும்போது அதை ஒரு ரெக்கார்டு போல சுழலச் செய்கிறது</string>
+  <string name="morphe_music_miniplayer_glass_hide_progress_bar_title">முன்னேற்றப் பட்டையை மறைக்கவும்</string>
+  <string name="morphe_music_miniplayer_glass_hide_progress_bar_summary">கிளாஸ் மினிப்ளேயரின் அடிப்பகுதியில் உள்ள முன்னேற்றப் பட்டையை மறைக்கிறது</string>
+  <!-- Labels of the preview, shown before the navigation bar was seen. Use the same localized wording YouTube Music displays for the tabs. -->
+  <string name="morphe_music_navigation_bar_glass_preview_home">முகப்பு</string>
+  <string name="morphe_music_navigation_bar_glass_preview_samples">மாதிரிகள்</string>
+  <string name="morphe_music_navigation_bar_glass_preview_explore">ஆராயுங்கள்</string>
+  <string name="morphe_music_navigation_bar_glass_preview_library">நூலகம்</string>
+  <!-- interaction.scrobbling.scrobblingPatch -->
+  <!-- 'scrobbling' must be kept untranslated -->
+  <!-- 'scrobbled' must be kept untranslated -->
+  <!-- 'scrobble' must be kept untranslated -->
+  <!-- 'scrobble' must be kept untranslated -->
+  <!-- 'scrobble' must be kept untranslated -->
+  <!-- 'scrobble' must be kept untranslated -->
+  <!-- 'scrobbling' must be kept untranslated -->
+  <!-- 'scrobbling' must be kept untranslated -->
+  <!-- interaction.soundproof.soundProofPatch -->
+  <!-- 'SoundProof' must be kept untranslated -->
+  <string name="morphe_music_soundproof_screen_summary">சமூகத்தால் AI என்று புகாரளிக்கப்பட்ட கலைஞர்களின் பாடல்களைத் தவிர்க்கவும்</string>
+  <string name="morphe_music_soundproof_show_button_title">SoundProof பொத்தானைக் காட்டு</string>
+  <string name="morphe_music_soundproof_show_button_summary">தற்போதைய கலைஞருக்கான சமூக வாக்குகளைப் பார்க்கவும் மற்றும் வாக்களிக்கவும் பிளேயரின் மேல் பட்டியில் ஒரு பொத்தானைக் காட்டுகிறது</string>
+  <string name="morphe_music_soundproof_skip_ai_artists_title">AI கலைஞர்களைத் தவிர்க்கவும்</string>
+  <string name="morphe_music_soundproof_skip_ai_artists_summary">கீழே உள்ள AI வரம்பை எட்டும் கலைஞர்களின் பாடல்களைத் தானாகவே தவிர்க்கிறது</string>
+  <string name="morphe_music_soundproof_toast_on_skip_title">தவிர்க்கும் அறிவிப்பைக் காட்டு</string>
+  <string name="morphe_music_soundproof_toast_on_skip_summary">ஒரு பாடல் தானாகத் தவிர்க்கப்படும்போது அறிவிப்பைக் காட்டுகிறது</string>
+  <string name="morphe_music_soundproof_threshold_title">கண்டறிதல் வரம்பு</string>
+  <string name="morphe_music_soundproof_minimum_ai_percent_title">குறைந்தபட்ச AI வாக்குகள்</string>
+  <string name="morphe_music_soundproof_minimum_ai_percent_summary">குறைந்தபட்சம் இந்த அளவு வாக்குகள் AI என்று கூறும்போது, ஒரு கலைஞர் AI ஆகக் கருதப்படுவார்</string>
+  <string name="morphe_music_soundproof_minimum_votes_title">குறைந்தபட்ச வாக்குகளின் எண்ணிக்கை</string>
+  <string name="morphe_music_soundproof_minimum_votes_summary">இதைவிடக் குறைவான வாக்குகள் பெற்ற கலைஞர்கள் ஒருபோதும் தவிர்க்கப்பட மாட்டார்கள்</string>
+  <!-- %1$s is the artist name, %2$s the share of AI votes. Example: Skipped 10mm (AI, 100%) -->
+  <string name="morphe_music_soundproof_skipped_toast">%1$s தவிர்க்கப்பட்டது (AI, %2$s%%)</string>
+  <string name="morphe_music_soundproof_button_description">இந்த கலைஞருக்கான SoundProof வாக்குகளை அளிக்கவும்</string>
+  <string name="morphe_music_soundproof_sheet_verified">சரிபார்க்கப்பட்டது</string>
+  <!-- Share of the votes on the majority side. Example: 93% AI -->
+  <string name="morphe_music_soundproof_sheet_percent_ai">%s%% AI</string>
+  <!-- Share of the votes on the majority side. Example: 92% human -->
+  <string name="morphe_music_soundproof_sheet_percent_human">%s%% மனிதன்</string>
+  <string name="morphe_music_soundproof_sheet_one_vote">1 வாக்கு</string>
+  <!-- Total number of votes, always more than one. Example: 44 votes -->
+  <string name="morphe_music_soundproof_sheet_votes">%s வாக்குகள்</string>
+  <!-- Number of votes saying the artist is human. Example: 3 human -->
+  <string name="morphe_music_soundproof_sheet_human_votes">%s மனிதன்</string>
+  <!-- Number of votes saying the artist is AI. Example: 41 AI -->
+  <string name="morphe_music_soundproof_sheet_ai_votes">%s AI</string>
+  <string name="morphe_music_soundproof_sheet_no_votes_title">இந்த கலைஞருக்கு இன்னும் வாக்குகள் எதுவும் இல்லை</string>
+  <string name="morphe_music_soundproof_sheet_unavailable_title">SoundProof தரவுத்தளம் இன்னும் கிடைக்கவில்லை</string>
+  <string name="morphe_music_soundproof_sheet_unavailable_summary">இது பின்னணியில் பதிவிறக்கம் செய்யப்படுகிறது. அது கிடைக்கும் வரை எந்தப் பாடலும் தவிர்க்கப்படாது.</string>
+  <!-- 'SoundProof' must be kept untranslated -->
+  <string name="morphe_music_soundproof_sheet_source">SoundProof தரவுத்தளத்திலிருந்து சமூக வாக்குகளைப் பெறப்பட்டது</string>
+  <string name="morphe_music_soundproof_sheet_vote_human">மனிதன்</string>
+  <string name="morphe_music_soundproof_sheet_vote_ai">AI</string>
+  <string name="morphe_music_soundproof_sheet_voting_locked">வாக்களிப்பு முடிவடைந்தது: SoundProof மிதவாதி இந்த கலைஞரைச் சரிபார்த்தார்</string>
+  <string name="morphe_music_soundproof_sheet_live_failed">SoundProof-ஐ தொடர்பு கொள்ள முடியவில்லை. வாக்குகள் தினசரி தரவுத்தளத்திலிருந்து பெறப்பட்டுள்ளன, மேலும் வாக்களிப்பு தற்போது கிடைக்கவில்லை.</string>
+  <string name="morphe_music_soundproof_vote_failed_toast">SoundProof வாக்கு அளிப்பதில் தோல்வி</string>
+  <!-- 'SoundProof' and 'SoundProof-Dumps' must be kept untranslated -->
+  <string name="morphe_music_soundproof_about_summary">"கலைஞர் தரவு SoundProof-Dumps (github.com/NuclearBlox/SoundProof-Dumps) இலிருந்து வருகிறது, இது ஒரு நாளைக்கு ஒரு முறை பதிவிறக்கம் செய்யப்படுகிறது. இதைத் தவிர்த்தால் நீங்கள் எதைப் இயக்குகிறீர்கள் என்பது பற்றிய எந்தத் தகவலும் அனுப்பப்படாது. SoundProof தாளைத் திறப்பது, சமீபத்திய வாக்குகளைக் காட்டவும் வாக்களிக்கவும் தற்போதைய கலைஞர் பெயரை SoundProof சேவையகத்திற்கு அனுப்பும். சேவையகம் வாக்காளர்களை IP முகவரி மூலம் வேறுபடுத்துகிறது, எனவே உங்கள் வாக்கு மற்றொரு நெட்வொர்க்கில் வித்தியாசமாகத் தோன்றலாம்.
+
+தரவுத்தளம் ODC Open Database License (ODbL) கீழ் உரிமம் பெற்றுள்ளது. xoundbyte-ன் Soul Over AI-லிருந்து பெறப்பட்ட பதிவுகள் CC BY 4.0 கீழ் உரிமம் பெற்றுள்ளன. SoundProof அல்லது Soul Over AI உடன் இணைக்கப்படவில்லை அல்லது அங்கீகரிக்கப்படவில்லை."</string>
+  <!-- layout.lyrics.lyricsPatch -->
+  <string name="morphe_music_lyrics_device_unavailable">இந்த சாதனக் கோப்பிற்கு பாடல் வரிகள் கிடைக்கவில்லை.</string>
+  <string name="morphe_music_lyrics_rime_dict_title">Rime வார்த்தைப் பட்டியல்</string>
+  <string name="morphe_music_lyrics_rime_dict_empty">"Rime Wordlist-க்கு UniDict-ம் தேவை: ஆஃப்லைன் அகராதி வழங்குநரில் (Offline Dictionary provider), \"Chinese and Cantonese characters (UniDict)\"-ஐ டிக் செய்து, அது பதிவிறக்கம் செய்து முடிக்கும் வரை காத்திருக்கவும். இது இல்லையெனில், எழுத்துக்களை வாசிக்கும் பட்டியல் எந்த வாசிப்பையும் வழங்காது.
+
+Rime Wordlist வாசிக்க வேண்டிய பட்டியல்களை டிக் செய்து, பின்னர் அவற்றை பதிவிறக்கம் செய்ய சேமி (Save)-ஐத் தட்டவும். நீங்கள் டிக் செய்யாத பட்டியலில் நீங்கள் சேர்த்த பட்டியல் நீக்கப்படும்.
+
+ஒவ்வொரு பட்டியலும் உங்களுக்கே உரித்தான சொல்-வாசிப்பு அட்டவணை ஆகும், இது பின்வரும் வரிகளைக் கொண்ட ஒரு .dict.yaml கோப்பாகும்:
+字 ham
+典 din2
+முதல் நெடுவரிசை சொல்லையும், இரண்டாவது அதன் வாசிப்பையும் குறிக்கும்; கூடுதல் நெடுவரிசைகள் மற்றும் டேப் (tab) இல்லாத வரிகள் புறக்கணிக்கப்படும்."</string>
+  <string name="morphe_music_lyrics_rime_dict_no_table">மேலே உள்ள மொழிக்கு Rime வார்த்தைப் பட்டியல் எதுவும் தேர்வு செய்யப்படவில்லை. ஒன்றைத் தேர்வு செய்ய இந்தப் பெயரைத் தட்டவும், அல்லது பட்டியல் உள்ள மொழியைத் தேர்வு செய்யவும்</string>
+  <string name="morphe_music_lyrics_rime_dict_add">சேர்</string>
+  <string name="morphe_music_lyrics_rime_dict_add_title">Rime வார்த்தைப் பட்டியலைச் சேர்</string>
+  <string name="morphe_music_lyrics_rime_dict_add_hint">字 ham மற்றும் 典 din2 போன்ற வரிகளைக் கொண்ட .dict.yaml கோப்பு அல்லது அதை உள்ளடக்கிய ஜிப் கோப்பு. நீங்கள் இதைத் தேர்ந்தெடுத்து சேமி என்பதைக் கிளிக் செய்யும்போது பட்டியல் பெறப்படும், மேலும் அதன் உரிமத்தை நீங்கள் சரிபார்த்துக் கொள்ளலாம்</string>
+  <string name="morphe_music_lyrics_rime_dict_field_code">மொழி குறியீடு</string>
+  <string name="morphe_music_lyrics_rime_dict_field_code_hint">Hak அல்லது wuu என்பது போல இரண்டு அல்லது மூன்று எழுத்துக்கள்</string>
+  <string name="morphe_music_lyrics_rime_dict_field_label">பெயர்</string>
+  <string name="morphe_music_lyrics_rime_dict_field_label_hint">வாசிப்பிற்கு கீழே காட்டப்படும், ஹக்கா (Meixian)-இல் உள்ளது போல</string>
+  <string name="morphe_music_lyrics_rime_dict_field_url">சொல் பட்டியலின் முகவரி</string>
+  <string name="morphe_music_lyrics_rime_dict_field_url_hint">.dict.yaml அல்லது அதன் zip கோப்பின் https:// முகவரி</string>
+  <string name="morphe_music_lyrics_rime_dict_field_char_source">சொல்லில் இல்லாத எழுத்துக்கள்</string>
+  <string name="morphe_music_lyrics_rime_char_source_auto">தானியங்கி</string>
+  <string name="morphe_music_lyrics_rime_char_source_cantonese">காண்டோனீஸ் எழுத்துக்கள்</string>
+  <string name="morphe_music_lyrics_rime_char_source_pinyin">மாண்டரின் எழுத்துக்கள்</string>
+  <string name="morphe_music_lyrics_rime_char_source_none">எழுத்து வாசிப்பு இல்லை</string>
+  <string name="morphe_music_lyrics_rime_dict_incomplete">குறியீடு, பெயர் மற்றும் முகவரியை நிரப்பவும்</string>
+  <string name="morphe_music_lyrics_rime_dict_bad_code">குறியீடு hak என்பதைப் போல இரண்டு அல்லது மூன்று எழுத்துக்களாக இருக்க வேண்டும்</string>
+  <string name="morphe_music_lyrics_rime_dict_bad_url">முகவரி https:// இல் தொடங்க வேண்டும்</string>
+  <string name="morphe_music_lyrics_rime_dict_bad_field">பெயர் மற்றும் முகவரியில் செங்குத்து கோடு இருக்கக்கூடாது</string>
+  <string name="morphe_music_lyrics_rime_dict_duplicate">%s ஏற்கனவே ஒரு சொல் அட்டவணையை கொண்டுள்ளது</string>
+  <string name="morphe_music_lyrics_rime_dict_reserved">%s உள்ளமைக்கப்பட்ட ரோமானைஸரால் படிக்கப்படுகிறது மற்றும் சொல் பட்டியலை ஏற்க முடியாது</string>
+  <string name="morphe_music_lyrics_rime_dict_reserved_row">பயன்படுத்தப்படவில்லை: இந்த மொழிக்கு ஏற்கனவே அதன் சொந்த வாசிப்பு உள்ளது, எனவே அதை நீக்க அதன் தேர்வை நீக்கவும்</string>
+  <string name="morphe_music_lyrics_rime_dict_added">%s சேர்க்கப்பட்டது - அதைத் தேர்ந்தெடுத்து பதிவிறக்கம் செய்ய சேமிப்பைத் தட்டவும்</string>
+  <string name="morphe_music_lyrics_rime_dict_ready">வார்த்தை பட்டியல்கள் தயாராக உள்ளன</string>
+  <string name="morphe_music_lyrics_rime_dict_ready_toast">சொல் பட்டியல்கள் தயாராக உள்ளன (%s பதிவுகள்)</string>
+  <string name="morphe_music_lyrics_rime_dict_building">சொல் பட்டியலைப் படிக்கிறது: %s%%</string>
+  <string name="morphe_music_lyrics_rime_dict_failed">சொல் பட்டியல் பதிவிறக்கம் தோல்வியடைந்தது - மீண்டும் முயற்சிக்க சேமிக்க மீண்டும் தட்டவும்</string>
+  <string name="morphe_music_lyrics_clear_cache_summary">இந்தக் கருவியில் சேமிக்கப்பட்டுள்ள %s MB பாடல் வரிகளை நீக்கவும்</string>
+  <string name="morphe_music_lyrics_clear_cache_done">%s MB நீக்கப்பட்டது</string>
+  <string name="morphe_music_lyrics_show_copy_button_summary">அசல் பாடல் வரிகளை சாதாரண உரையாக நகலெடுக்கத் தட்டவும்; மூலப் பாடல் வரிக் கோப்பு மற்றும் மாற்றப்பட்ட TTML கோப்பை பதிவிறக்கங்களில் சேமிக்க நீண்ட நேரம் அழுத்தவும்</string>
+  <string name="morphe_music_lyrics_show_translate_button_summary">மொழிபெயர்ப்பை மாற்ற தட்டவும்; மொழிபெயர்ப்புக்கு மட்டும் நீண்ட நேரம் அழுத்தவும். பட்டியலிடப்பட்ட வரிசையில் செயல்படுத்தப்பட்ட மொழிபெயர்ப்பு வழங்குநர்களைப் பயன்படுத்துகிறது</string>
+  <string name="morphe_music_lyrics_show_romanize_button_title">ரோமமயமாக்கல் அல்லது ஒலிபெயர்ப்பு பொத்தானைக் காட்டவும்</string>
+  <string name="morphe_music_lyrics_show_romanize_button_summary">ரோமமயமாக்கல் அல்லது ஒலிபெயர்ப்பை மாற்ற தட்டவும்; ரோமமயமாக்கல் அல்லது ஒலிபெயர்ப்புக்கு மட்டும் நீண்ட நேரம் அழுத்தவும். பட்டியலிடப்பட்ட வரிசையில் செயல்படுத்தப்பட்ட ரோமமயமாக்கல் வழங்குநர்களைப் பயன்படுத்துகிறது</string>
+  <string name="morphe_music_lyrics_show_current_button_title">தற்போதைய பொத்தானைக் காட்டு</string>
+  <string name="morphe_music_lyrics_show_current_button_summary">பாடலை கைமுறையாக நகர்த்தும்போது, பாடப்படும் வரிக்குத் திரும்பச் செல்லும் பொத்தானைக் காட்டுகிறது</string>
+  <string name="morphe_music_lyrics_allow_transliteration_title">ஒலிபெயர்ப்பைச் செயல்படுத்தவும்</string>
+  <string name="morphe_music_lyrics_allow_transliteration_summary">பாடல்களின் மூலத்திலிருந்து லத்தீன் அல்லாத வாசிப்புகளை அனுமதிக்கவும்; ஆஃப் செய்யும்போது, லத்தீன் எழுத்துக்கள், உச்சரிப்புக்குறியீடு கொண்ட எழுத்துக்கள் மற்றும் டோன் எண்களை மட்டும் வைத்திருங்கள்</string>
+  <string name="morphe_music_lyrics_local_romanization_summary">நேரம் நிர்ணயிக்கப்பட்ட பாடலின் ஒவ்வொரு வார்த்தையையும் வாசிக்கிறது (வார்த்தை ஒத்திசைவு ஆன்; கொரிய மொழிக்கு பதிவிறக்கம் தேவையில்லை; பதிநான்கு ஸ்கிரிப்டுகள் ஒரே CLDR பதிவிறக்கத்தைப் பகிர்ந்து கொள்கின்றன; ஹான் எழுத்துக்கள் Rime Wordlist-ஆல் வாசிக்கப்படுகின்றன, அதன் வார்த்தை அட்டவணை அந்த மொழியை உள்ளடக்கியிருக்கும் போது)</string>
+  <string name="morphe_music_lyrics_local_romanization_download_started">வாசிப்பு அகராதிகள் பதிவிறக்கப்படுகின்றன…</string>
+  <string name="morphe_music_lyrics_local_romanization_dict_ready">வாசிப்புகள் தயாராக உள்ளன (%s பதிவுகள்)</string>
+  <string name="morphe_music_lyrics_local_romanization_download_confirm_title">ஆஃப்லைன் அகராதி</string>
+  <string name="morphe_music_lyrics_local_romanization_dict_japanese">ஜப்பானிய மொழி (SudachiDict, ~75 MB)</string>
+  <string name="morphe_music_lyrics_local_romanization_dict_unidict">சீன மற்றும் காண்டனீஸ் எழுத்துக்கள் (UniDict, ~8 MB)</string>
+  <string name="morphe_music_lyrics_local_romanization_dict_chinese">சீன வார்த்தைகள் (pinyin-pro, ~17 MB)</string>
+  <string name="morphe_music_lyrics_local_romanization_dict_cldr">கிரேக்க, ஸ்லாவிக் சிரிலிக் (ரஷ்யன், உக்ரேனியன், பல்கேரியன், செர்பியன், பெலாரூசியன், மாகிடோனியன் உட்பட), ஜார்ஜியன், அர்மேனியன், ஹீப்ரு, அரபு, அம்ஹாரிக் மற்றும் சிரியாக் ஒலிபெயர்ப்பு (CLDR, ~0.5 MB)</string>
+  <string name="morphe_music_lyrics_local_romanization_dict_building">வாசிக்கப்படுகிறது %1$s: %2$s%%</string>
+  <string name="morphe_music_lyrics_search_google">Google மூலம் தேடுங்கள்</string>
+  <string name="morphe_music_lyrics_written_by">எழுதியவர்: %s</string>
+  <string name="morphe_music_lyrics_spring_scroll_title">ஸ்பிரிங் ஸ்க்ரோலிங்கைப் பயன்படுத்தவும்</string>
+  <string name="morphe_music_lyrics_spring_scroll_summary">ஸ்பிரிங் இயற்பியலுடன் பாடலை நகர்த்துகிறது, மேலும் ஒவ்வொரு வரியையும் அதற்கு மேலே உள்ள வரிக்கு சற்றுப் பின்னால் நகர்த்துகிறது. மெதுவான சாதனங்களில் பேட்டரியைச் சேமிக்க இதை அணைக்கவும்</string>
+  <string name="morphe_music_lyrics_gap_dots_title">இசை இடைவெளிப் புள்ளிகளைக் காட்டு</string>
+  <string name="morphe_music_lyrics_gap_dots_summary">நீண்ட இசை இடைவெளியின் போது வரிகளுக்கு இடையே மூன்று புள்ளிகளைக் காட்டும், இடைவெளி முடியும் போது அவை நிரம்பும்</string>
+  <string name="morphe_music_lyrics_focus_spotlight_title">தொலைதூர வரிகளை மேலும் மங்கலாக்கு</string>
+  <string name="morphe_music_lyrics_focus_spotlight_summary">பாடும் வரியிலிருந்து எவ்வளவு தொலைவில் உள்ளதோ, அந்த அளவிற்கு ஒவ்வொரு செயலற்ற வரியும் மேலும் மங்கலாக்கப்படுகிறது. இது ஆஃப் செய்யப்பட்டிருக்கும்போது, அனைத்து செயலற்ற வரிகளும் ஒரே அளவில் மங்கலாக இருக்கும்</string>
+  <string name="morphe_music_lyrics_line_scale_title">செயலில் இல்லாத வரிகளைக் குறுக்கவும்</string>
+  <string name="morphe_music_lyrics_line_scale_summary">தற்போது பாடப்படாத ஒவ்வொரு வரியையும் சற்று சிறியதாக வரைந்து, அதே சமயம் மங்கலாகக் காட்டும்</string>
+  <string name="morphe_music_lyrics_split_background_title">பின்னணி குரல்களைத் தனியாகக் காட்டவும்</string>
+  <string name="morphe_music_lyrics_split_background_summary">முக்கிய வரியிலிருந்து பின்னணி குரல்கள் மற்றும் ஹார்மோனியைப் பிரிக்கும். \"(Oh) I want you\" என்பது போல அடைப்புக்குறிக்குள் எழுதப்பட்ட பின்னணி குரலை, பாடப்படும் வரியிலிருந்து நீக்கி அதற்குரிய மங்கலான வரியில் வைக்கும்</string>
+  <string name="morphe_music_lyrics_dynamic_background_title">டைனமிக் பின்னணி</string>
+  <string name="morphe_music_lyrics_dynamic_background_summary">பாடல்களுக்குப் பின்னால் ஆல்பம் கலைப்படைப்பிலிருந்து உருவாக்கப்பட்ட மங்கலான பின்னணியைக் காட்டுங்கள்</string>
+  <string name="morphe_music_lyrics_dynamic_background_animated_title">டைனமிக் பின்னணியை அனிமேட் செய்யவும்</string>
+  <string name="morphe_music_lyrics_dynamic_background_animated_summary">இயங்கும்போது பின்னணியை நகர்த்தவும், YouTube Music-க்கு மைக்ரோஃபோன் அனுமதி இருந்தால் இசையுடன் அதை துடிக்கச் செய்யவும். குறைந்த பேட்டரியைப் பயன்படுத்தும் நிலையான பின்னணிக்கு இதை ஆஃப் செய்யவும்</string>
+  <string name="morphe_music_lyrics_mediasession_summary">லாக் ஸ்கிரீன், Android Auto மற்றும் ப்ளூடூத்தில் தற்போதைய வரியைக் காட்டுகிறது</string>
+  <string name="morphe_music_lyrics_han_form_title">சீன வடிவ மாற்றம்</string>
+  <string name="morphe_music_lyrics_han_form_summary">இதை ஆன் செய்யும் போது, பாடல்களை எளிய மற்றும் பாரம்பரிய எழுத்துக்களுக்கு இடையே மாற்ற உங்கள் மொழிபெயர்ப்பு இலக்கு மொழியைப் பின்பற்றுகிறது</string>
+  <!-- Shown under the lyrics. The placeholder is a service name such as LRCLIB. -->
+  <string name="morphe_music_lyrics_with_ruby_provider">%1$s (%2$s உடன்)</string>
+  <!-- Tappable label under the lyrics that turns the translation on. -->
+  <string name="morphe_music_lyrics_romanize_language_title">ரோமமயமாக்கல் அல்லது ஒலிபெயர்ப்பு மொழி</string>
+  <string name="morphe_music_lyrics_translation_target_language">"மொழிபெயர்ப்பு இலக்கு மொழி:
+%s"</string>
+  <string name="morphe_music_lyrics_romanization_target_language">"ரோமமயமாக்கல் அல்லது ஒலிபெயர்ப்பு இலக்கு மொழி:
+%s"</string>
+  <string name="morphe_music_lyrics_romanize_language_none">எதுவுமில்லை</string>
+  <string name="morphe_music_lyrics_ruby_language_title">ரூபி இலக்கு</string>
+  <string name="morphe_music_lyrics_current">தற்போதைய</string>
+  <string name="morphe_music_lyrics_transcribe_key_summary">QuickLRC தற்போதைய பாடலுக்கான வரிகளைப் பிரதி எடுக்கிறது அல்லது நேரத்துடன் சீரமைக்கிறது</string>
+  <string name="morphe_music_lyrics_about_summary">"பாடல்கள் தலைப்பு மற்றும் கலைஞரின் அடிப்படையில் பொருத்தப்படுகின்றன, அசாதாரண மெட்டாடேட்டா எதுவும் கிடைக்காமல் போகலாம் அல்லது தவறான பதிப்பைக் கண்டறியலாம். பதிப்புகளை மாற்ற refresh-ஐப் பயன்படுத்தவும். * குறியிடப்பட்ட வழங்குநர்களுக்கு டோக்கன் தேவை. செயல்படுத்தப்பட்ட அனைத்து வழங்குநர்களும் எப்போதும் உங்கள் வரிசையிலேயே கோரப்படுவதில்லை, ஆனால் அவர்களின் வேகத்தின் அடிப்படையில் பதிலளிக்கிறார்கள்.
+
+பாடல்கள் Morphe-உடன் இணைக்கப்படாத, ஸ்பான்சர் செய்யப்படாத அல்லது அங்கீகரிக்கப்படாத மூன்றாம் தரப்பு சேவைகளிலிருந்து வருகின்றன. ஒவ்வொன்றும் அப்படியே பயன்படுத்தப்படுகிறது: பாடல்கள், அவற்றின் கிடைக்கும் தன்மை மற்றும் அவற்றின் உரிமங்கள் அந்த சேவைகளிடமும் அவற்றின் உரிம வழங்குநர்களிடமும் இருக்கும், மேலும் அவற்றைப் பயன்படுத்துவது அவர்களின் சேவை விதிமுறைகளுக்கு உட்பட்டிருக்கலாம். செயல்படுத்தப்பட்ட சேவைக்கு நீங்கள் கேட்ட தேடல் மட்டுமே சென்றடையும் - தலைப்பு, கலைஞர் மற்றும் அந்த சேவைக்கு தேவைப்படும் இடத்தில் வீடியோ ஐடி. விருப்பத்தேர்வு AI எண்ட்பாயிண்ட் மற்றும் QuickLRC டிரான்ஸ்கிரிப்ஷன் நீங்கள் அவற்றைக் கட்டமைத்த பின்னரே இயங்கும், மேலும் பாடல் உரை அல்லது டிரேக்கின் வீடியோ URL-ஐப் பெறும்."</string>
+  <string name="morphe_music_lyrics_swap_trans_roma_summary">மொழிபெயர்ப்பைப் பாடல்களுக்கு மேலே நகர்த்துகிறது; வாசிப்பு மற்றும் ரோமானியமயமாக்கல் கீழே இருக்கும்</string>
+  <string name="morphe_music_lyrics_force_center_title">வரிகளை எப்போதும் மையப்படுத்து</string>
+  <string name="morphe_music_lyrics_force_center_summary">ON என்பதைத் தேர்ந்தெடுத்தால், இருவர் பாடும் பக்கங்கள் உட்பட ஒவ்வொரு வரியும் மையப்பகுதியில் வைக்கப்படும் மற்றும் மூல சீரமைப்பு புறக்கணிக்கப்படும்; OFF என்பதைத் தேர்ந்தெடுத்தால் வரிகள் கோரும் சீரமைப்பே இருக்கும்</string>
+  <string name="morphe_music_lyrics_providers_keep_one">குறைந்தபட்சம் ஒரு வழங்குநர் ஆன் செய்யப்பட வேண்டும்</string>
+  <string name="morphe_music_lyrics_translation_provider_title">மொழிபெயர்ப்பு</string>
+  <string name="morphe_music_lyrics_romanization_provider_title">ரோமமயமாக்கல் அல்லது ஒலிபெயர்ப்பு</string>
+  <string name="morphe_music_lyrics_romanization_provider_local">ஆஃப்லைன் அகராதி</string>
+  <string name="morphe_music_lyrics_romanization_provider_rime">Rime வார்த்தைப் பட்டியல்</string>
+  <string name="morphe_music_lyrics_romanization_provider_icu">ICU மொழிமாற்றி</string>
+  <string name="morphe_music_lyrics_use_ai_section_title">AI மூலம் பிரிவுகளைக் கண்டறியவும்</string>
+  <string name="morphe_music_lyrics_use_ai_section_summary">Chorus அல்லது Verse போன்ற பிரிவு லேபிள்களை வழங்குநர் அனுப்பாதபோது மட்டுமே இது பயன்படுத்தப்படும், அவற்றை உங்கள் OpenAI-க்கு இணக்கமான மாடல் கண்டறியும். வரிசையைத் திருத்துவது அதன் தூண்டுதலையும் திறக்கும்</string>
+  <string name="morphe_music_lyrics_ai_config_base_url_hint">API endpoint URL (உதாரணமாக https://api.openai.com/v1/chat/completions, https://api.anthropic.com/v1/chat/completions, https://generativelanguage.googleapis.com/v1beta/openai/chat/completions)</string>
+  <string name="morphe_music_lyrics_ai_prompt_dialog_hint">Placeholders: {task}, {language}, {title}, {artist}, {count}, {lines}. தெரியாதவை தட்டச்சு செய்யப்பட்டவாறே விடப்படும்</string>
+  <string name="morphe_music_lyrics_ai_prompt_toast_endpoint_invalid">அமைப்புகள் சேமிக்கப்பட்டன, ஆனால் AI எண்ட் பாயிண்ட் இன்னும் பயன்படுத்தக்கூடியதாக இல்லை</string>
+  <string name="morphe_music_lyrics_ai_config_toast_saved">அமைப்புகள் சேமிக்கப்பட்டன</string>
+  <string name="morphe_music_lyrics_ai_config_status_invalid">அமைப்புகள் முழுமையற்றவை அல்லது வழங்குநரால் நிராகரிக்கப்பட்டன</string>
+  <string name="morphe_music_lyrics_ai_config_status_connected">%1$s: இணைக்கப்பட்டது! (%2$s)</string>
+  <string name="morphe_music_lyrics_ai_config_status_failed">%s: இணைப்பு தோல்வியுற்றது. அமைப்புகளைச் சரிபார்க்கவும்.</string>
+  <string name="morphe_music_lyrics_ai_config_test_connection">இணைப்பைச் சோதிக்கவும்</string>
+  <string name="morphe_music_lyrics_ai_config_fetch_models">மாடல்களைப் பெறவும்</string>
+  <string name="morphe_music_lyrics_ai_config_prompt_label">தூண்டுதல்</string>
+  <string name="morphe_music_lyrics_ai_config_ruby_prompt_label">ரூபி பிராம்ப்ட் (கானா)</string>
+  <string name="morphe_music_lyrics_ai_config_base_url_presets">சேவை முன்கூட்டியமைப்புகள்</string>
+  <string name="morphe_music_lyrics_ai_config_base_url_presets_title">ஒரு சேவையைத் தேர்ந்தெடுக்கவும்</string>
+  <string name="morphe_music_lyrics_ai_config_extra_headers_label">கூடுதல் கோரிக்கை தலைப்புகள் (விருப்பமான JSON)</string>
+  <string name="morphe_music_lyrics_ai_config_extra_headers_hint">பெயர்கள் மற்றும் மதிப்புகளை மேற்கோள் குறிகளுக்குள் இடவும், எ.கா. {\"api-key\": \"abc\"}. / : அல்லது எண்ணைக் கொண்ட மேற்கோள் இல்லாத மதிப்பு நிராகரிக்கப்படும். காலியான மதிப்பு ஒரு தலைப்பை நீக்கும்.</string>
+  <string name="morphe_music_lyrics_ai_config_extra_body_hint">பெயர்கள் மற்றும் மதிப்புகளை மேற்கோள் குறிகளுக்குள் இடவும், எ.கா. {\"temperature\": 0.3}. / அல்லது : ஐக் கொண்ட மேற்கோள் இல்லாத மதிப்பு நிராகரிக்கப்படும். மாடல் மற்றும் செய்திகளை இங்கே அமைக்க முடியாது.</string>
+  <string name="morphe_music_lyrics_ai_config_reasoning_effort">தருக்க முயற்சி</string>
+  <string name="morphe_music_lyrics_ai_config_reasoning_effort_default">இயல்பானது</string>
+  <string name="morphe_music_lyrics_ai_section_failed">இந்தப் பாடலுக்கான பிரிவுகளை AI-ஆல் கண்டறிய முடியவில்லை</string>
+  <string name="morphe_music_lyrics_ai_section_detecting">கண்டறிகிறது</string>
+  <string name="morphe_music_lyrics_ai_section_apply">பிரிவுகளைப் பயன்படுத்து</string>
+  <string name="morphe_music_lyrics_ai_section_cancelled">கண்டறிதல் ரத்து செய்யப்பட்டது</string>
+  <string name="morphe_music_lyrics_ai_section_no_text">பகுதிகளைக் கண்டறிய பாடல் வரிகள் இல்லை</string>
+  <!-- misc.spoof.appversion.spoofAppVersionPatch -->
+</resources>

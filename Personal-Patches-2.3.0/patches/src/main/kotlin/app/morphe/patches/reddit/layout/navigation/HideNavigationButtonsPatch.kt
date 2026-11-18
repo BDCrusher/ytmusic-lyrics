@@ -1,0 +1,102 @@
+/*
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to this code.
+ */
+
+package app.morphe.patches.reddit.layout.navigation
+
+import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
+import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
+import app.morphe.patcher.patch.mutableClassDefBy
+import app.morphe.patcher.patch.patch
+import app.morphe.patcher.util.addPatchInterface
+import app.morphe.patcher.util.findFreeRegister
+import app.morphe.patcher.util.smali.ExternalLabel
+import app.morphe.patches.reddit.misc.settings.settingsPatch
+import app.morphe.patches.reddit.misc.version.is_2026_25_0_or_greater
+import app.morphe.patches.reddit.misc.version.versionCheckPatch
+import app.morphe.patches.reddit.shared.Constants.COMPATIBILITY_REDDIT
+import app.morphe.util.findInstructionIndicesReversedOrThrow
+import app.morphe.util.setExtensionIsPatchIncluded
+import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
+
+private const val EXTENSION_CLASS =
+    "Lapp/morphe/extension/reddit/patches/HideNavigationButtonsPatch;"
+
+private const val EXTENSION_HEADER_ITEM_INTERFACE =
+    $$"Lapp/morphe/extension/reddit/patches/HideNavigationButtonsPatch$NavigationButtonInterface;"
+
+@Suppress("unused")
+val hideNavigationButtonsPatch = patch(
+    name = "Hide navigation buttons",
+    description = "Adds options to hide buttons in the navigation bar."
+) {
+    compatibleWith(COMPATIBILITY_REDDIT)
+
+    dependsOn(settingsPatch, versionCheckPatch)
+
+    execute {
+        // region legacy method
+        if (!is_2026_25_0_or_greater) {
+            val navigationButtonInnerMethod =
+                BottomNavScreenResourceBuilderLegacyFingerprint.instructionMatches[0]
+                    .methodReference
+
+            mutableClassDefBy(navigationButtonInnerMethod.definingClass).apply {
+                // Add interface and helper methods to allow extension code to call obfuscated methods.
+                // Add methods to access obfuscated navigation button fields.
+                val labelField = fields.single { field ->
+                    field.type == "Ljava/lang/String;"
+                }
+                addPatchInterface(EXTENSION_HEADER_ITEM_INTERFACE, "patch_getLabel", labelField)
+            }
+
+            BottomNavScreenResourceBuilderLegacyFingerprint.method.apply {
+                findInstructionIndicesReversedOrThrow(ADD_METHOD_CALL).forEach { index ->
+                    val instruction = getInstruction<FiveRegisterInstruction>(index)
+
+                    val listRegister = instruction.registerC
+                    val objectRegister = instruction.registerD
+
+                    replaceInstruction(
+                        index,
+                        "invoke-static { v$listRegister, v$objectRegister }, " +
+                                "$EXTENSION_CLASS->hideNavigationButtonsLegacy(Ljava/util/List;Ljava/lang/Object;)V"
+                    )
+                }
+            }
+        }
+
+        // endregion
+
+        // region modern method
+
+        BottomNavScreenListBuilderFingerprint.let {
+            it.method.apply {
+                val enumIndex = it.instructionMatches.last().index
+                val enumRegister = getInstruction<TwoRegisterInstruction>(enumIndex).registerA
+                val freeRegister = findFreeRegister(enumIndex, enumRegister)
+                val jumpInstructionIndex = it.instructionMatches[1].index
+                val jumpInstruction = getInstruction(jumpInstructionIndex)
+
+                addInstructionsWithLabels(
+                    enumIndex + 1,
+                    """
+                        invoke-static { v$enumRegister }, $EXTENSION_CLASS->hideNavigationTab(Ljava/lang/Enum;)Z
+                        move-result v$freeRegister
+                        if-nez v$freeRegister, :jump
+                    """,
+                    ExternalLabel("jump", jumpInstruction)
+                )
+            }
+        }
+
+        // endregion
+
+        setExtensionIsPatchIncluded(EXTENSION_CLASS)
+    }
+}

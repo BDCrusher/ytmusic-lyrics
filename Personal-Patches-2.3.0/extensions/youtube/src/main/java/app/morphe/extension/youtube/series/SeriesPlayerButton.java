@@ -1,0 +1,46 @@
+/*
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches/pull/3114
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to this code.
+ */
+
+package app.morphe.extension.youtube.series;
+
+import static app.morphe.extension.shared.StringRef.str;
+
+import android.view.View;
+
+import app.morphe.extension.shared.Logger;
+import app.morphe.extension.shared.Utils;
+import app.morphe.extension.youtube.settings.Settings;
+import app.morphe.extension.youtube.videoplayer.LegacyPlayerControlButton;
+
+@SuppressWarnings("unused")
+public final class SeriesPlayerButton {
+    static {
+        if (SeriesTrackerPatch.ENABLED && Settings.SERIES_TRACKER_BUTTON.get())
+            LegacyPlayerControlButton.incrementUpperButtonCount();
+    }
+
+    // The shared top-control hook supports both modern and legacy player styles.
+    public static void initializeLegacyButton(View view) {
+        if (!SeriesTrackerPatch.ENABLED) return;
+        try {
+            new LegacyPlayerControlButton(
+                    view,
+                    "morphe_series_tracker_button",
+                    null,
+                    "morphe_series_tracker_button",
+                    Settings.SERIES_TRACKER_BUTTON,
+                    v -> PlayerSeriesAction.open(v.getContext()),
+                    null);
+            View button = Utils.getChildViewByResourceName(view, "morphe_series_tracker_button");
+            button.setContentDescription(str("morphe_series_tracker_screen_title"));
+        } catch (Exception e) {
+            Logger.printException(() -> "Series top button", e);
+        }
+    }
+
+    private SeriesPlayerButton() {}
+}

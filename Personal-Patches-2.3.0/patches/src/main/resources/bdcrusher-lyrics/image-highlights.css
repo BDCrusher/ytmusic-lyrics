@@ -1,0 +1,9 @@
+/* The renderer adds the instrumental image only for blyrics-image-highlights = true.
+   An SDR image is equally valid. HDR assets and dynamic-range-limit belong to the theme. */
+.blyrics-instrumental-image { display: none; }
+.blyrics--instrumental-icon[data-image-ready] .blyrics-instrumental-image { display: inline; }
+.blyrics--instrumental-icon[data-image-ready] .blyrics-instrumental-color { display: none; }
+@media (forced-colors: active) {
+  .blyrics--instrumental-icon[data-image-ready] .blyrics-instrumental-image { display: none; }
+  .blyrics--instrumental-icon[data-image-ready] .blyrics-instrumental-color { display: inline; }
+}

@@ -1,0 +1,410 @@
+@import url("image-highlights.css");
+
+/* Resolve the default stack at each language boundary. A root-level var() would freeze
+   the host's language-specific fallback before the lyric/translation language is known.
+   Theme overrides remain inherited through --blyrics-font-family. */
+.blyrics--line,
+.blyrics--translated,
+.blyrics--romanized {
+	--blyrics-default-font-family:
+		Satoshi, var(--noto-sans-universal, "Noto Sans"), Avenir, -apple-system,
+		BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans,
+		Helvetica Neue, sans-serif;
+	font-family: var(--blyrics-font-family, var(--blyrics-default-font-family));
+}
+
+/* Main container styles */
+.blyrics-container {
+	font-family: var(--blyrics-font-family, var(--blyrics-default-font-family));
+	font-size: var(--blyrics-font-size);
+	font-weight: var(--blyrics-font-weight);
+	isolation: isolate;
+	line-height: var(--blyrics-line-height);
+	padding-bottom: calc(var(--blyrics-padding-bottom));
+	padding-top: 2rem;
+	position: relative !important;
+	will-change: transform;
+	z-index: 1;
+}
+
+.blyrics-container > div {
+	box-sizing: border-box;
+	cursor: pointer;
+	padding: var(--blyrics-padding) 0.25em !important;
+	transform: scale(var(--blyrics-scale));
+	transform-origin: left center;
+}
+
+.blyrics--active {
+	cursor: default;
+}
+
+.blyrics--line {
+	color: var(--blyrics-lyric-inactive-color);
+	max-width: 100%;
+	unicode-bidi: plaintext;
+	white-space: normal;
+	word-break: normal;
+}
+
+.blyrics-line-main {
+	display: block;
+	max-width: 100%;
+	overflow-wrap: normal;
+	position: relative;
+	text-align: inherit;
+	unicode-bidi: plaintext;
+	white-space: normal;
+}
+
+.blyrics-background-line {
+	display: block;
+	margin-top: 0.1em;
+	max-width: 100%;
+	position: relative;
+	text-align: inherit;
+	unicode-bidi: plaintext;
+	white-space: normal;
+}
+
+.blyrics-bidi-run {
+	display: block;
+	max-width: 100%;
+	unicode-bidi: normal;
+	white-space: inherit;
+}
+
+.blyrics-highlight-run {
+	inset: 0 0 auto;
+	pointer-events: none;
+	position: absolute;
+	user-select: none;
+	width: auto;
+	z-index: 1;
+}
+
+.blyrics-word-group {
+	display: inline-block;
+	max-width: 100%;
+	unicode-bidi: normal;
+	vertical-align: baseline;
+	white-space: nowrap;
+}
+
+.blyrics-word-group-long {
+	display: inline;
+	overflow-wrap: anywhere;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.blyrics--word {
+	color: var(--blyrics-lyric-inactive-color);
+	display: inline;
+	position: relative;
+	transform: translateY(0);
+	unicode-bidi: normal;
+	white-space: inherit;
+}
+
+.blyrics-word-group:not(.blyrics-word-group-long) .blyrics--word {
+	display: inline-block;
+}
+
+.blyrics-bidi-sensitive .blyrics-word-group,
+.blyrics-bidi-sensitive .blyrics-word-group-long {
+	display: contents;
+	max-width: none;
+	overflow-wrap: normal;
+	unicode-bidi: normal;
+	white-space: normal;
+	word-break: normal;
+}
+
+.blyrics-bidi-sensitive .blyrics--word,
+.blyrics-bidi-sensitive .blyrics-word-group:not(.blyrics-word-group-long) .blyrics--word {
+	display: inline;
+	white-space: inherit;
+}
+
+.blyrics--word.blyrics-word-highlight {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.blyrics--letter {
+	display: inline-block;
+}
+
+/* Atomic letter boxes otherwise take their visual ordering from the surrounding
+   paragraph. Isolate each word's own dir=auto while keeping it inline/wrappable. */
+.blyrics--word.blyrics-word--lettered {
+	unicode-bidi: isolate;
+}
+
+/* WebRender snaps 2D-translated glyphs to whole pixels; perspective rasterizes them in local space. */
+.blyrics-container[data-browser-engine="gecko"] .blyrics--animating .blyrics-word--lettered {
+	perspective: 100000px;
+}
+
+/* The compositor's sweep. A cell is a word that is its own inline-block box, or one letter of a word
+   that flows inline. Its mask box is 3 + fade cells wide and starts a cell before the cell: opaque up
+   to half a cell past the cell's end (SWEEP_REST in sweepPlans.ts), then a soft edge `fade` cells
+   wide, where fade is the swipe's width from its last start stop to its last end stop, in cells. The
+   engine slides the mask back to where the swipe begins and the text inside it the other way by the
+   same distance, so the glyphs hold still while the edge crosses them. The glow's two halos sit in
+   that same text, so the edge reveals them with it. With nothing animating the mask rests with the
+   cell lit and its halos whole. */
+.blyrics--word.blyrics-word-highlight.blyrics-word-highlight--sweep {
+	color: var(--blyrics-lyric-active-color);
+	--blyrics-sweep-angle: 90deg;
+	--blyrics-sweep-fade: calc(
+		var(--blyrics-highlight-swipe-end-to, 1.5) - var(--blyrics-highlight-swipe-start-to, 1.4)
+	);
+}
+
+.blyrics--word.blyrics-word-highlight.blyrics-word-highlight--sweep.blyrics-rtl,
+.blyrics-sweep-window.blyrics-sweep-cell[dir="rtl"] {
+	--blyrics-sweep-angle: 270deg;
+}
+
+.blyrics-word-highlight--sweep .blyrics--letter.blyrics-sweep-cell {
+	--blyrics-sweep-fade: calc(
+		(var(--blyrics-highlight-swipe-end-to, 1.5) - var(--blyrics-highlight-swipe-start-to, 1.4)) *
+			var(--letters, 1)
+	);
+}
+
+/* The mask boxes are laid out by direction, which a `dir="auto"` word does not hand down to its letters,
+   so each cell takes the direction of the word the engine sweeps it for. */
+.blyrics-sweep-cell {
+	direction: ltr;
+	/* The mask boxes add nothing to the row's scroll width; the margin keeps the glow's halo. */
+	overflow: clip;
+	overflow-clip-margin: 2rem;
+	position: relative;
+}
+
+.blyrics-word-highlight--sweep.blyrics-rtl .blyrics-sweep-cell,
+.blyrics-sweep-window.blyrics-sweep-cell[dir="rtl"] {
+	direction: rtl;
+}
+
+.blyrics-sweep-mask {
+	--blyrics-sweep-widths: calc(3 + var(--blyrics-sweep-fade));
+	box-sizing: content-box;
+	display: block;
+	margin-inline-start: -100%;
+	width: calc(var(--blyrics-sweep-widths) * 100%);
+	/* Room above and below for the halo, the letter wave and glyphs that reach past the line box. */
+	padding-block: calc(0.5em + var(--blyrics-highlight-glow-radius-from, 0.8rem));
+	margin-block: calc(-0.5em - var(--blyrics-highlight-glow-radius-from, 0.8rem));
+	--blyrics-sweep-solid: calc(250% / var(--blyrics-sweep-widths));
+	--blyrics-sweep-clear: calc((2.5 + var(--blyrics-sweep-fade)) * 100% / var(--blyrics-sweep-widths));
+	-webkit-mask-image: linear-gradient(var(--blyrics-sweep-angle), #000 var(--blyrics-sweep-solid), #0000 var(--blyrics-sweep-clear));
+	mask-image: linear-gradient(var(--blyrics-sweep-angle), #000 var(--blyrics-sweep-solid), #0000 var(--blyrics-sweep-clear));
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+}
+
+.blyrics-sweep-text {
+	box-sizing: content-box;
+	display: block;
+	isolation: isolate;
+	margin-inline-start: calc(100% / var(--blyrics-sweep-widths));
+	position: relative;
+	width: calc(100% / var(--blyrics-sweep-widths));
+}
+
+/* A halo is a copy of the text whose own glyphs are clear, under a text shadow that never changes; the
+   engine fades it by opacity. */
+.blyrics-sweep-glow {
+	--blyrics-sweep-glow-radius: var(--blyrics-highlight-glow-radius-from, 0.8rem);
+	color: transparent;
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	text-shadow: 0 0 var(--blyrics-sweep-glow-radius) var(--blyrics-glow-color);
+	user-select: none;
+	z-index: -1;
+}
+
+/* The glow shrinks as it fades. The engine crossfades from the wide halo to this one, which sits where
+   the radius has shrunk to by the time the wide one is gone. */
+.blyrics-sweep-glow--tight {
+	--blyrics-sweep-glow-radius: calc(var(--blyrics-highlight-glow-radius-from, 0.8rem) * 0.4);
+}
+
+/* A word that flows inline keeps its text here only for layout; its sweep is drawn by cells placed over
+   each box it breaks into, which show the word from copies of its line. */
+.blyrics--word.blyrics-word-highlight.blyrics-word-highlight--context {
+	color: transparent;
+}
+
+.blyrics-sweep-context {
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+	position: absolute;
+	user-select: none;
+	z-index: 1;
+}
+
+.blyrics-sweep-window {
+	--blyrics-sweep-angle: 90deg;
+	position: absolute;
+}
+
+.blyrics-sweep-window .blyrics-sweep-mask,
+.blyrics-sweep-window .blyrics-sweep-text {
+	height: 100%;
+}
+
+.blyrics-sweep-clone {
+	color: transparent;
+	max-width: none;
+	position: absolute;
+	text-shadow: none;
+}
+
+.blyrics-sweep-clone .blyrics--word {
+	color: transparent;
+}
+
+.blyrics-sweep-clone .blyrics--word.blyrics-sweep-target {
+	color: var(--blyrics-lyric-active-color);
+}
+
+.blyrics-sweep-glow .blyrics-sweep-clone .blyrics--word.blyrics-sweep-target {
+	color: transparent;
+	text-shadow: 0 0 var(--blyrics-sweep-glow-radius) var(--blyrics-glow-color);
+}
+
+/* text-decoration skips inline-block letters and rides the wave, so draw on the word box instead, from its
+   center (fixed against the text at any line-height), with layout-neutral padding so a tight box can hold it. */
+[blyrics-alt-hover] .blyrics--word:hover {
+	padding-block: 0.25em;
+	margin-block: -0.25em;
+	background-image: linear-gradient(currentColor, currentColor);
+	background-position: 0 calc(50% + 0.54em);
+	background-repeat: no-repeat;
+	background-size: 100% 0.06em;
+}
+
+.blyrics--line > .blyrics-line-main > .blyrics-background-lyric,
+.blyrics--line > .blyrics-background-line > .blyrics-background-lyric,
+.blyrics--line > .blyrics-line-main > .blyrics-bidi-run > .blyrics-background-lyric,
+.blyrics--line > .blyrics-background-line > .blyrics-bidi-run > .blyrics-background-lyric,
+.blyrics-sweep-clone > .blyrics-background-lyric {
+	font-size: 0.75em;
+	font-weight: 500;
+}
+
+.blyrics--line > .blyrics-line-main > .blyrics-word-group.blyrics-background-lyric,
+.blyrics--line > .blyrics-background-line > .blyrics-word-group.blyrics-background-lyric,
+.blyrics--line > .blyrics-line-main > .blyrics-bidi-run > .blyrics-word-group.blyrics-background-lyric,
+.blyrics--line > .blyrics-background-line > .blyrics-bidi-run > .blyrics-word-group.blyrics-background-lyric {
+	color: color-mix(in srgb, var(--blyrics-lyric-inactive-color) 78%, transparent);
+}
+
+.blyrics--translated,
+.blyrics--romanized {
+	animation: blyrics-decoration-in calc(var(--blyrics-animate-decoration-entry) * 0.35s)
+		cubic-bezier(0.25, 1, 0.5, 1) both;
+	color: var(--blyrics-translated-color);
+	display: block;
+	font-family: var(--blyrics-translated-font-family, var(--blyrics-font-family, var(--blyrics-default-font-family)));
+	font-size: var(--blyrics-translated-font-size);
+	font-weight: var(--blyrics-translated-font-weight);
+	line-height: normal;
+	margin-top: 8px;
+	max-width: 100%;
+	text-align: inherit;
+	unicode-bidi: plaintext;
+	white-space: normal;
+}
+
+@keyframes blyrics-decoration-in {
+	from {
+		opacity: 0;
+		transform: translateY(-0.4em);
+	}
+}
+
+.blyrics-container > .blyrics-credits {
+	box-sizing: border-box;
+	cursor: default;
+	margin: 0;
+	padding: var(--blyrics-padding) 0.25em;
+	transform: scale(var(--blyrics-scale));
+	transform-origin: left center;
+}
+
+.blyrics-credits {
+	color: var(--blyrics-ui-text-color);
+	opacity: var(--blyrics-credits-opacity);
+	transition: opacity 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.blyrics-credits__text {
+	display: block;
+	font-size: var(--blyrics-credits-font-size);
+}
+
+.blyrics-credits__text::before {
+	content: var(--blyrics-credits-label) " ";
+}
+
+.blyrics-container[data-credits-focused] > .blyrics-credits,
+.blyrics-container[data-sync="none"] > .blyrics-credits {
+	opacity: var(--blyrics-credits-focused-opacity);
+}
+
+.blyrics--romanized {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 1rem;
+	box-sizing: border-box;
+	display: block;
+	font-size: calc(var(--blyrics-translated-font-size) / 1.25);
+	padding: 0.25rem 0.75rem;
+	width: fit-content;
+}
+
+.blyrics-rtl {
+	direction: rtl;
+}
+
+.blyrics--line[data-direction="rtl"] {
+	text-align: right;
+	transform-origin: right center;
+}
+
+/* Secondary and tertiary vocals */
+.blyrics--line[data-agent="v2"],
+.blyrics--line[data-agent="v3"] {
+	text-align: right;
+	transform-origin: right center !important;
+}
+
+/* All vocals together */
+.blyrics--line[data-agent="v1000"] {
+	text-align: center;
+	transform-origin: center center !important;
+}
+
+.blyrics--line[data-agent="v2"] .blyrics--romanized,
+.blyrics--line[data-agent="v3"] .blyrics--romanized,
+.blyrics--line[data-direction="rtl"] .blyrics--romanized {
+	margin-left: auto;
+}
+
+.blyrics--line[data-agent="v1000"] .blyrics--romanized {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+#blyrics-wrapper {
+	margin-top: 0;
+}

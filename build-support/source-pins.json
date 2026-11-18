@@ -1,7 +1,7 @@
 {
-  "morphe-patcher-2.3.0": "d19545e8505e0329cc640723cb8ff91eddd3cd05",
-  "morphe-patches-library-2.2.0-dev.5": "b6fbe7e1a97653afd0eb95936c1e913aa6ce969b",
+  "morphe-patcher-2.4.0": "0aed87c4e3264cf9233feab7ed26cf2543a08b96",
+  "morphe-patches-library-2.2.0": "3e56d653d9c00994f352abcdcfc5a4e077df421c",
   "morphe-patches-gradle-plugin-2.1.0": "5b7e4619931a8c78b7858e598e002222d37021b9",
-  "ARSCLib-675bed2de3": "675bed2de397097400ba6f0c808e28005ae5aa53",
-  "smali-patcher210": "ac700e1942"
+  "ARSCLib-50418a07a8": "50418a07a806f7fc6d8a567be81d951d6e360079",
+  "smali-patcher240": "5eaff5a2c956ea5aeb13ad0b043b6d4491a2cb92"
 }

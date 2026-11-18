@@ -1,0 +1,67 @@
+/*
+ * Copyright 2026 Morphe.
+ * https://github.com/MorpheApp/morphe-patches/pull/3953
+ *
+ * See the included NOTICE file for GPLv3 Section 7 terms that apply to this code.
+ */
+
+package app.morphe.patches.youtube.interaction.nativeplaylistqueue
+
+import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
+import app.morphe.patcher.patch.mutableClassDefBy
+import app.morphe.patcher.util.addPatchInterface
+import app.morphe.patcher.util.cloneParameters
+import app.morphe.util.addInstructionsAtControlFlowLabel
+import app.morphe.util.findFieldFromToString
+import app.morphe.util.findInstructionIndicesReversedOrThrow
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.TwoRegisterInstruction
+
+/** Observe the native playlist title after inflation and model rebinding. */
+internal fun installPlaylistTitle() {
+    val titleMatch = PlaylistTitleFingerprint.match()
+    val headerType = titleMatch.originalClassDef.type
+    val titleStore = titleMatch.instructionMatches.last()
+    val title = titleStore.fieldReference
+    val panelType = PlaylistModelDescriptionFingerprint.match().originalMethod
+        .findFieldFromToString(", playlistPanel=").type
+    val binding = playlistTitleBindingFingerprint(headerType, panelType).match()
+    val panel = binding.instructionMatches.single().fieldReference
+
+    mutableClassDefBy(headerType).apply {
+        addPatchInterface(
+            PLAYLIST_TITLE_INTERFACE,
+            "patch_getPanel",
+            """
+                iget-object v0, p0, $panel
+                return-object v0
+            """
+        )
+
+        addPatchInterface(
+            PLAYLIST_TITLE_INTERFACE,
+            "patch_getTitle",
+            """
+                iget-object v0, p0, $title
+                return-object v0
+            """
+        )
+    }
+
+    // Observe initial inflation once, rather than every call to the cached-view getter.
+    // Native model binding can happen earlier, while no TextView exists yet.
+    val receiver = (titleStore.instruction as TwoRegisterInstruction).registerB
+    titleMatch.method.addInstruction(
+        titleStore.index + 1,
+        "invoke-static/range {v$receiver .. v$receiver}, $EXTENSION_CLASS->onPlaylistTitleBound($PLAYLIST_TITLE_INTERFACE)V"
+    )
+
+    binding.method.cloneParameters().apply {
+        findInstructionIndicesReversedOrThrow(Opcode.RETURN_VOID).forEach { index ->
+            addInstructionsAtControlFlowLabel(
+                index,
+                "invoke-static/range {p0 .. p0}, $EXTENSION_CLASS->onPlaylistTitleBound($PLAYLIST_TITLE_INTERFACE)V"
+            )
+        }
+    }
+}
