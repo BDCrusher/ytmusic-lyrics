@@ -23,6 +23,14 @@ and settings in both categories. The source list includes Morphe's providers,
 Spicy Lyrics and Unison, with the existing drag-to-reorder controls. Shaders and
 Volume Boost also use shared personal feature code.
 
+**Better Lyrics Web** is the upstream browser extension. **Better Lyrics Patch**
+is the Android integration in this bundle. **Web Shaders** is the upstream
+companion extension. **Android Shaders** uses its Kawarp effect and animated
+artwork service with the native player and Lyrics surfaces. The Android port
+is based on Shaders 1.5.1 with its own settings and motion limits. Audio-reactive
+beat detection and the browser's browse-page glass treatment are specific to
+[Web Shaders](https://github.com/better-lyrics/shaders).
+
 Select **Clone YouTube Music** with **GmsCore support**, then choose the
 **BDCrusher side-by-side** package option to use `app.bdcrusher.android.apps.youtube.music`.
 Android gives the new package its own settings, downloaded files and folder grants.
@@ -52,6 +60,10 @@ three-line handle to reorder it, or use the accessibility move actions. The exis
 Better Lyrics scroll engine, instrumental notes and permanent lyric storage are used.
 
 **Morphe → Lyrics** contains the personal and upstream controls in one page. **Shaders** appears directly below it when selected.
+
+On track changes, the personal renderer starts a new lookup for the active recording.
+Metadata that arrives with a different recording ID can wait for its own playback.
+Unconfirmed metadata waits before it starts title and artist based searches.
 
 Volume boost appears as a speaker button that scrolls with the player actions. It starts off
 on each app launch and offers up to +12 dB for a supported Music audio session.

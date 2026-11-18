@@ -42,6 +42,11 @@ public final class PersonalLyricsTab {
         if (renderer.get() == panel) schedule();
     }
 
+    static void recordingChanged() {
+        BetterLyricsPanelView panel = renderer.get();
+        if (panel != null && panel.isAttachedToWindow()) panel.recordingChanged();
+    }
+
     private static void install() {
         ViewGroup tabs = selectedTabs();
         ViewGroup body = tabs == null ? null : content(tabs);

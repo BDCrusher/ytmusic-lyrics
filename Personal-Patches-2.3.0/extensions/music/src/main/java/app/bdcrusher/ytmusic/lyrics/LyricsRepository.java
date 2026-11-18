@@ -30,8 +30,11 @@ final class LyricsRepository {
 
     static void ensure(Context context, TrackInfo track, String id, boolean refresh) {
         String next = identity(track, id);
-        if (!refresh && next.equals(identity)) {if(!track.title().isBlank()&&!track.artist().isBlank()){currentTrack=track;if(catalog!=null)catalog.refine(track);}return;}
-        if(refresh&&next.equals(identity)){
+        boolean sameRecording = next.equals(identity);
+        boolean differentSong = LyricsTrackBinding.hasSong(currentTrack) && LyricsTrackBinding.hasSong(track)
+                && !track.equals(currentTrack);
+        if (!refresh && sameRecording && !differentSong) {if(LyricsTrackBinding.hasSong(track)){currentTrack=track;if(catalog!=null)catalog.refine(track);}return;}
+        if(refresh&&sameRecording&&!differentSong){
             generation++;if(catalog!=null)catalog.close();catalog=null;finished=false;definitelyNotFound=null;
         }else clear();
         identity = next;currentTrack=track;

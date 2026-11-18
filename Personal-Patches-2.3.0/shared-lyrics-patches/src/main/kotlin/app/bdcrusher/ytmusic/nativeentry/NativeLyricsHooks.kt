@@ -37,7 +37,7 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
  }?:fail("timestamped playback callback")
  playback.addInstruction(0,"invoke-static/range { p0 .. p0 }, ${OWN}RendererPlayback;->sample(Landroid/media/session/PlaybackState;)V")
  val metadata = callbacks.singleOrNull {
-  it.name == "onSetMetadata" && it.parameterTypes == listOf("Landroid/media/MediaMetadata;") && it.returnType == "V"
+  it.name == "onSetMetadata" && it.parameterTypes == listOf("Landroid/media/MediaMetadata;") && it.returnType == "V" && AccessFlags.STATIC.isSet(it.accessFlags)
  } ?: fail("track metadata callback")
  for (callback in listOf(metadata, playback)) {
   val returns = callback.implementation!!.instructions.withIndex().filter { it.value.opcode == Opcode.RETURN_VOID }
@@ -47,6 +47,7 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
    callback.addInstruction(index + 1, "return-void")
   }
  }
+ metadata.addInstruction(0,"invoke-static/range { p0 .. p0 }, ${OWN}LyricsEntryCoordinator;->onMetadata(Landroid/media/MediaMetadata;)V")
  Controller.clearMatch();val controller=Controller.classDef
  val mutableTypes=controller.fields.filter {it.type.startsWith("L")&&!AccessFlags.STATIC.isSet(it.accessFlags)&&!AccessFlags.FINAL.isSet(it.accessFlags)}.map {it.type}
  val setter=controller.methods.singleOrNull {it.returnType=="V"&&it.parameterTypes.size==2&&it.parameterTypes[1]=="Z"&&it.parameterTypes[0] in mutableTypes}?:fail("current panel setter")

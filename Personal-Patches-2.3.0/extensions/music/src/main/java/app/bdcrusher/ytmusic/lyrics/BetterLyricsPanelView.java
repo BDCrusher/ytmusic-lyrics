@@ -201,14 +201,13 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             }
             return;
         }
-        if(next==null){
-            next=nextId.equals(manager.getCommittedVideoId())?manager.getCurrentTrack():null;
-            if(next==null)next=new TrackInfo("","","",0);
-            LyricsRepository.ensure(getContext(),next,nextId,false);
-        }
+        TrackInfo bound = LyricsEntryCoordinator.trackFor(nextId);
+        if (next == null || LyricsTrackBinding.hasSong(bound)) next = bound;
+        LyricsRepository.ensure(getContext(),next,nextId,false);
         String key=LyricsRepository.identity(next,nextId);
-        if(key.equals(identity)){
-            if(track==null||!track.equals(next)){track=next;if(ready)try{call("metadata",trackJson());}catch(JSONException ignored){}}
+        boolean differentSong = LyricsTrackBinding.hasSong(track) && LyricsTrackBinding.hasSong(next) && !next.equals(track);
+        if(key.equals(identity)&&!differentSong){
+            if(track==null||!track.equals(next)||track.durationSeconds()!=next.durationSeconds()||!track.album().equals(next.album())){track=next;if(ready)try{call("metadata",trackJson());}catch(JSONException ignored){}}
             if(catalogSink!=null)LyricsRepository.subscribe(nextId,catalogSink);
             return;
         }
@@ -216,7 +215,6 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         syncOverlay();if(catalogSink!=null)LyricsRepository.unsubscribe(catalogSink);
         if(ready)sendTrack();
         int expected=generation;
-        LyricsRepository.ensure(getContext(),track,nextId,false);
         catalogSink=new LyricsCatalog.Sink(){
             public void health(JSONObject status){handler.post(()->{if(attached&&generation==expected&&currentRecording()){sourceHealth=status;call("health",expected+","+status);}});}
             public void reconnect(){handler.postDelayed(()->{if(attached&&generation==expected&&NativeLyricsHost.isOpen())ServiceConnection.renew(getContext());},700);}
@@ -243,7 +241,8 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
             sourceNotice=state==LyricsManager.State.NOT_FOUND?"No lyrics found":"Lyrics could not be loaded";
             sourceFinished=true;call("notice",generation+","+JSONObject.quote(sourceNotice)+",true");return;
         }
-        if(state!=LyricsManager.State.LOADED||lyrics==null||lyrics.isEmpty()||!deviceTrack&&!recordingId.equals(LyricsManager.getInstance().getLyricsVideoId()))return;
+        if(state!=LyricsManager.State.LOADED||lyrics==null||lyrics.isEmpty()
+                ||!deviceTrack&&!LyricsEntryCoordinator.acceptsNativeLyrics(LyricsManager.getInstance(),recordingId))return;
         try{
             JSONObject payload=deviceTrack?NativeLyricPayload.from(lyrics,track,"device-lyrics"):NativeLyricPayload.from(lyrics,track);
             if(payload==null)return;

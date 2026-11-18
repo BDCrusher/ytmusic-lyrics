@@ -315,6 +315,7 @@ val singlesExtension = tasks.register("prepareSinglesExtension") {
             -keep class app.bdcrusher.ytmusic.lyrics.LyricsEntryButton { *; }
             -keep class app.bdcrusher.ytmusic.lyrics.LyricsEntryCoordinator {
                 public static void onPlaybackEvent();
+                public static void onMetadata(android.media.MediaMetadata);
             }
             -keep class app.bdcrusher.ytmusic.lyrics.RendererPlayback {
                 public static void sample(...);
