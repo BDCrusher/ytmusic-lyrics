@@ -37,6 +37,22 @@ fun BytecodePatchContext.normalizePersonalLyricsAccessors(){
             getter.addInstructions(0,"iget"+(if(type=="Z")"-boolean" else "")+" v0, p0, ${manager.type}->${field}:$type\nreturn v0");manager.methods.add(getter)
         }
     }
+    if (manager != null && manager.methods.none { it.name == "getLyricsVideoId" }) {
+        val field = manager.fields.single { it.name == "lyricsVideoId" && it.type == "Ljava/lang/String;" }
+        val getter = MutableMethod(ImmutableMethod(manager.type, "getLyricsVideoId", emptyList(), field.type,
+            AccessFlags.PUBLIC.value, null, null, MutableMethodImplementation(2)))
+        getter.addInstructions(0, "iget-object v0, p0, $field\nreturn-object v0")
+        manager.methods.add(getter)
+    }
+    if (manager != null && manager.methods.none { it.name == "isDeviceFile" }) {
+        val uri = "Landroid/net/Uri;"
+        val field = manager.fields.single { it.name == "currentMediaUri" && it.type == uri }
+        val local = manager.methods.single { it.name == "isLocalUri" && it.parameterTypes == listOf(uri) && it.returnType == "Z" }
+        val getter = MutableMethod(ImmutableMethod(manager.type, "isDeviceFile", emptyList(), "Z",
+            AccessFlags.PUBLIC.value, null, null, MutableMethodImplementation(2)))
+        getter.addInstructions(0, "iget-object v0, p0, $field\ninvoke-static { v0 }, $local\nmove-result v0\nreturn v0")
+        manager.methods.add(getter)
+    }
 }
 
 /** Single owner for personal payload, Activity lifecycle and native settings integration. */

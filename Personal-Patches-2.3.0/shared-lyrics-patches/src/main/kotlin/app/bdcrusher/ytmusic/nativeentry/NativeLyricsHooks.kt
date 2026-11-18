@@ -31,10 +31,22 @@ private object NativeLyricsFactory:Fingerprint(strings=listOf("music_offline_lyr
 
 fun BytecodePatchContext.installNativeLyricsHooks(){
  fun fail(message:String):Nothing=throw PatchException("Unsupported native Lyrics integration: $message. Requires an original supported arm64-v8a Music APK.")
- val playback=mutableClassDefBy("Lapp/morphe/extension/music/patches/lyrics/LyricsPatch;").methods.singleOrNull {
+ val callbacks=mutableClassDefBy("Lapp/morphe/extension/music/patches/lyrics/LyricsPatch;").methods
+ val playback=callbacks.singleOrNull {
   it.name=="onSetPlaybackState"&&it.returnType=="V"&&it.parameterTypes==listOf("Landroid/media/session/PlaybackState;")&&AccessFlags.STATIC.isSet(it.accessFlags)
  }?:fail("timestamped playback callback")
  playback.addInstruction(0,"invoke-static/range { p0 .. p0 }, ${OWN}RendererPlayback;->sample(Landroid/media/session/PlaybackState;)V")
+ val metadata = callbacks.singleOrNull {
+  it.name == "onSetMetadata" && it.parameterTypes == listOf("Landroid/media/MediaMetadata;") && it.returnType == "V"
+ } ?: fail("track metadata callback")
+ for (callback in listOf(metadata, playback)) {
+  val returns = callback.implementation!!.instructions.withIndex().filter { it.value.opcode == Opcode.RETURN_VOID }
+  if (returns.isEmpty()) fail("missing lyrics callback return")
+  for ((index, _) in returns.reversed()) {
+   callback.replaceInstruction(index, "invoke-static {}, ${OWN}LyricsEntryCoordinator;->onPlaybackEvent()V")
+   callback.addInstruction(index + 1, "return-void")
+  }
+ }
  Controller.clearMatch();val controller=Controller.classDef
  val mutableTypes=controller.fields.filter {it.type.startsWith("L")&&!AccessFlags.STATIC.isSet(it.accessFlags)&&!AccessFlags.FINAL.isSet(it.accessFlags)}.map {it.type}
  val setter=controller.methods.singleOrNull {it.returnType=="V"&&it.parameterTypes.size==2&&it.parameterTypes[1]=="Z"&&it.parameterTypes[0] in mutableTypes}?:fail("current panel setter")
@@ -185,6 +197,7 @@ fun BytecodePatchContext.installNativeLyricsHooks(){
  val installer=mutableClassDefBy("Lapp/morphe/extension/music/patches/lyrics/ui/LyricsPanelInstaller;")
  fun redirect(name:String,code:String){val old=installer.methods.single {it.name==name};val m=MutableMethod(ImmutableMethod(old.definingClass,old.name,old.parameters,old.returnType,old.accessFlags,old.annotations,old.hiddenApiRestrictions,MutableMethodImplementation(2)));installer.methods.remove(old);m.addInstructions(0,code);installer.methods.add(m)}
  redirect("onLyricsPanelDetected","invoke-static {}, ${OWN}NativeLyricsHost;->onNativeLayout()V\nreturn-void")
+ redirect("onTabSelected","invoke-static { p0 }, ${OWN}PersonalLyricsTab;->onTabSelected(Landroid/view/ViewGroup;)V\nreturn-void")
  redirect("onEngagementPanelChanged","return-void")
  redirect("enableLyricsButton","return-void")
  redirect("isLyricsPanelOpen","invoke-static {}, ${OWN}NativeLyricsHost;->isOpen()Z\nmove-result v0\nreturn v0")

@@ -11,12 +11,12 @@ The worktree starts at the tracked personal 9.45.51 source and merges official M
 
 ## Integration choices
 
-- Native new In-app downloads use YouTube Music's quality prompt and preserve its account eligibility. The earlier personal Audio/Video sheet remains available to the legacy personal download code. Current External routing sends recognized actions to the chosen app. Upstream export is pending separate integration for authorized completed files.
+- New In-app downloads reuse YouTube Music's quality rows and submit through its native confirmation action. One shared personal Audio/Video sheet decorates supported pickers in either category. Other eligible flows use native UI. Both categories retain the Morphe export menu for exportable native saved files. External routing sends recognized actions to the chosen app.
 - Saved media transport reads the Range header through Morphe's current media-header interface. Music 9.46.51 uses its own validated Lyrics recipe and artwork resource IDs. The personal volume hooks match the actual audio session and release callsites in both targets.
-- The separate Singles payload keeps official Morphe settings, panel and download engine in control. Better Lyrics (Single) improves the Better Lyrics provider; the Full Collection carries the personal renderer and extra providers. Authorized native download responses can initiate a best-effort Full Collection lyrics prefetch when recording metadata is available. An external downloader receives the resolved video or playlist URL.
-- Remaining feature work includes retimed holds, AI section actions, external lyric sidecars, completed-download lyric association, and wiring the personal Audio/Video sheet to the native engine. Samsung visual and playback acceptance requires a phone.
+- Better Lyrics uses one renderer, provider catalogue, lyrics pull-out, and settings installer in both categories. Official Morphe supplies the native settings groups and timing callbacks in Singles. The personal tab and engagement panel use the same renderer. Native smooth scrolling and instrumental visibility settings control the personal renderer, with the existing Better Lyrics defaults.
+- Remaining work from the earlier rebase includes retimed holds, AI section actions, external lyric sidecars and completed-download lyric association. The Full Collection can prefetch lyrics when an authorized response includes recording metadata. Samsung visual and playback acceptance requires a phone.
 
-The app-home build entry point is build-music-230.ps1. The two-category run is retained under Verification/morphe-singles-04 and supersedes the earlier rebase run below.
+The app-home build entry point is build-music-230.ps1. The parity run is retained under Verification/music-parity-01.
 
 ## Earlier rebase checks
 

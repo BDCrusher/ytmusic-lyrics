@@ -66,6 +66,33 @@ private const val LYRICS_PANEL_FILTER =
 
 private object BetterLyricsAssets
 
+internal val personalLyricsAssets = resourcePatch {
+    execute {
+        val assets = listOf("index.html", "host.css", "renderer.js", "variables.css",
+            "lyrics.css", "image-highlights.css", "instrumental.css", "Satoshi-Variable.woff2", "NOTICE.txt", "providers.json",
+            "bd_lyrics_syllable.xml", "bd_lyrics_word.xml", "bd_lyrics_line.xml", "bd_lyrics_unsynced.xml")
+        assets.forEach { name ->
+            val destination = this["assets/bdcrusher-lyrics/$name"]
+            destination.parentFile.mkdirs()
+            val stream = BetterLyricsAssets::class.java.classLoader!!.getResourceAsStream("bdcrusher-lyrics/$name")
+                ?: throw IllegalStateException("Missing bundled lyric asset: $name")
+            stream.use { input -> destination.outputStream().use { output -> input.copyTo(output) } }
+        }
+        copyResources(
+            "copyvideolinkbutton",
+            ResourceGroup("drawable", "morphe_yt_copy_bold.xml")
+        )
+        copyResources(
+            "romanisationbutton",
+            ResourceGroup("drawable", "morphe_yt_romanize.xml")
+        )
+        copyResources(
+            "lyricscurrentbutton",
+            ResourceGroup("drawable", "morphe_yt_crosshair.xml")
+        )
+    }
+}
+
 @Suppress("unused")
 val lyricsPatch = bytecodePatch(
     name = "Third-party lyrics",
@@ -80,34 +107,7 @@ val lyricsPatch = bytecodePatch(
         lithoFilterPatch,
         mediaSessionHookPatch,
         musicVideoInformationPatch,
-        // The copy and romanize buttons need their icons whether the patches
-        // that own these resources are applied.
-        resourcePatch {
-            execute {
-                val assets = listOf("index.html", "host.css", "renderer.js", "variables.css",
-                    "lyrics.css", "image-highlights.css", "instrumental.css", "Satoshi-Variable.woff2", "NOTICE.txt", "providers.json",
-                    "bd_lyrics_syllable.xml", "bd_lyrics_word.xml", "bd_lyrics_line.xml", "bd_lyrics_unsynced.xml")
-                assets.forEach { name ->
-                    val destination = this["assets/bdcrusher-lyrics/$name"]
-                    destination.parentFile.mkdirs()
-                    val stream = BetterLyricsAssets::class.java.classLoader!!.getResourceAsStream("bdcrusher-lyrics/$name")
-                        ?: throw IllegalStateException("Missing bundled lyric asset: $name")
-                    stream.use { input -> destination.outputStream().use { output -> input.copyTo(output) } }
-                }
-                copyResources(
-                    "copyvideolinkbutton",
-                    ResourceGroup("drawable", "morphe_yt_copy_bold.xml")
-                )
-                copyResources(
-                    "romanisationbutton",
-                    ResourceGroup("drawable", "morphe_yt_romanize.xml")
-                )
-                copyResources(
-                    "lyricscurrentbutton",
-                    ResourceGroup("drawable", "morphe_yt_crosshair.xml")
-                )
-            }
-        }
+        personalLyricsAssets,
     )
 
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
@@ -184,6 +184,8 @@ val lyricsPatch = bytecodePatch(
                         dependency = "morphe_music_lyrics_enabled"
                     ),
                     SwitchPreference("morphe_music_lyrics_word_sync", summary = true),
+                    SwitchPreference("morphe_music_lyrics_spring_scroll", summary = true),
+                    SwitchPreference("morphe_music_lyrics_gap_dots", summary = true),
                     SwitchPreference("morphe_music_lyrics_focus_spotlight", summary = true),
                     SwitchPreference("morphe_music_lyrics_line_scale", summary = true),
                     SwitchPreference("morphe_music_lyrics_split_background", summary = true),

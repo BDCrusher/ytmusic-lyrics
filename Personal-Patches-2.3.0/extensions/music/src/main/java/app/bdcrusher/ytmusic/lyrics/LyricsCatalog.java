@@ -161,8 +161,7 @@ final class LyricsCatalog implements AutoCloseable {
         send(payload);
         if(result.isHighMatch(track)&&result.lyrics().synced()){
             new android.os.Handler(android.os.Looper.getMainLooper()).post(()->{
-                if(!closed)app.morphe.extension.music.patches.lyrics.LyricsManager.getInstance()
-                        .offerSessionLyrics(videoId,key,result.lyrics());
+                if(!closed)PersonalLyricsSession.offer(videoId,key,result.lyrics());
             });
         }
     }

@@ -72,6 +72,8 @@ public final class LyricsConfig {
              .put("romanization",p.getBoolean("romanization",false))
              .put("language",app.morphe.extension.music.patches.lyrics.requests.LyricsRequests.translationLanguage())
              .put("spotlight",app.morphe.extension.music.settings.Settings.LYRICS_FOCUS_SPOTLIGHT.get())
+             .put("smoothScroll",app.morphe.extension.music.settings.Settings.LYRICS_SPRING_SCROLL.get())
+             .put("showInstrumental",app.morphe.extension.music.settings.Settings.LYRICS_GAP_DOTS.get())
              .put("jumpToCurrent",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_CURRENT_BUTTON.get())
              .put("showCopy",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_COPY_BUTTON.get())
              .put("showRefresh",app.morphe.extension.music.settings.Settings.LYRICS_SHOW_REFRESH_BUTTON.get())

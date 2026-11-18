@@ -290,11 +290,31 @@ val singlesExtension = tasks.register("prepareSinglesExtension") {
                 public static byte[] rewriteModel(...);
                 public static boolean handleCommand(...);
             }
-            -keep class app.bdcrusher.ytmusic.lyrics.NativeBetterLyricsProvider { *; }
+            -keep class app.bdcrusher.ytmusic.lyrics.NativeLyricsHost { *; }
+            -keep class app.bdcrusher.ytmusic.lyrics.LyricsEntryButton { *; }
+            -keep class app.bdcrusher.ytmusic.lyrics.LyricsEntryCoordinator {
+                public static void onPlaybackEvent();
+            }
+            -keep class app.bdcrusher.ytmusic.lyrics.RendererPlayback {
+                public static void sample(...);
+            }
+            -keep class app.bdcrusher.ytmusic.lyrics.LyricsSettingsPage {
+                public static void install(...);
+            }
+            -keep class app.bdcrusher.ytmusic.lyrics.PersonalLyricsTab {
+                public static void onTabSelected(...);
+            }
+            -keep class app.bdcrusher.ytmusic.lyrics.PersonalLyricsSession {
+                public static app.morphe.extension.music.patches.lyrics.model.Lyrics current(...);
+                public static java.lang.String nativeOrder();
+            }
             -keep class app.bdcrusher.ytmusic.playlists.PersonalDownloadRouting {
                 public static byte[] replaceDownloadCommand(...);
                 public static java.lang.CharSequence onLithoTextLoaded(...);
                 public static boolean isFlyoutMenuOverridden();
+            }
+            -keep class app.bdcrusher.ytmusic.playlists.DownloadPrompt {
+                public static void showNative(android.app.AlertDialog);
             }
         """.trimIndent()
         com.android.tools.r8.R8.run(com.android.tools.r8.R8Command.builder()

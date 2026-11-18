@@ -10071,6 +10071,7 @@
     document.body.classList.toggle("lyrics-centered", settings.forceCenter === true);
     document.body.classList.toggle("lyrics-no-scale", settings.lineScale === false);
     document.body.classList.toggle("lyrics-hide-info", settings.hideInfo === true);
+    document.body.classList.toggle("lyrics-hide-instrumental", settings.showInstrumental === false);
     document.body.classList.toggle("lyrics-swap-language", settings.swapTranslation === true);
     document.body.classList.toggle("lyrics-hide-played", settings.hidePlayed === true);
     document.body.classList.toggle("lyrics-hide-unplayed", settings.hideUnplayed === true);
@@ -10271,7 +10272,7 @@
       isPlaying: clock.playing,
       playbackRate: clock.rate,
       passiveScrollEnabled: settings.passive,
-      smoothScroll: !settings.reducedMotion,
+      smoothScroll: !settings.reducedMotion && settings.smoothScroll !== false,
       followPausedSeeks: true,
       countEveryUserScroll: true
     });
@@ -10458,7 +10459,8 @@
         "swapTranslation",
         "hidePlayed",
         "hideUnplayed",
-        "showSection"
+        "showSection",
+        "showInstrumental"
       ];
       const changed = visual.some((key) => key in next && JSON.stringify(next[key]) !== JSON.stringify(settings[key]));
       if ("offset" in next && next.offset !== settings.offset) clock.initialized = false;

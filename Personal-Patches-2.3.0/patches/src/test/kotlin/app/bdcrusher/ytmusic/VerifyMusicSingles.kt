@@ -76,6 +76,18 @@ fun main(args: Array<String>) {
     val types = mutableSetOf<String>()
     val calls = mutableMapOf<String, Int>()
     ZipFile(result).use { zip ->
+        val lyricsSelected = "Better Lyrics (Single)" in cases
+        for (asset in listOf("renderer.js", "providers.json", "instrumental.css")) {
+            val entry = zip.getEntry("assets/bdcrusher-lyrics/$asset")
+            check((entry != null) == lyricsSelected) { "Unexpected lyrics asset $asset" }
+            if (entry != null) {
+                ZipFile(personal).use { bundle ->
+                    val shared = bundle.getEntry("bdcrusher-lyrics/$asset")
+                    check(zip.getInputStream(entry).use { it.readBytes() }
+                        .contentEquals(bundle.getInputStream(shared).use { it.readBytes() })) { "Different renderer bundle asset: $asset" }
+                }
+            }
+        }
         for (entry in zip.entries().asSequence().filter { it.name.matches(Regex("classes[0-9]*[.]dex")) }) {
             val dex = zip.getInputStream(entry).buffered().use { DexBackedDexFile.fromInputStream(null, it) }
             for (owner in dex.classes) {
@@ -91,7 +103,7 @@ fun main(args: Array<String>) {
     val expected = mapOf(
         "Shaders (Single)" to "shaders/ShaderRuntime;->onNativePanel",
         "Volume Boost (Single)" to "common/PlayerVolumeBoost;->handleCommand",
-        "Better Lyrics (Single)" to "lyrics/NativeBetterLyricsProvider;-><init>",
+        "Better Lyrics (Single)" to "lyrics/RendererPlayback;->sample",
         "Downloads (Single)" to "playlists/PersonalDownloadRouting;->replaceDownloadCommand"
     )
     for ((feature, hook) in expected) {
@@ -99,6 +111,11 @@ fun main(args: Array<String>) {
             "Unexpected Single hook $hook: $calls"
         }
     }
+    val lyrics = "Better Lyrics (Single)" in cases
+    val downloads = "Downloads (Single)" in cases
+    check(calls.getOrDefault(OWN + "lyrics/LyricsSettingsPage;->install", 0) == if (lyrics) 1 else 0)
+    check(calls.getOrDefault(OWN + "lyrics/PersonalLyricsTab;->onTabSelected", 0) == if (lyrics) 1 else 0)
+    check(calls.getOrDefault(OWN + "playlists/DownloadPrompt;->showNative", 0) == if (downloads) 1 else 0)
     check(calls.keys.none { "PersonalRuntime;->attach" in it || "TaskDismissal;" in it }) { "Full Collection hooks in Singles" }
     println("PASS: ${selectedPersonal.map { it.name }} compatible with ${selectedOfficial.size} official patches, ${types.size} distinct classes")
     println("Patched unsigned APK ${sha(result)}")

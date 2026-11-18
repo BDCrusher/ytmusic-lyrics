@@ -14,10 +14,10 @@ Morphe Patches 2.3.0 at `31234a8465683a389bcfba25ad636fd1cd38fd02`.
   enabled with Downloads (Single). Shaders and Volume Boost require no other personal
   selection.
 
-Better Lyrics (Single) supplies Better Lyrics lookups to Morphe's native lyrics panel
-and keeps its other providers and controls. Full Collection adds the personal renderer
-and its extra provider and rendering controls. Shaders and Volume Boost use the same
-personal feature code in both categories.
+Better Lyrics uses the same personal renderer, lyrics pull-out, source catalogue,
+and settings in both categories. The source list includes Morphe's providers,
+Spicy Lyrics and Unison, with the existing drag-to-reorder controls. Shaders and
+Volume Boost also use shared personal feature code.
 
 Select **Clone YouTube Music** with **GmsCore support**, then choose the
 **BDCrusher side-by-side** package option to use `app.bdcrusher.android.apps.youtube.music`.
@@ -25,13 +25,16 @@ Android gives the new package its own settings, downloaded files and folder gran
 Leave the clone option at its default to retain the ordinary Morphe package when
 patching with GmsCore support. Shaders remains independently selectable.
 
-New authorized downloads use YouTube Music's quality picker, offline engine and
-**Library → Downloads**. Account and subscription checks stay in place. Configure
+In-app downloads use the personal Audio/Video pop-out when YouTube Music returns
+a supported quality picker. It shows the native quality options and size information
+and submits the chosen row to the original confirmation action. Other eligible flows
+use YouTube Music's picker. Account and subscription checks remain in the native flow.
+**Library → Downloads** shows native downloads and Morphe supplies **Export to device**
+for eligible saved files in either category. Configure
 external routing under **Morphe → Player → Downloads**. Set **Download mode → External** to send the player and song-menu actions to the selected downloader. Use **Previous personal
 downloads** on that settings page for files and groups from the older downloader
 under the same package, or choose your YTDLnis folder there. Native groups and older
-personal groups retain their own storage. The legacy quality sheet remains in the
-previous personal download flow. Full Collection attempts to prefetch lyrics when an
+personal groups retain their own storage. Full Collection attempts to prefetch lyrics when an
 authorized offline response includes matching recording metadata. External downloaders
 receive the resolved URL.
 
@@ -60,7 +63,7 @@ outputs into the app home.
 
 ## Verification
 
-The app-home `Verification/morphe-singles-04` directory contains exact-bundle patch logs,
+The app-home `Verification/music-parity-01` directory contains exact-bundle patch logs,
 desktop fixtures and compiled audit reports. The test entry points are
 `verifyMusicSingles`, `verifyMusic94551`, `auditNativeMusic94551`, `PlaylistOccurrencesTest` and
 `DownloadQualityTest`.

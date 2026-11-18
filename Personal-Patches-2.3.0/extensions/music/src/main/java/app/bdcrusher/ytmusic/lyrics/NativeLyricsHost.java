@@ -83,7 +83,7 @@ public final class NativeLyricsHost {
         BetterLyricsPanelView old=renderer.get();if(old!=null)old.syncOverlay();
         if(lyrics)attach(epoch,0);
     }
-    public static void onNativeLayout(){if(isOpen())attach(epoch,0);app.bdcrusher.ytmusic.shaders.ShaderRuntime.onNativeLayout();}
+    public static void onNativeLayout(){if(isOpen())attach(epoch,0);else PersonalLyricsTab.schedule();app.bdcrusher.ytmusic.shaders.ShaderRuntime.onNativeLayout();}
     private static void attach(int expected,int attempt){
         if(queuedEpoch==expected)return;
         queuedEpoch=expected;

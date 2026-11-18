@@ -2,6 +2,10 @@
 package app.bdcrusher.ytmusic.singles
 
 import app.bdcrusher.ytmusic.nativeentry.addonEditionGuard
+import app.bdcrusher.ytmusic.nativeentry.installNativeLyricsHooks
+import app.bdcrusher.ytmusic.nativeentry.normalizePersonalLyricsAccessors
+import app.morphe.patches.music.layout.lyrics.personalLyricsAssets
+import app.morphe.patches.music.interaction.downloads.installNativeDownloadSheet
 import app.bdcrusher.ytmusic.shaders.installShaders
 import app.bdcrusher.ytmusic.shaders.shaderAssets
 import app.bdcrusher.ytmusic.shaders.verifyShaderIdentity
@@ -12,16 +16,16 @@ import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
 import app.morphe.patcher.patch.*
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
+import app.morphe.patcher.util.registersUsed
 import app.morphe.patcher.util.returnEarly
 import app.morphe.patches.music.shared.Constants.COMPATIBILITY_YOUTUBE_MUSIC
 import app.morphe.patches.youtube.interaction.downloads.ResolveCommandFingerprint
 import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.builder.MutableMethodImplementation
-import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
-import com.android.tools.smali.dexlib2.iface.instruction.FiveRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
+import com.android.tools.smali.dexlib2.iface.reference.FieldReference
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethod
 import com.android.tools.smali.dexlib2.immutable.ImmutableMethodParameter
 
@@ -36,6 +40,7 @@ private val singlesRuntime = bytecodePatch {
     dependsOn(addonEditionGuard)
     extendWith("extensions/bdcrusher-music-singles.mpe")
     finalize {
+        normalizePersonalLyricsAccessors()
         if (classDefByOrNull(MUSIC + "settings/preference/MusicPreferenceFragment;") == null)
             throw PatchException("Singles require the official Morphe Music settings and extension.")
     }
@@ -109,32 +114,67 @@ val volumeBoostSingle = bytecodePatch(
     finalize { installVolumeBoost() }
 }
 
+private fun BytecodePatchContext.installSinglePreference(owner: String) {
+    val init = mutableClassDefBy(MUSIC + "settings/preference/MusicPreferenceFragment;")
+        .methods.single { it.name == "initialize" && it.parameterTypes.isEmpty() }
+    val sort = init.implementation!!.instructions.indexOfFirst {
+        ((it as? ReferenceInstruction)?.reference as? MethodReference)?.name == "sortPreferenceGroups"
+    }
+    if (sort < 0) throw PatchException("Official Morphe Music settings initializer changed.")
+    init.addInstruction(sort + 1, "invoke-static/range { p0 .. p0 }, $owner->install($FRAGMENT)V")
+}
+
+private fun BytecodePatchContext.installSingleLyricsSession() {
+    val manager = mutableClassDefBy(LYRICS + "LyricsManager;")
+    val model = LYRICS + "model/Lyrics;"
+    for (name in listOf("areLyricsSynced", "getCurrentLineText")) {
+        val method = manager.methods.single { it.name == name && it.parameterTypes.isEmpty() }
+        val source = method.implementation!!.instructions.withIndex().singleOrNull { (_, instruction) ->
+            instruction.opcode == Opcode.IGET_OBJECT &&
+                ((instruction as? ReferenceInstruction)?.reference as? FieldReference)
+                    ?.let { it.definingClass == manager.type && it.name == "currentLyrics" && it.type == model } == true
+        } ?: throw PatchException("Official Morphe lyrics session source changed: $name")
+        val register = source.value.registersUsed.first()
+        method.addInstructions(source.index + 1,
+            "invoke-static/range { v$register .. v$register }, " +
+                "${OWN}lyrics/PersonalLyricsSession;->current($model)$model\nmove-result-object v$register")
+    }
+    var lookups = 0
+    for (method in manager.methods) {
+        val calls = method.implementation?.instructions?.withIndex()?.filter { (_, instruction) ->
+            val call = (instruction as? ReferenceInstruction)?.reference as? MethodReference
+            call?.definingClass == LYRICS + "LyricsProviders;" && call.name == "providersInOrder" &&
+                call.parameterTypes == listOf("Ljava/lang/String;")
+        }.orEmpty()
+        for ((index, instruction) in calls.asReversed()) {
+            // Replace the invoke at the original label. Its original move-result
+            // must remain immediately after the replacement provider call.
+            val register = instruction.registersUsed.single()
+            method.replaceInstruction(index, "invoke-static {}, ${OWN}lyrics/PersonalLyricsSession;->nativeOrder()Ljava/lang/String;")
+            method.addInstructions(index + 1,
+                "move-result-object v$register\ninvoke-static/range { v$register .. v$register }, " +
+                    "${LYRICS}LyricsProviders;->providersInOrder(Ljava/lang/String;)Ljava/util/List;")
+            lookups++
+        }
+    }
+    if (lookups != 4) throw PatchException("Official Morphe lyrics provider order integration changed: $lookups")
+}
+
 val betterLyricsSingle = bytecodePatch(
     name = "Better Lyrics (Single)",
-    description = "Improves Better Lyrics lookups in official Third-party lyrics and keeps its native panel and controls.",
+    description = "Adds the personal Better Lyrics renderer, sources and controls to official Morphe.",
     default = false,
 ) {
     category("Singles")
     compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
-    dependsOn(singlesRuntime)
+    dependsOn(singlesRuntime, personalLyricsAssets)
     finalize {
         if (!hasHostCall(LYRICS + "LyricsPatch;", "onSetPlaybackState")) {
             throw PatchException("Select official Morphe Third-party lyrics with Better Lyrics (Single).")
         }
-        val providers = mutableClassDefBy(LYRICS + "LyricsProviders;")
-        val method = providers.methods.single { it.name == "providerFor" && it.parameterTypes == listOf("Ljava/lang/String;") }
-        val instructions = method.implementation!!.instructions
-        val constructor = instructions.withIndex().singleOrNull {
-            ((it.value as? ReferenceInstruction)?.reference as? MethodReference)
-                ?.let { call -> call.name == "<init>" && call.definingClass == LYRICS + "requests/BlyricsProvider;" } == true
-        } ?: throw PatchException("Official Morphe Better Lyrics provider factory changed.")
-        val call = constructor.value as? FiveRegisterInstruction
-        val allocation = instructions.getOrNull(constructor.index - 1) as? OneRegisterInstruction
-        if (call == null || allocation?.opcode != Opcode.NEW_INSTANCE || allocation.registerA != call.registerC)
-            throw PatchException("Unexpected Better Lyrics provider allocation.")
-        val type = OWN + "lyrics/NativeBetterLyricsProvider;"
-        method.replaceInstruction(constructor.index - 1, "new-instance v${allocation.registerA}, $type")
-        method.replaceInstruction(constructor.index, "invoke-direct { v${call.registerC} }, $type-><init>()V")
+        installNativeLyricsHooks()
+        installSingleLyricsSession()
+        installSinglePreference(OWN + "lyrics/LyricsSettingsPage;")
     }
 }
 
@@ -153,6 +193,7 @@ val downloadsSingle = bytecodePatch(
                 val call = (it as? ReferenceInstruction)?.reference as? MethodReference
                 call?.definingClass == DOWNLOADS && call.name == "replaceDownloadCommand"
             }) throw PatchException("Select official Morphe Downloads with Downloads (Single).")
+        installNativeDownloadSheet()
         val owner = mutableClassDefBy(DOWNLOADS)
         fun forward(name: String, parameters: List<String>, returnType: String, code: String) {
             val method = owner.methods.singleOrNull { it.name == name && it.parameterTypes == parameters && it.returnType == returnType }

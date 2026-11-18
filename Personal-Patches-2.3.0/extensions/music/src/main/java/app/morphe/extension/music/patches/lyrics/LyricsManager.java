@@ -2537,30 +2537,8 @@ public final class LyricsManager {
         return sectionDetecting;
     }
 
-    private final java.util.Map<String,Lyrics> personalSessionLyrics = new java.util.HashMap<>();
-    private String personalSessionRecording = "";
-
-    public void offerSessionLyrics(String recording,String key,Lyrics lyrics) {
-        Utils.verifyOnMainThread();
-        if(!recording.equals(VideoInformation.getVideoId()))return;
-        if(!recording.equals(personalSessionRecording)){
-            personalSessionRecording=recording;
-            personalSessionLyrics.clear();
-        }
-        personalSessionLyrics.put(key,lyrics);
-    }
-
-    private Lyrics sessionLyrics() {
-        if(personalSessionRecording.equals(VideoInformation.getVideoId())){
-            String key=app.bdcrusher.ytmusic.lyrics.LyricsConfig.sessionSource(
-                    Utils.getContext(),personalSessionLyrics.keySet());
-            if(key!=null)return personalSessionLyrics.get(key);
-        }
-        return currentLyrics;
-    }
-
     public boolean areLyricsSynced() {
-        Lyrics lyrics = sessionLyrics();
+        Lyrics lyrics = app.bdcrusher.ytmusic.lyrics.PersonalLyricsSession.current(currentLyrics);
         return lyrics != null && lyrics.synced() && !lyrics.isEmpty();
     }
 
@@ -2570,7 +2548,7 @@ public final class LyricsManager {
      */
     @Nullable
     public String getCurrentLineText() {
-        Lyrics lyrics = sessionLyrics();
+        Lyrics lyrics = app.bdcrusher.ytmusic.lyrics.PersonalLyricsSession.current(currentLyrics);
         if (lyrics == null || !lyrics.synced() || lyrics.isEmpty()) {
             return null;
         }

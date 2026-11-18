@@ -95,6 +95,7 @@ fun main(args: Array<String>) {
     val host = "Lapp/morphe/extension/music/patches/downloads/NativeDownloadsHost;"
     val downloadsHost = "Lapp/morphe/extension/music/patches/DownloadsPatch;"
     val nativeOfflineHooks = mutableSetOf<String>()
+    val nativeExportHooks = mutableSetOf<String>()
     ZipFile(result).use { archive ->
         for (entry in archive.entries().asSequence().filter { it.name.matches(Regex("classes[0-9]*[.]dex")) }) {
             val dex = archive.getInputStream(entry).buffered().use { DexBackedDexFile.fromInputStream(null, it) }
@@ -109,6 +110,7 @@ fun main(args: Array<String>) {
                             check(ref.definingClass != host) { "Retired Library hook remains: $method" }
                             if (ref.definingClass == downloadsHost ||
                                 ref.definingClass.endsWith("/BaseInAppDownloadsPatch;")) nativeOfflineHooks.add(ref.name)
+                            if (ref.definingClass.endsWith("/ExportMenuItem;")) nativeExportHooks.add(ref.name)
                         }
                         if (ref.definingClass.startsWith("Lapp/bdcrusher/ytmusic/"))
                             calls.merge("${ref.definingClass}->${ref.name}", 1, Int::plus)
@@ -125,6 +127,8 @@ fun main(args: Array<String>) {
         check(calls["Lapp/bdcrusher/ytmusic/playlists/LocalPlayback;->bd_nativeResponse"] == 1)
         check(calls.getOrDefault("Lapp/bdcrusher/ytmusic/playlists/LocalNetFetch;->local", 0) >= 1)
         check(calls.getOrDefault("Lapp/bdcrusher/ytmusic/playlists/NativePlayback;->open", 0) >= 1)
+        check(calls["Lapp/bdcrusher/ytmusic/playlists/DownloadPrompt;->showNative"] == 1)
+        check(nativeExportHooks == setOf("getExportMenuItems", "onMenuItemClick"))
         check(seen.none { it.endsWith("/OfflinePlaybackService;") || it.endsWith("/LocalDownloadsFragment;") })
         check(nativeOfflineHooks.containsAll(setOf("handleExternalDownload", "observeAuthorizedOfflineResponse"))) {
             "Native offline hooks missing: $nativeOfflineHooks"
@@ -134,6 +138,8 @@ fun main(args: Array<String>) {
         println("PASS: native offline hooks and no personal Library mount ($nativeOfflineHooks)")
     } else {
         check(nativeOfflineHooks.isEmpty()) { "Native Downloads hooks were installed without Downloads" }
+        check(nativeExportHooks.isEmpty())
+        check(calls["Lapp/bdcrusher/ytmusic/playlists/DownloadPrompt;->showNative"] == null)
     }
     val volume = "Lapp/bdcrusher/ytmusic/common/PlayerVolumeBoost;"
     for (hook in listOf("nativeModel", "handleCommand", "audioSession", "releaseAudioTrack")) {

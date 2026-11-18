@@ -28,7 +28,6 @@ import app.morphe.extension.music.patches.lyrics.model.Lyrics;
 import app.morphe.extension.music.patches.lyrics.model.LyricsLine;
 import app.morphe.extension.music.patches.lyrics.model.Word;
 import app.morphe.extension.music.patches.lyrics.model.TrackInfo;
-import app.morphe.extension.music.patches.lyrics.ui.LyricsPanelInstaller;
 import app.morphe.extension.music.settings.Settings;
 import app.morphe.extension.music.shared.VideoInformation;
 import app.morphe.extension.shared.Logger;
@@ -62,6 +61,13 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     private final SharedPreferences.OnSharedPreferenceChangeListener listener=(preferences,key)->handler.post(()->{
         if(!"serviceJwt".equals(key))applySettings();
     });
+    private final SharedPreferences.OnSharedPreferenceChangeListener morpheSettingsListener = (preferences, key) -> {
+        if (key == null || key.startsWith("morphe_music_lyrics_")) handler.post(() -> {
+            if (!attached) return;
+            applySettings();
+            syncOverlay();
+        });
+    };
     private final Runnable tick=new Runnable(){public void run(){
         if(!attached)return;
         try{
@@ -81,13 +87,15 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
     }};
     public BetterLyricsPanelView(Context context){super(context);setVisibility(View.INVISIBLE);}
     public void useNativeTab(){nativeTab=true;}
-    private boolean ownsContent(){return nativeTab?LyricsPanelInstaller.isNativeTabVisible(this):NativeLyricsHost.owns(this);}
+    private boolean ownsContent(){return nativeTab?PersonalLyricsTab.owns(this):NativeLyricsHost.owns(this);}
     @Override protected void onWindowVisibilityChanged(int visibility){super.onWindowVisibilityChanged(visibility);if(visibility!=View.VISIBLE&&web!=null)frameRate.release(web);call("visible",String.valueOf(visibility==View.VISIBLE&&isShown()));}
     @Override protected void onVisibilityChanged(View changed,int visibility){super.onVisibilityChanged(changed,visibility);if(visibility!=View.VISIBLE&&web!=null)frameRate.release(web);call("visible",String.valueOf(isShown()&&getWindowVisibility()==View.VISIBLE));}
     @Override protected void onAttachedToWindow(){
         super.onAttachedToWindow();attached=true;iconsLoading=false;createWebView();getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
         enrichmentNetwork=new LyricsNetwork();enrichmentExecutor=java.util.concurrent.Executors.newSingleThreadExecutor();
         LyricsConfig.preferences(getContext()).registerOnSharedPreferenceChangeListener(listener);
+        app.morphe.extension.shared.settings.Setting.preferences.preferences
+                .registerOnSharedPreferenceChangeListener(morpheSettingsListener);
         LyricsManager.getInstance().addListener(this);handler.post(tick);
     }
     @Override protected void onDetachedFromWindow(){
@@ -95,12 +103,14 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         restoreNativeContent();
         attached=false;if(web!=null)frameRate.release(web);handler.removeCallbacksAndMessages(null);
         LyricsConfig.preferences(getContext()).unregisterOnSharedPreferenceChangeListener(listener);
+        app.morphe.extension.shared.settings.Setting.preferences.preferences
+                .unregisterOnSharedPreferenceChangeListener(morpheSettingsListener);
         LyricsManager.getInstance().removeListener(this);if(catalogSink!=null){LyricsRepository.unsubscribe(catalogSink);catalogSink=null;}
         if(enrichmentNetwork!=null)enrichmentNetwork.close();if(enrichmentExecutor!=null)enrichmentExecutor.shutdownNow();
         if(web!=null){frameRate.release(web);web.removeJavascriptInterface("BDNative");web.stopLoading();app.bdcrusher.ytmusic.common.ViewDisposal.dispose(web,web::destroy);web=null;}
         ready=false;identity="";recordingId="";track=null;generation++;sourceHealth=null;sourceNotice="";sourceFinished=false;
         lastSettings="";lastInsets="";pending.clear();super.onDetachedFromWindow();
-        if(nativeTab)LyricsPanelInstaller.onTabPanelDetached(this);
+        if(nativeTab)PersonalLyricsTab.onDetached(this);
     }
     private void createWebView(){
         if(web!=null)return;

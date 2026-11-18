@@ -7,9 +7,20 @@
 
 package app.morphe.patches.music.interaction.downloads
 
+import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.util.cloneParameters
+import app.morphe.patcher.util.findFreeRegister
+import app.morphe.patches.shared.misc.downloads.exportDownloadFolderPreference
+import app.morphe.patches.shared.misc.fix.proto.parseByteArrayMethodRef
+import app.morphe.patches.shared.misc.fix.proto.protoDefaultInstanceFingerprint
+import app.morphe.util.addInstructionsAtControlFlowLabel
+import app.morphe.util.findInstructionIndicesReversedOrThrow
+import com.android.tools.smali.dexlib2.Opcode
+import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructions
 import app.morphe.patcher.extensions.InstructionExtensions.addInstructionsWithLabels
 import app.morphe.patcher.patch.patch
+import app.morphe.patcher.patch.bytecodePatch
 import app.morphe.patcher.util.getReference
 import app.morphe.patcher.util.proxy.mutableTypes.MutableMethod.Companion.toMutable
 import app.morphe.patcher.util.registersUsed
@@ -57,6 +68,7 @@ private val downloadsResourcePatch = app.morphe.patcher.patch.resourcePatch {
                 sorting = Sorting.UNSORTED,
                 preferences = setOf(
                     ListPreference("morphe_download_mode"),
+                    exportDownloadFolderPreference(),
                     SwitchPreference("morphe_external_downloader_menu", summary = true),
                     TextPreference(
                         "morphe_external_downloader_name",
@@ -65,6 +77,14 @@ private val downloadsResourcePatch = app.morphe.patcher.patch.resourcePatch {
                 )
             )
         )
+    }
+}
+
+private val nativeFullDownloadUi = bytecodePatch {
+    dependsOn(fixProtoLibraryPatch)
+    execute {
+        installNativeDownloadSheet()
+        installNativeDownloadExport()
     }
 }
 
@@ -77,6 +97,7 @@ val downloadsPatch = patch(
     category("Full Collection")
     dependsOn(
         downloadsResourcePatch,
+        nativeFullDownloadUi,
         app.bdcrusher.ytmusic.playlists.localPlaybackPatch,
         sharedExtensionPatch,
         settingsPatch,
@@ -146,6 +167,90 @@ val downloadsPatch = patch(
             val register = response.instruction.registersUsed.first()
             it.method.addInstructions(response.index + 1,
                 "invoke-static/range { v$register .. v$register }, $observer")
+        }
+    }
+}
+
+// Export menu bridge adapted from Morphe Patches 2.3.0. The saved-file exporter and its checks are unchanged.
+private const val EXPORT_MENU_ITEM = "Lapp/morphe/extension/music/patches/downloads/ExportMenuItem;"
+
+private fun app.morphe.patcher.patch.BytecodePatchContext.installNativeDownloadExport() {
+    fun protoDefaultInstance(type: String) = protoDefaultInstanceFingerprint(type).instructionMatches.first().fieldReference
+    // Add the export items to the menus of the songs and videos the app saved.
+    MusicMenuBottomSheetItemsFingerprint.let {
+        val menuField = it.instructionMatches.first().fieldReference
+        val menuItemType = it.instructionMatches[3].instruction.getReference<TypeReference>()!!.type
+        val addItemMethod = it.instructionMatches.last().methodReference
+        val itemsType = addItemMethod.definingClass
+
+        val addExportMenuItemMethod = ImmutableMethod(
+            it.classDef.type,
+            "patch_addExportMenuItems",
+            listOf(
+                ImmutableMethodParameter(itemsType, null, null),
+                ImmutableMethodParameter("Ljava/lang/Object;", null, null)
+            ),
+            "V",
+            AccessFlags.PRIVATE.value or AccessFlags.STATIC.value,
+            null,
+            null,
+            MutableMethodImplementation(7),
+        ).toMutable().apply {
+            addInstructionsWithLabels(
+                0,
+                """
+                    invoke-static { p1 }, $EXPORT_MENU_ITEM->getExportMenuItems(Ljava/lang/Object;)[[B
+                    move-result-object v0
+                    array-length v1, v0
+                    const/4 v2, 0x0
+                    sget-object v3, ${protoDefaultInstance(menuItemType)}
+                    :next_item
+                    if-ge v2, v1, :no_more_items
+                    aget-object v4, v0, v2
+                    invoke-static { v3, v4 }, ${parseByteArrayMethodRef.get()!!}
+                    move-result-object v4
+                    invoke-virtual { p0, v4 }, $addItemMethod
+                    add-int/lit8 v2, v2, 0x1
+                    goto :next_item
+                    :no_more_items
+                    return-void
+                """
+            )
+        }
+        it.classDef.methods.add(addExportMenuItemMethod)
+
+        // The method overwrites the register of the fragment, which is needed for the menu renderer.
+        it.method.cloneParameters().apply {
+            findInstructionIndicesReversedOrThrow(Opcode.RETURN_OBJECT).forEach { index ->
+                val itemsRegister = getInstruction<OneRegisterInstruction>(index).registerA
+                val menuRegister = findFreeRegister(index, itemsRegister)
+
+                // The loop jumps to the return when it ends, so the code goes at its label.
+                addInstructionsAtControlFlowLabel(
+                    index,
+                    """
+                        iget-object v$menuRegister, p0, $menuField
+                        invoke-static { v$itemsRegister, v$menuRegister }, $addExportMenuItemMethod
+                    """
+                )
+            }
+        }
+    }
+
+    // The export items have no command, so the app only closes the menu when one is clicked.
+    MenuItemClickFingerprint.let {
+        val menuItemField = it.instructionMatches.first().fieldReference
+
+        it.method.apply {
+            val register = findFreeRegister(0)
+
+            addInstructions(
+                0,
+                """
+                    iget-object v$register, p0, $menuItemField
+                    invoke-static { v$register }, $EXPORT_MENU_ITEM->onMenuItemClick(Ljava/lang/Object;)V
+                """
+            )
         }
     }
 }

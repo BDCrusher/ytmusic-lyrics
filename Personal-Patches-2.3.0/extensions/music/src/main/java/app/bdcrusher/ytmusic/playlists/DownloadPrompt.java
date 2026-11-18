@@ -18,9 +18,11 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.view.WindowInsets;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.CheckBox;
+import android.widget.Checkable;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -42,6 +44,9 @@ import app.morphe.extension.music.patches.downloads.LocalDownloadManager;
 import app.morphe.extension.music.patches.downloads.LocalDownloadManager.Choice;
 import app.morphe.extension.music.patches.downloads.LocalDownloadManager.MediaOptions;
 import app.morphe.extension.shared.Utils;
+import app.morphe.extension.shared.ResourceUtils;
+import app.morphe.extension.music.settings.Settings;
+import app.morphe.extension.shared.patches.DownloadMode;
 import app.morphe.extension.shared.innertube.PlayerResponseOuterClass.Format;
 import app.morphe.extension.shared.theme.ThemeUtils;
 
@@ -103,14 +108,14 @@ public final class DownloadPrompt {
         MAIN.post(() -> {
             Activity activity = foreground.get();
             if (!usable(activity) || single != null || pending != null) return;
-            Sheet sheet = new Sheet(activity, options -> LocalDownloadManager.enqueue(id, options.options, options.choice),
+            Sheet sheet = new Sheet(activity, null,
                     () -> single = null);
             single = sheet;
             sheet.show();
             Utils.submitOnBackgroundThread(() -> {
                 MediaOptions options = LocalDownloadManager.mediaOptions(id, true);
                 MAIN.post(() -> {
-                    if (single == sheet) sheet.populate(options);
+                    if (single == sheet) sheet.populate(options, choice -> LocalDownloadManager.enqueue(id, options, choice));
                 });
                 return null;
             });
@@ -162,10 +167,10 @@ public final class DownloadPrompt {
             single.close();
             single = null;
         }
-        request.sheet = new Sheet(activity, selected -> request.answer.complete(selected.choice),
+        request.sheet = new Sheet(activity, null,
                 () -> request.answer.complete(null));
         request.sheet.show();
-        request.sheet.populate(request.options);
+        request.sheet.populate(request.options, request.answer::complete);
     }
 
     private static final class BatchChoice {
@@ -178,8 +183,72 @@ public final class DownloadPrompt {
         }
     }
 
-    private record Selection(MediaOptions options, Choice choice) {}
-    private record Quality(String label, Choice choice, String size) {}
+    private record Quality(String label, String size, String key, Runnable confirm) {}
+
+    /** Decorates a populated native quality picker while keeping its original listeners. */
+    public static void showNative(android.app.AlertDialog dialog) {
+        dialog.show();
+        if (Settings.DOWNLOAD_MODE.get() != DownloadMode.IN_APP) return;
+        try {
+            Activity activity = Utils.getActivity();
+            if (!usable(activity) || dialog.getWindow() == null) return;
+            View listView = dialog.findViewById(ResourceUtils.getIdIdentifier("offline_stream_selection_list"));
+            View actionView = dialog.findViewById(ResourceUtils.getIdIdentifier("action_button"));
+            if (!(listView instanceof ViewGroup rows) || !(actionView instanceof TextView action)
+                    || !action.isEnabled() || !action.hasOnClickListeners()
+                    || !action.isShown() || !rows.isShown()
+                    || !matchesResource(action, action.getText(), "confirm_download")
+                    || rows.getChildCount() == 0 || rows.getChildCount() > 16) return;
+            if (!(dialog.findViewById(android.R.id.content) instanceof FrameLayout body)) return;
+            Sheet sheet = new Sheet(activity, dialog, () -> {});
+            sheet.preferencePrefix = "native";
+            sheet.complete = () -> {};
+            for (int i = 0; i < rows.getChildCount(); i++) {
+                View row = rows.getChildAt(i);
+                if (!row.isEnabled() || !row.hasOnClickListeners()) return;
+                List<String> texts = new ArrayList<>(2);
+                collectVisibleText(row, texts);
+                if (texts.isEmpty() || texts.size() > 2) return;
+                String label = texts.get(0);
+                boolean audio = matchesResource(row, label, "offline_video_quality_audio_only",
+                        "offline_audio_quality_high", "offline_audio_quality_normal", "offline_audio_quality_low");
+                boolean video = matchesResource(row, label, "offline_video_quality_144p", "offline_video_quality_360p",
+                        "offline_video_quality_480p", "offline_video_quality_720p", "offline_video_quality_1080p");
+                if (!audio && !video) return;
+                List<Quality> options = video ? sheet.video : sheet.audio;
+                if (options.stream().anyMatch(option -> option.key.equals(label))) return;
+                options.add(new Quality(label, texts.size() == 2 ? texts.get(1) : "Size unavailable", label, () -> {
+                    if (dialog.isShowing() && row.isAttachedToWindow() && action.isAttachedToWindow()
+                            && action.isEnabled() && row.performClick()) action.performClick();
+                }));
+                if (row instanceof Checkable active && active.isChecked()) {
+                    if (video) sheet.defaultVideo = label;
+                    else sheet.defaultAudio = label;
+                }
+            }
+            sheet.switchTab(sheet.audio.isEmpty(), false);
+            sheet.mountInNativeWindow(body);
+        } catch (RuntimeException ex) {
+            app.morphe.extension.shared.Logger.printException(() -> "Could not decorate Music download quality picker", ex);
+        }
+    }
+
+    private static boolean matchesResource(View view, CharSequence label, String... names) {
+        for (String name : names) {
+            int id = ResourceUtils.getStringIdentifier(name);
+            if (id != 0 && view.getResources().getString(id).trim().equalsIgnoreCase(label.toString().trim())) return true;
+        }
+        return false;
+    }
+
+    private static void collectVisibleText(View view, List<String> values) {
+        if (view.getVisibility() != View.VISIBLE) return;
+        if (view instanceof TextView text && !text.getText().toString().isBlank()) {
+            values.add(text.getText().toString().trim());
+        } else if (view instanceof ViewGroup group) {
+            for (int i = 0; i < group.getChildCount(); i++) collectVisibleText(group.getChildAt(i), values);
+        }
+    }
 
     private static final class Sheet {
         final Activity activity;
@@ -192,13 +261,14 @@ public final class DownloadPrompt {
         final ScrollView scroll;
         final TextView download;
         final CheckBox remember;
-        final Consumer<Selection> accept;
         final Runnable cancel;
         final int foregroundColor = ThemeUtils.getAppForegroundColor();
         final int background = ThemeUtils.getAppBackgroundColor();
         final List<Quality> audio = new ArrayList<>();
         final List<Quality> video = new ArrayList<>();
-        MediaOptions options;
+        String preferencePrefix = "legacy";
+        boolean nativeDialog;
+        Runnable complete = this::close;
         Quality selected;
         boolean showingVideo;
         boolean expanded;
@@ -206,13 +276,15 @@ public final class DownloadPrompt {
         boolean dragging;
         int dispatchedBottom;
 
-        Sheet(Activity activity, Consumer<Selection> accept, Runnable cancel) {
+        Sheet(Activity activity, Dialog host, Runnable cancel) {
             this.activity = activity;
-            this.accept = accept;
             this.cancel = cancel;
-            dialog = new Dialog(activity);
-            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-            dialog.setOnCancelListener(ignored -> cancel.run());
+            nativeDialog = host != null;
+            dialog = nativeDialog ? host : new Dialog(activity);
+            if (!nativeDialog) {
+                dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+                dialog.setOnCancelListener(ignored -> cancel.run());
+            }
 
             root = new LinearLayout(activity);
             root.setOrientation(LinearLayout.VERTICAL);
@@ -273,15 +345,13 @@ public final class DownloadPrompt {
             download.setEnabled(false);
             addAction(actions, cancelButton);
             addAction(actions, download);
-            cancelButton.setOnClickListener(view -> { cancel.run(); close(); });
+            cancelButton.setOnClickListener(view -> { if (nativeDialog) dialog.cancel(); else { cancel.run(); close(); } });
             download.setOnClickListener(view -> {
                 if (selected == null) return;
                 if (remember.isChecked()) preferences(activity).edit()
-                        .putInt(showingVideo ? "videoItag" : "audioItag",
-                                showingVideo ? selected.choice.video().getItag() : selected.choice.audio().getItag()).apply();
-                accept.accept(new Selection(options, selected.choice));
-                close();
-                if (single == this) single = null;
+                        .putString(rememberedKey(showingVideo), selected.key).apply();
+                selected.confirm.run();
+                complete.run();
             });
             root.addView(actions);
             root.setOnApplyWindowInsetsListener((view, insets) -> {
@@ -289,7 +359,7 @@ public final class DownloadPrompt {
                 root.post(this::applyNavigationPadding);
                 return insets;
             });
-            dialog.setContentView(root);
+            if (!nativeDialog) dialog.setContentView(root);
         }
 
         void show() {
@@ -303,6 +373,36 @@ public final class DownloadPrompt {
             dialog.show();
             PersonalRuntime.dialog(dialog);
             if (window != null) window.setLayout(-1, -2);
+            root.requestApplyInsets();
+            root.post(this::applyNavigationPadding);
+        }
+
+        void mountInNativeWindow(FrameLayout body) {
+            Window window = dialog.getWindow();
+            WindowManager.LayoutParams original = new WindowManager.LayoutParams();
+            original.copyFrom(window.getAttributes());
+            List<View> views = new ArrayList<>();
+            List<Integer> visibility = new ArrayList<>();
+            for (int i = 0; i < body.getChildCount(); i++) {
+                View child = body.getChildAt(i);
+                views.add(child);
+                visibility.add(child.getVisibility());
+            }
+            body.addView(root, new FrameLayout.LayoutParams(-1, -2, Gravity.BOTTOM));
+            for (View view : views) view.setVisibility(View.GONE);
+            root.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
+                @Override public void onViewAttachedToWindow(View view) {}
+                @Override public void onViewDetachedFromWindow(View view) {
+                    root.removeOnAttachStateChangeListener(this);
+                    MAIN.post(() -> {
+                        body.removeView(root);
+                        for (int i = 0; i < views.size(); i++) views.get(i).setVisibility(visibility.get(i));
+                        window.setAttributes(original);
+                    });
+                }
+            });
+            window.setGravity(Gravity.BOTTOM);
+            window.setLayout(-1, -2);
             root.requestApplyInsets();
             root.post(this::applyNavigationPadding);
         }
@@ -370,8 +470,8 @@ public final class DownloadPrompt {
             dialog.dismiss();
         }
 
-        void populate(MediaOptions options) {
-            this.options = options;
+        void populate(MediaOptions options, Consumer<Choice> accept) {
+            complete = () -> { close(); if (single == this) single = null; };
             List<Format> sounds = options.formats().stream()
                     .filter(AudioQuality::opus)
                     .sorted(Comparator.comparingInt(Format::getBitrate).reversed())
@@ -379,25 +479,50 @@ public final class DownloadPrompt {
             for (Format f : sounds) {
                 String codec = f.getMimeType().contains("webm") ? "Opus" : "AAC";
                 String label = f.getBitrate() > 0 ? codec + " · " + Math.round(f.getBitrate() / 1000f) + " kbps" : codec;
-                audio.add(new Quality(label, new Choice(f, null), size(f, null)));
+                audio.add(new Quality(label, size(f, null, options.seconds()), Integer.toString(f.getItag()),
+                        () -> accept.accept(new Choice(f, null))));
             }
             Format selectedAudio = AudioQuality.select(sounds, DownloadPrompt.selected(activity));
             if (selectedAudio == null) {
                 selectedAudio = LocalDownloadManager.bestAudio(options);
             }
             if (selectedAudio != null) {
-                int rememberedAudio = preferences(activity).getInt("audioItag", -1);
+                int rememberedAudio = parseItag(false);
                 for (Format f : sounds) if (f.getItag() == rememberedAudio) selectedAudio = f;
                 for (Format f : MediaSelection.videos(options.formats(), DownloadCatalog::videoSupported)) {
-                    video.add(new Quality(MediaSelection.height(f) + "p", new Choice(selectedAudio, f), size(selectedAudio, f)));
+                    Format sound = selectedAudio;
+                    video.add(new Quality(MediaSelection.height(f) + "p", size(sound, f, options.seconds()),
+                            Integer.toString(f.getItag()), () -> accept.accept(new Choice(sound, f))));
+                }
+            }
+            if (selectedAudio != null) {
+                defaultAudio = Integer.toString(selectedAudio.getItag());
+                int height = preferences(activity).getInt("videoHeight", 1080);
+                for (Quality option : video) {
+                    if (Integer.parseInt(option.label.substring(0, option.label.length() - 1)) <= height) {
+                        defaultVideo = option.key;
+                        break;
+                    }
                 }
             }
             switchTab(false, false);
         }
 
-        private String size(Format sound, Format picture) {
-            long bytes = AudioQuality.estimate(sound, options.seconds());
-            long extra = picture == null ? 0 : AudioQuality.estimate(picture, options.seconds());
+        private String defaultAudio = "", defaultVideo = "";
+
+        private String rememberedKey(boolean video) {
+            return preferencePrefix + (video ? "-video-quality" : "-audio-quality");
+        }
+
+        private int parseItag(boolean video) {
+            int legacy = preferences(activity).getInt(video ? "videoItag" : "audioItag", -1);
+            try { return Integer.parseInt(preferences(activity).getString(rememberedKey(video), Integer.toString(legacy))); }
+            catch (NumberFormatException invalid) { return legacy; }
+        }
+
+        private String size(Format sound, Format picture, int seconds) {
+            long bytes = AudioQuality.estimate(sound, seconds);
+            long extra = picture == null ? 0 : AudioQuality.estimate(picture, seconds);
             if (bytes <= 0 || extra < 0) return "Size unavailable";
             boolean estimate = sound.getContentLength() <= 0 || picture != null && picture.getContentLength() <= 0;
             return (estimate ? "≈ " : "") + Formatter.formatShortFileSize(activity, bytes + extra);
@@ -407,31 +532,22 @@ public final class DownloadPrompt {
             showingVideo = useVideo;
             tabArea.setVisibility(View.VISIBLE);
             if (tabs.getChildCount() == 0) {
-                addTab("Audio", false);
+                if (!audio.isEmpty()) addTab("Audio", false);
                 if (!video.isEmpty()) addTab("Video", true);
             }
-            for (int i = 0; i < tabs.getChildCount(); i++) tabs.getChildAt(i).setSelected(i == (useVideo ? 1 : 0));
+            int active = useVideo && !audio.isEmpty() ? 1 : 0;
+            for (int i = 0; i < tabs.getChildCount(); i++) tabs.getChildAt(i).setSelected(i == active);
             moveIndicator(animate);
             rows.removeAllViews();
             List<Quality> choices = useVideo ? video : audio;
             selected = choices.isEmpty() ? null : choices.get(0);
-            int remembered = preferences(activity).getInt(useVideo ? "videoItag" : "audioItag", -1);
-            Format preferred = useVideo ? null : AudioQuality.select(options.formats(), DownloadPrompt.selected(activity));
-            if (useVideo) {
-                int height = preferences(activity).getInt("videoHeight", 1080);
-                for (Quality row : choices) {
-                    if (MediaSelection.height(row.choice.video()) <= height) {
-                        selected = row;
-                        break;
-                    }
-                }
-            }
-            for (Quality row : choices) {
-                Format stream = useVideo ? row.choice.video() : row.choice.audio();
-                if (stream.getItag() == (remembered >= 0 ? remembered : preferred == null ? -1 : preferred.getItag())) selected = row;
-            }
+            String remembered = preferences(activity).getString(rememberedKey(useVideo),
+                    nativeDialog ? "" : Integer.toString(parseItag(useVideo)));
+            String preferred = useVideo ? defaultVideo : defaultAudio;
+            for (Quality row : choices) if (row.key.equals(preferred)) selected = row;
+            for (Quality row : choices) if (row.key.equals(remembered)) selected = row;
             List<RadioButton> buttons = new ArrayList<>();
-            if (selected == null) rows.addView(text("No compatible Opus download available", 16, foregroundColor));
+            if (selected == null) rows.addView(text("No compatible download available", 16, foregroundColor));
             for (Quality quality : choices) addQuality(quality, buttons);
             download.setEnabled(selected != null);
             if (animate && ValueAnimator.areAnimatorsEnabled()) {
@@ -460,7 +576,7 @@ public final class DownloadPrompt {
                 layout.width = targetWidth;
                 indicator.setLayoutParams(layout);
             }
-            View activeTab = tabs.getChildAt(showingVideo ? 1 : 0);
+            View activeTab = tabs.getChildAt(showingVideo && !audio.isEmpty() ? 1 : 0);
             float target = activeTab == null ? dp(4) : activeTab.getLeft();
             if (animate && ValueAnimator.areAnimatorsEnabled()) {
                 indicator.animate().translationX(target).setDuration(ANIMATION_MS).start();

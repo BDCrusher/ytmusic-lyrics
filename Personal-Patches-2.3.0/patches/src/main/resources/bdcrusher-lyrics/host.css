@@ -118,3 +118,6 @@ button svg,button img{width:24px;height:24px;display:block;flex:none;margin:0}
     font-weight: 600;
     opacity: 0.72;
 }
+body.lyrics-hide-instrumental .blyrics--instrumental-icon {
+  visibility: hidden;
+}
