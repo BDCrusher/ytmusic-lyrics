@@ -34,6 +34,7 @@ public final class NativeLyricsHost {
         if(!isOpen())controller=new WeakReference<>(value);
     }
     public static void recordingChanged(){BetterLyricsPanelView view=renderer.get();if(view!=null)view.recordingChanged();}
+    static void playbackChanged(){BetterLyricsPanelView view=renderer.get();if(view!=null)view.publishPlayback();}
     public static boolean isOpen(){return lyrics&&panel.get()!=null;}
     public static void captureDefinition(Object owner,byte[] bytes){
         if(installing.get()||!Settings.LYRICS_ENABLED.get()||bytes==null||bytes.length>1_000_000)return;

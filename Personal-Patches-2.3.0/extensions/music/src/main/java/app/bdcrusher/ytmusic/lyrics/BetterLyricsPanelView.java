@@ -72,19 +72,26 @@ public final class BetterLyricsPanelView extends FrameLayout implements LyricsMa
         if(!attached)return;
         try{
             updateTrack();
-            if(ready){
-                boolean d=app.bdcrusher.ytmusic.common.FeatureDiagnostics.detailed();if(debug==null||debug!=d){debug=d;call("debug",String.valueOf(d));}
-                LyricsManager manager=LyricsManager.getInstance();
-                long[] clock=RendererPlayback.snapshot(VideoInformation.getVideoId(),manager.getVideoPositionMs(),manager.isPlaying(),manager.getPlaybackSpeed());
-                JSONObject sample=new JSONObject().put("generation",generation).put("sampledAt",System.currentTimeMillis())
-                    .put("position",clock[0]-Settings.LYRICS_OFFSET_MS.get()-manager.getTemporaryOffsetMs()).put("playing",clock[1]!=0)
-                    .put("rate",Float.intBitsToFloat((int)clock[2])).put("revision",clock[3]).put("visible",isShown()&&getWindowVisibility()==View.VISIBLE&&ownsContent());
-                frameRate.update(web,clock[1]!=0&&sample.optBoolean("visible")&&!LyricsConfig.preferences(getContext()).getBoolean("reducedMotion",false),app.morphe.extension.shared.settings.SharedYouTubeSettings.APP_REFRESH_RATE.get());
-                call("state",sample.toString());
-            }
+            publishPlayback();
         }catch(Exception ex){Logger.printException(()->"BDCrusher lyric clock",ex);}
         handler.postDelayed(this,isShown()&&getWindowVisibility()==View.VISIBLE?250:1000);
     }};
+    void publishPlayback() {
+        if (!attached || !ready || !currentRecording()) return;
+        try {
+            boolean detailed=app.bdcrusher.ytmusic.common.FeatureDiagnostics.detailed();
+            if(debug==null||debug!=detailed){debug=detailed;call("debug",String.valueOf(detailed));}
+            LyricsManager manager=LyricsManager.getInstance();
+            long[] clock=RendererPlayback.snapshot(VideoInformation.getVideoId(),manager.getVideoPositionMs(),manager.isPlaying(),manager.getPlaybackSpeed());
+            JSONObject sample=new JSONObject().put("generation",generation).put("sampledAt",System.currentTimeMillis())
+                    .put("position",clock[0]-Settings.LYRICS_OFFSET_MS.get()-manager.getTemporaryOffsetMs()).put("playing",clock[1]!=0)
+                    .put("rate",Float.intBitsToFloat((int)clock[2])).put("revision",clock[3]).put("visible",isShown()&&getWindowVisibility()==View.VISIBLE&&ownsContent());
+            frameRate.update(web,clock[1]!=0&&sample.optBoolean("visible")&&!LyricsConfig.preferences(getContext()).getBoolean("reducedMotion",false),app.morphe.extension.shared.settings.SharedYouTubeSettings.APP_REFRESH_RATE.get());
+            call("state",sample.toString());
+        } catch(Exception failure) {
+            Logger.printException(()->"BDCrusher lyric clock",failure);
+        }
+    }
     public BetterLyricsPanelView(Context context){super(context);setVisibility(View.INVISIBLE);}
     public void useNativeTab(){nativeTab=true;}
     private boolean ownsContent(){return nativeTab?PersonalLyricsTab.owns(this):NativeLyricsHost.owns(this);}

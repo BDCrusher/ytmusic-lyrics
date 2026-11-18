@@ -21,9 +21,13 @@ final class LyricsCatalog implements AutoCloseable {
     private final java.util.Set<String> requested=ConcurrentHashMap.newKeySet();
     private final AtomicBoolean resultSeen=new AtomicBoolean(),lookupFailed=new AtomicBoolean();
     private volatile boolean closed,connectionNeeded;
+    private volatile boolean timedOut;
     private boolean metadataPending,metadataMissing;
     private final AtomicInteger waiting=new AtomicInteger();
     private static final long METADATA_WAIT_SECONDS=12;
+    private static final long LOOKUP_TIMEOUT_SECONDS=25;
+    private ScheduledFuture<?> deadline;
+    private int lookupRound;
     private final java.util.Set<String> failedSources=new java.util.HashSet<>();
     private synchronized void failed(String source){failedSources.add(source);lookupFailed.set(!failedSources.isEmpty());}
     private synchronized void recovered(String source){failedSources.remove(source);lookupFailed.set(!failedSources.isEmpty());}
@@ -38,6 +42,7 @@ final class LyricsCatalog implements AutoCloseable {
     LyricsCatalog(Context context,TrackInfo track,String videoId,boolean refresh,Sink sink,ExecutorService executor,ScheduledExecutorService retries){
         this.executor=executor;this.retries=retries;
         this.context=context;this.videoId=videoId;this.sink=sink;cache=new LyricsDiskCache(context);
+        startDeadline();
         normalized=new TrackInfo(LyricsLookup.title(track.title()),LyricsLookup.artist(track.artist()),clean(track.album()),track.durationSeconds());
         LyricsDiagnostics.record("track","video="+videoId+"; title="+normalized.title()+"; artist="+normalized.artist()+"; album="+normalized.album()+"; duration="+normalized.durationSeconds());
         metadataPending=!metadataReady(normalized);
@@ -52,7 +57,7 @@ final class LyricsCatalog implements AutoCloseable {
     }
     private static boolean metadataReady(TrackInfo track){return !track.title().isBlank()&&!track.artist().isBlank();}
     synchronized void refine(TrackInfo track){
-        if(closed)return;
+        if(closed||timedOut)return;
         TrackInfo next=new TrackInfo(LyricsLookup.title(track.title()),LyricsLookup.artist(track.artist()),clean(track.album()),track.durationSeconds());
         TrackInfo old=normalized;
         boolean waiting=!metadataReady(old);if(!metadataReady(next)||!waiting&&(!old.title().equals(next.title())||!old.artist().equals(next.artist())))return;
@@ -73,7 +78,7 @@ final class LyricsCatalog implements AutoCloseable {
         finished();
     }
     synchronized void connectionChanged(){
-        if(closed||!metadataReady(normalized))return;
+        if(closed||timedOut||!metadataReady(normalized))return;
         if(!LyricsConfig.brokerEnabled(context))return;
         String jwt=LyricsConfig.preferences(context).getString("serviceJwt","");
         if(jwt.isEmpty()||ServiceConnection.expired(jwt)){
@@ -170,22 +175,24 @@ final class LyricsCatalog implements AutoCloseable {
     interface Work {void run()throws Exception;}
     private static final class NotFound extends Exception {}
     private synchronized void task(String source,Work work){
-        if(closed)return;remaining.incrementAndGet();health();
+        if(closed||timedOut)return;
+        if(remaining.getAndIncrement()==0)startDeadline();
+        health();
         new Query(source,work).submit();
     }
     private final class Query implements Runnable {
-        final String source;final Work work;int attempts;boolean done,confirmedMissing,renewed;
+        final String source;final Work work;int attempts;boolean done,renewed;
         Query(String source,Work work){this.source=source;this.work=work;}
-        void submit(){if(closed){finish();return;}try{executor.execute(this);}catch(RejectedExecutionException ignored){finish();}}
+        void submit(){if(closed||timedOut){finish();return;}try{executor.execute(this);}catch(RejectedExecutionException ignored){finish();}}
         void schedule(long delay){
-            if(closed){finish();return;}
+            if(closed||timedOut){finish();return;}
             waiting.incrementAndGet();health();
             try{retries.schedule(()->{waiting.decrementAndGet();health();submit();},delay,TimeUnit.MILLISECONDS);}
             catch(RejectedExecutionException ignored){waiting.decrementAndGet();finish();}
         }
         void finish(){if(!done){done=true;finished();}}
         public void run(){
-            if(closed||done){finish();return;}
+            if(closed||timedOut||done){finish();return;}
             // Recovery timers do not consume network attempts while the app/network is inactive.
             if(!"Saved lyrics".equals(source)&&!LyricsRetry.active(context)){schedule(10000);return;}
             attempts++;
@@ -198,14 +205,13 @@ final class LyricsCatalog implements AutoCloseable {
                 finish();
             }
             catch(Exception failure){
-                if(closed||Thread.currentThread().isInterrupted()){finish();return;}
+                if(closed||timedOut||Thread.currentThread().isInterrupted()){finish();return;}
                 if(failure instanceof LyricsNetwork.TransportBusy){attempts--;schedule(250);return;}
                 if(failure instanceof NotFound||failure instanceof LyricsNetwork.HttpFailure http&&http.status==404){
-                    if(!confirmedMissing){confirmedMissing=true;LyricsDiagnostics.record(source,"Not found; confirming once in 30 seconds");schedule(30000);return;}
                     recovered(source);LyricsDiagnostics.record(source,"Not found");finish();return;
                 }
                 long delay=LyricsRetry.delay(failure,attempts);
-                if(delay>=0){LyricsDiagnostics.record(source,"Temporary failure; attempt "+attempts+" of 9 completed; retry scheduled");failed(source);health();schedule(LyricsRetry.jitter(delay));return;}
+                if(delay>=0){LyricsDiagnostics.record(source,"Temporary failure; retry scheduled");failed(source);health();schedule(LyricsRetry.jitter(delay));return;}
                 if("Combined service".equals(source)&&failure instanceof LyricsNetwork.HttpFailure http&&(http.status==401||http.status==403)&&!renewed){
                     renewed=true;connectionNeeded=true;
                     new android.os.Handler(android.os.Looper.getMainLooper()).post(()->ServiceConnection.renew(context));
@@ -214,9 +220,28 @@ final class LyricsCatalog implements AutoCloseable {
             }
         }
     }
+    private void startDeadline() {
+        int expected=++lookupRound;
+        deadline=retries.schedule(()->lookupTimedOut(expected),LOOKUP_TIMEOUT_SECONDS,TimeUnit.SECONDS);
+    }
+    private void lookupTimedOut(int expected) {
+        synchronized (this) {
+            if (closed || lookupRound!=expected || remaining.get() == 0) return;
+            timedOut = true;
+            health();
+            sink.completion(false);
+            sink.notice("Lyrics lookup timed out", true);
+        }
+        network.close();
+        executor.shutdownNow();
+        retries.shutdownNow();
+    }
     private synchronized void finished(){
-        remaining.decrementAndGet();
-        publishProgress();
+        if(remaining.decrementAndGet()==0&&deadline!=null){
+            deadline.cancel(false);
+            deadline=null;
+        }
+        if (!timedOut) publishProgress();
     }
     private synchronized void publishProgress(){
         health();
@@ -229,13 +254,14 @@ final class LyricsCatalog implements AutoCloseable {
     private synchronized void health(){
         if(closed)return;
         try{
-            sink.health(new JSONObject().put("pending",Math.max(0,remaining.get()))
-                    .put("waiting",waiting.get()).put("failed",lookupFailed.get())
+            sink.health(new JSONObject().put("pending",timedOut?0:Math.max(0,remaining.get()))
+                    .put("waiting",timedOut?0:waiting.get()).put("failed",lookupFailed.get()||timedOut)
+                    .put("timedOut",timedOut)
                     .put("connectionNeeded",connectionNeeded).put("metadataMissing",metadataMissing)
                     .put("found",resultSeen.get()));
         }catch(org.json.JSONException impossible){throw new AssertionError(impossible);}
     }
-    private void send(JSONObject payload){if(!closed){
+    private void send(JSONObject payload){if(!closed&&!timedOut){
         if(payload.has("key")&&!LyricsConfig.enabled(context,payload.optString("key")))return;
         new LyricsLibrary(context).offer(videoId,payload);
         try{String hash=java.util.Base64.getEncoder().encodeToString(java.security.MessageDigest.getInstance("SHA-256").digest(payload.toString().getBytes(StandardCharsets.UTF_8)));if(delivered.contains(hash))return;if(delivered.size()<256)delivered.add(hash);}
@@ -318,6 +344,6 @@ final class LyricsCatalog implements AutoCloseable {
         }
         return 0;
     }
-    @Override public void close(){closed=true;network.close();retries.shutdownNow();executor.shutdownNow();}
+    @Override public void close(){synchronized(this){closed=true;}network.close();retries.shutdownNow();executor.shutdownNow();}
 }
 

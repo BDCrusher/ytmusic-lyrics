@@ -30,6 +30,8 @@ artwork service with the native player and Lyrics surfaces. The Android port
 is based on Shaders 1.5.1 with its own settings and motion limits. Audio-reactive
 beat detection and the browser's browse-page glass treatment are specific to
 [Web Shaders](https://github.com/better-lyrics/shaders).
+When WebGL is unavailable, Android Shaders can display a softly moving blurred
+version of the cover. The effect follows playback and the reduced-motion setting.
 
 Select **Clone YouTube Music** with **GmsCore support**, then choose the
 **BDCrusher side-by-side** package option to use `app.bdcrusher.android.apps.youtube.music`.
@@ -53,11 +55,19 @@ receive the resolved URL.
 Spicy Lyrics is available in the Lyrics source list when Better Lyrics returns a
 community sync. Provider and contributor credits appear below the lyrics. Spicy results
 are kept for the current recording session. Confirmed empty lookups show “No lyrics found.”
-in the center of the panel. Unison displays the service and submitter links
+in the center of the panel. The active search has a 25-second limit. A timeout or
+connection failure has its own message. The lyrics clock updates when playback
+pauses or resumes and keeps the source's TTML timestamps. Unison displays the service and submitter links
 when present in the response. Earlier saved entries pick up credits as they refresh.
 The personal source list includes the official provider set. Drag directly from the
 three-line handle to reorder it, or use the accessibility move actions. The existing
 Better Lyrics scroll engine, instrumental notes and permanent lyric storage are used.
+
+Enabling **YouTube Captions**, **Spotify** or **Deezer** without credentials opens
+the corresponding setup dialog. The switch stays off until validation succeeds.
+An unverified entry is available in the same dialog when you retry. Tap an
+**Apple Music** or **Musixmatch direct** source name to edit its optional
+credential, or use **Morphe → Lyrics → Provider credentials**.
 
 **Morphe → Lyrics** contains the personal and upstream controls in one page. **Shaders** appears directly below it when selected.
 

@@ -9715,7 +9715,7 @@
       const age = Number.isFinite(delay) && delay >= 0 && delay <= 1e3 ? delay : 0;
       const target = sample.position + (playing ? age * rate : 0), predicted = this.read(now), error = target - predicted;
       const discontinuity = Number.isFinite(sample.revision) && this.revision !== void 0 && sample.revision !== this.revision;
-      const snap = !this.initialized || !playing || playing !== this.playing || rate !== this.rate || discontinuity || Math.abs(error) > 750;
+      const snap = !this.initialized || !playing || playing !== this.playing || rate !== this.rate || discontinuity || Math.abs(error) > 240;
       this.position = snap ? target : predicted;
       this.at = now;
       this.playing = playing;
@@ -9837,9 +9837,10 @@
   // web/src/lookup-status.js
   function lookupMessage(recording, health, parsing2, slow2, decodingFailed2) {
     if (!recording) return "Play a song to see lyrics.";
+    if (health.timedOut) return "Lyrics lookup timed out. Try refreshing.";
     if (parsing2 || health.pending > 0 && !slow2 && health.waiting < health.pending) return "Looking for lyrics\u2026";
     if (health.pending > 0) return "Still checking for lyrics\u2026";
-    if (health.connectionNeeded) return "Some lyric sources are still verifying.";
+    if (health.connectionNeeded) return "Some lyric sources need a connection.";
     if (health.metadataMissing) return "Track details unavailable. Lyrics couldn\u2019t be checked.";
     if (decodingFailed2 || health.found) return "No readable lyrics available.";
     if (health.failed) return "Couldn\u2019t check all lyric sources. Try refreshing.";

@@ -49,14 +49,16 @@ public final class LyricsConfig {
     static JSONArray disabledSources(Context c)throws JSONException{
         SharedPreferences p=preferences(c);
         JSONArray disabled=new JSONArray(p.getString("disabled","[]"));
-        if(p.getInt("catalogSchema",0)>=3)return disabled;
-        JSONArray providers=catalog(c).optJSONArray("providers");
-        for(int i=0;i<providers.length();i++){
-            JSONObject provider=providers.optJSONObject(i);
-            String id=provider.optString("morpheProvider");
-            if(!id.isEmpty()&&app.morphe.extension.music.settings.Settings.DEFAULT_LYRICS_ORDER.contains("-"+id+","))
-                disabled.put(provider.optString("key"));
+        if(p.getInt("catalogSchema",0)<3) {
+            JSONArray providers=catalog(c).optJSONArray("providers");
+            for(int i=0;i<providers.length();i++){
+                JSONObject provider=providers.optJSONObject(i);
+                String id=provider.optString("morpheProvider");
+                if(!id.isEmpty()&&app.morphe.extension.music.settings.Settings.DEFAULT_LYRICS_ORDER.contains("-"+id+","))
+                    disabled.put(provider.optString("key"));
+            }
         }
+        for (var credential : LyricsSourceCredentials.values()) if (credential.missing()) disabled.put(credential.key);
         return disabled;
     }
     static boolean brokerEnabled(Context c){return enabled(c,"bLyrics-richsynced","bLyrics-synced","binimum-richsynced","binimum-synced","portato-richsynced","spicy-richsynced","spicy-synced","musixmatch-richsync","musixmatch-synced","legato-synced","lrclib-synced","lrclib-plain");}

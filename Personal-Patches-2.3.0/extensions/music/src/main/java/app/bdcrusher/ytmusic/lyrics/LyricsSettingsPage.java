@@ -81,10 +81,7 @@ public final class LyricsSettingsPage {
         sources.setOrder(-1);
         page.addPreference(sources);
         page=newGroup(c,screen,"credentials","Provider credentials");
-        credential(c,page,"Apple Music token",Settings.APPLE_MUSIC_TOKEN);
-        credential(c,page,"Spotify token",Settings.SPOTIFY_TOKEN);
-        credential(c,page,"Deezer ARL",Settings.DEEZER_ARL);
-        credential(c,page,"Musixmatch token",Settings.MUSIXMATCH_TOKEN);
+        for (var credential : LyricsSourceCredentials.values()) credential(c,page,credential);
         page=newGroup(c,screen,"storage","Saved lyrics and storage");
         ListPreference policy=app.bdcrusher.ytmusic.common.FeaturePreferences.choice(c);policy.setTitle("Choose the saved version");policy.setKey("bdcrusher_cache_policy");policy.setPersistent(false);
         policy.setEntries(new String[]{"Best timing, then source order","Source order first"});policy.setEntryValues(new String[]{"quality","source"});policy.setValue(p.getString("cachePolicy","quality"));policy.setSummary(policy.getEntry());
@@ -99,20 +96,14 @@ public final class LyricsSettingsPage {
         Preference license=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);license.setKey("bdcrusher_lyrics_credits");license.setTitle("Credits and licenses");license.setOnPreferenceClickListener(pref->{showNotice(c);return true;});group(screen,"morphe_music_lyrics_section_about").addPreference(license);
         Preference reset=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);reset.setKey("bdcrusher_lyrics_reset_rendering");reset.setTitle("Reset rendering settings");reset.setSummary("Restore visual defaults without changing sources, saved lyrics or connections");reset.setOnPreferenceClickListener(pref->{new android.app.AlertDialog.Builder(c).setTitle("Reset rendering settings?").setNegativeButton("Cancel",null).setPositiveButton("Reset",(d,w)->{SharedPreferences.Editor e=p.edit();for(String key:new String[]{"wordSync","letterWave","fontSize","reducedMotion","tapSeek","passive","background","bgSize","bgOpacity","backgroundAlignment","v1","v2","v3","v1000","extraAgents"})e.remove(key);e.apply();populate(c,screen);}).show();return true;});group(screen,"morphe_music_lyrics_section_display").addPreference(reset);
     }
-    private static void credential(Context c,PreferenceGroup page,String title,
-            app.morphe.extension.shared.settings.StringSetting setting){
-        EditTextPreference input=app.bdcrusher.ytmusic.common.FeaturePreferences.text(c);
-        input.setTitle(title);input.setDialogTitle(title);input.setKey(setting.key);
-        input.setPersistent(false);input.setText(setting.get());
-        input.getEditText().setInputType(android.text.InputType.TYPE_CLASS_TEXT
-                |android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        input.setSummary(setting.get().isBlank()?"Optional provider credential":"Configured");
-        input.setOnPreferenceChangeListener((pref,value)->{
-            String token=value.toString().trim();
-            setting.save(token);input.setSummary(token.isEmpty()?"Optional provider credential":"Configured");
-            return true;
-        });
-        page.addPreference(input);
+    private static void credential(Context c,PreferenceGroup page,LyricsSourceCredentials credential){
+        Preference item=app.bdcrusher.ytmusic.common.FeaturePreferences.action(c);
+        item.setTitle(credential.title());
+        item.setKey("bdcrusher_lyric_credential_"+credential.key);
+        item.setSummary(credential.summary());
+        Runnable update=()->item.setSummary(credential.summary());
+        item.setOnPreferenceClickListener(pref->{credential.show(c,update,update);return true;});
+        page.addPreference(item);
     }
     static String join(org.json.JSONArray a){java.util.List<String> v=new java.util.ArrayList<>();for(int i=0;i<a.length();i++)v.add(a.optString(i));return android.text.TextUtils.join(",",v);}
     private static PreferenceGroup group(PreferenceScreen screen,String key){

@@ -10,7 +10,7 @@ export class PlaybackClock {
     const age=Number.isFinite(delay)&&delay>=0&&delay<=1000?delay:0;
     const target=sample.position+(playing?age*rate:0),predicted=this.read(now),error=target-predicted;
     const discontinuity=Number.isFinite(sample.revision)&&this.revision!==undefined&&sample.revision!==this.revision;
-    const snap=!this.initialized||!playing||playing!==this.playing||rate!==this.rate||discontinuity||Math.abs(error)>750;
+    const snap=!this.initialized||!playing||playing!==this.playing||rate!==this.rate||discontinuity||Math.abs(error)>240;
     this.position=snap?target:predicted;this.at=now;this.playing=playing;this.rate=rate;this.revision=sample.revision;this.initialized=true;
     // Ordinary bridge jitter changes the rate slightly, never the current position.
     // Genuine seeks, track changes, pauses and playback-rate changes are immediate.

@@ -124,7 +124,7 @@ public final class ShaderRuntime {
             View root=nativePanelView(panel);if(root==null){retryPanel(panel,attempt,epoch);return;}if(!enabled(root.getContext()))return;if(!(root instanceof FrameLayout body))return;
             if(!root.isAttachedToWindow()){retryPanel(panel,attempt,epoch);return;}
             if(panelRetry!=null){main.removeCallbacks(panelRetry);panelRetry=null;}
-            ViewGroup sheet=nativeSheet(body);if(sheet==null){FeatureDiagnostics.record("Shader-panel","Verified native sheet ancestor not ready");retryPanel(panel,attempt,epoch);return;}
+            ViewGroup sheet=nativeSheet(body);if(sheet==null)sheet=body;
             if(surfaces.containsKey(sheet)){lyricsBody=new WeakReference<>(root);lyricsSheet=new WeakReference<>(sheet);return;}View previous=lyricsSheet.get();if(previous!=null&&previous!=sheet){Binding old=surfaces.remove(previous);if(old!=null)old.close();}
             Binding binding=new Binding(sheet,sheet,false);surfaces.put(sheet,binding);lyricsBody=new WeakReference<>(root);lyricsSheet=new WeakReference<>(sheet);PersonalRuntime.lyricsViewport(root);binding.update();
         }catch(Exception ignored){}
@@ -142,12 +142,13 @@ public final class ShaderRuntime {
     private static View findNamed(View view,String target,int depth,int[] budget){if(depth>10||++budget[0]>200||isEffectSurface(view))return null;if(target.equals(name(view)))return view;if(view instanceof ViewGroup group)for(int i=0;i<group.getChildCount();i++){View found=findNamed(group.getChildAt(i),target,depth+1,budget);if(found!=null)return found;}return null;}
     /** The APK's engagement_panel_layout owns both header and content, excluding the compact player. */
     public static ViewGroup nativeSheet(View body){for(View v=body;v!=null;v=v.getParent() instanceof View parent?parent:null)if("app_engagement_panel".equals(name(v))&&v instanceof ViewGroup group)return group;return null;}
-    public static boolean ownsBackground(View body){View sheet=lyricsSheet.get();Binding binding=sheet==null?null:surfaces.get(sheet);return body==lyricsBody.get()&&binding!=null&&binding.active&&binding.surface instanceof ShaderSurface background&&!background.imageUrl().isEmpty();}
+    public static boolean ownsBackground(View body){View sheet=lyricsSheet.get();Binding binding=sheet==null?null:surfaces.get(sheet);return body==lyricsBody.get()&&binding!=null&&binding.active&&binding.surface instanceof ShaderSurface background&&background.hasArtwork();}
     private static Bitmap bitmap(View view){if(view instanceof ImageView image&&image.getDrawable() instanceof android.graphics.drawable.BitmapDrawable d)return d.getBitmap();if(view instanceof android.view.ViewGroup group)for(int i=0;i<group.getChildCount();i++){Bitmap found=bitmap(group.getChildAt(i));if(found!=null)return found;}return null;}
     private static void recording(String id){if(id.equals(recording))return;recording=id;generation++;identity=id+"|";artwork=null;media=null;mediaKey="";frameFor="";failures=0;currentTrack=null;lastLookup=0;for(Binding binding:new ArrayList<>(surfaces.values()))binding.clearImage();}
     private static void nativePoster(){if(artwork!=null||metadata==null||recording.isEmpty())return;String id=metadata.getString(MediaMetadata.METADATA_KEY_MEDIA_ID);if(id!=null&&id.matches("[A-Za-z0-9_-]{11}")&&!recording.equals(id)||currentTrack==null&&(id==null||!recording.equals(id)))return;for(Binding b:new ArrayList<>(surfaces.values()))if(b.cover){Bitmap value=bitmap(b.anchor);if(value!=null){artwork=value;for(Binding target:new ArrayList<>(surfaces.values()))target.image(value,generation);FeatureDiagnostics.event("Artwork-poster","Native thumbnail reused for background");break;}}}
     private static final class Binding implements AutoCloseable {
         final View anchor;final ViewGroup parent;final View surface;final boolean cover;
+        final boolean fillPlayer;
         boolean closed,active;
         final Map<View,android.graphics.drawable.Drawable> paints=new IdentityHashMap<>();
         final Map<View,android.content.res.ColorStateList> tints=new IdentityHashMap<>();
@@ -158,9 +159,10 @@ public final class ShaderRuntime {
         final View.OnAttachStateChangeListener attachment=new View.OnAttachStateChangeListener(){public void onViewAttachedToWindow(View v){update();}public void onViewDetachedFromWindow(View v){surfaces.remove(anchor,Binding.this);close();}};
         Binding(View a,ViewGroup p,boolean image){
             anchor=a;parent=p;cover=image;surface=image?new AnimatedCoverSurface(a.getContext()):new ShaderSurface(a.getContext());
-            surface.setClipToOutline(true);
+            fillPlayer=!cover&&a!=p&&p instanceof FrameLayout&&"player_page_background".equals(name(a));
+            surface.setClipToOutline(cover);
             surface.setOutlineProvider(new ViewOutlineProvider(){@Override public void getOutline(View v,android.graphics.Outline out){ViewOutlineProvider provider=anchor.getOutlineProvider();android.graphics.drawable.Drawable saved=paints.get(anchor);if(provider==ViewOutlineProvider.BACKGROUND&&saved!=null&&saved.getConstantState()!=null){android.graphics.drawable.Drawable copy=saved.getConstantState().newDrawable().mutate();copy.setBounds(0,0,v.getWidth(),v.getHeight());copy.getOutline(out);}else if(provider!=null)provider.getOutline(anchor,out);}});
-            ViewGroup.LayoutParams params=a==p?new FrameLayout.LayoutParams(-1,-1):a.getLayoutParams();
+            ViewGroup.LayoutParams params=a==p||fillPlayer?new FrameLayout.LayoutParams(-1,-1):a.getLayoutParams();
             int index=a==p?0:p.indexOfChild(a)+1;p.addView(surface,index,params);
             a.addOnAttachStateChangeListener(attachment);a.getViewTreeObserver().addOnGlobalLayoutListener(layout);a.getViewTreeObserver().addOnWindowFocusChangeListener(focus);
             if(artwork!=null)image(artwork,generation);update();
@@ -169,7 +171,7 @@ public final class ShaderRuntime {
         void clearImage(){if(surface instanceof ShaderSurface background)background.clearImage();}
         void update(){
             if(closed)return;SharedPreferences prefs=ArtworkRepository.preferences(anchor.getContext());boolean master=prefs.getBoolean("enabled",true);
-            if(anchor!=parent){if(surface.getLayoutParams()!=anchor.getLayoutParams())surface.setLayoutParams(anchor.getLayoutParams());if(surface.getTranslationX()!=anchor.getTranslationX())surface.setTranslationX(anchor.getTranslationX());if(surface.getTranslationY()!=anchor.getTranslationY())surface.setTranslationY(anchor.getTranslationY());if(surface.getScaleX()!=anchor.getScaleX())surface.setScaleX(anchor.getScaleX());if(surface.getScaleY()!=anchor.getScaleY())surface.setScaleY(anchor.getScaleY());}
+            if(anchor!=parent&&!fillPlayer){if(surface.getLayoutParams()!=anchor.getLayoutParams())surface.setLayoutParams(anchor.getLayoutParams());if(surface.getTranslationX()!=anchor.getTranslationX())surface.setTranslationX(anchor.getTranslationX());if(surface.getTranslationY()!=anchor.getTranslationY())surface.setTranslationY(anchor.getTranslationY());if(surface.getScaleX()!=anchor.getScaleX())surface.setScaleX(anchor.getScaleX());if(surface.getScaleY()!=anchor.getScaleY())surface.setScaleY(anchor.getScaleY());}
             // player_page_background is initially INVISIBLE in both APK layouts. Its parent,
             // not the decoration's visibility flag, owns the lifetime of our sibling surface.
             boolean backgroundSlot=!cover&&anchor!=parent;
@@ -177,7 +179,7 @@ public final class ShaderRuntime {
             active=shown&&(cover?prefs.getBoolean("animatedCover",true):prefs.getBoolean("background",true));
             int visibility=active?View.VISIBLE:View.INVISIBLE;if(surface.getVisibility()!=visibility)surface.setVisibility(visibility);
             surface.setAlpha(anchor==parent||backgroundSlot?1:anchor.getAlpha());
-            if(anchor==lyricsSheet.get())chrome(active&&surface instanceof ShaderSurface background&&!background.imageUrl().isEmpty());
+            if(anchor==lyricsSheet.get())chrome(active&&surface instanceof ShaderSurface background&&background.hasArtwork());
             boolean reduced=prefs.getBoolean("reducedMotion",false)||SettingsMotion.reduced(anchor.getContext());
             if(surface instanceof AnimatedCoverSurface animation){animation.update(media,active,playing,reduced);return;}
             try{

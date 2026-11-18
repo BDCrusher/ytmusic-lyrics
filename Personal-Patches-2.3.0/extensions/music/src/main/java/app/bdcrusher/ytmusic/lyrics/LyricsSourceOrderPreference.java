@@ -34,8 +34,10 @@ public final class LyricsSourceOrderPreference extends Preference {
             for(int i=0;i<all.length();i++){
                 JSONObject provider=all.optJSONObject(i);items.add(provider);
                 String providerId=provider.optString("morpheProvider");
+                var credential=LyricsSourceCredentials.forSource(provider.optString("key"));
                 if(!providerId.isEmpty()&&app.morphe.extension.music.settings.Settings.DEFAULT_LYRICS_ORDER.contains("-"+providerId+","))
                     disabled.add(provider.optString("key"));
+                if(credential!=null&&credential.missing())disabled.add(credential.key);
             }
             save();rebuild();
         });box.addView(reset);
@@ -65,8 +67,27 @@ public final class LyricsSourceOrderPreference extends Preference {
                 return true;});
             ImageView image=new ImageView(getContext());image.setImageDrawable(icon(type));image.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);row.addView(image,new LinearLayout.LayoutParams(dp(24),dp(24)));
             TextView label=new TextView(getContext());label.setText("provider".equals(type)?name:name+"\n"+type);label.setTextSize(14);label.setTextColor(ThemeUtils.getAppForegroundColor());label.setPadding(dp(10),0,dp(8),0);row.addView(label,new LinearLayout.LayoutParams(0,-2,1));
-            Switch toggle=new Switch(getContext());toggle.setChecked(!disabled.contains(id));toggle.setContentDescription(name+" "+type+" enabled");
-            toggle.setOnCheckedChangeListener((v,on)->{if(on)disabled.remove(id);else disabled.add(id);save();});row.addView(toggle);
+            var credential=LyricsSourceCredentials.forSource(id);
+            Switch toggle=new Switch(getContext());
+            toggle.setChecked(!disabled.contains(id)&&(credential==null||!credential.missing()));
+            toggle.setContentDescription(name+" "+type+" enabled");
+            if (credential!=null) {
+                label.setOnClickListener(v->credential.show(getContext(),()->{
+                    save();rebuild();
+                },()->{
+                    if(credential.missing())disabled.add(id);
+                    save();rebuild();
+                }));
+            }
+            toggle.setOnCheckedChangeListener((v,on)->{
+                if(on&&credential!=null&&credential.missing()){
+                    disabled.add(id);
+                    toggle.setChecked(false);
+                    credential.show(getContext(),()->{disabled.remove(id);save();rebuild();},()->{});
+                    return;
+                }
+                if(on?disabled.remove(id):disabled.add(id))save();
+            });row.addView(toggle);
             row.setAccessibilityDelegate(new View.AccessibilityDelegate(){
                 @Override public void onInitializeAccessibilityNodeInfo(View host,AccessibilityNodeInfo info){super.onInitializeAccessibilityNodeInfo(host,info);info.addAction(new AccessibilityNodeInfo.AccessibilityAction(0x02000001,"Move up"));info.addAction(new AccessibilityNodeInfo.AccessibilityAction(0x02000002,"Move down"));}
                 @Override public boolean performAccessibilityAction(View host,int action,android.os.Bundle args){if(action==0x02000001){move(index,index-1);return true;}if(action==0x02000002){move(index,index+1);return true;}return super.performAccessibilityAction(host,action,args);}

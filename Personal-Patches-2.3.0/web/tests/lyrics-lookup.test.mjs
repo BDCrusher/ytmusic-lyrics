@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { lookupMessage } from '../src/lookup-status.js';
+import { PlaybackClock } from '../src/playback-clock.js';
 import { unisonContributors } from '../src/unison-source.js';
 import { spicyContributors } from '../src/spicy-source.js';
 import { processStreamData } from '../src/upstream-providers.ts';
@@ -15,12 +16,27 @@ test('no result changes from active lookup to the confirmed empty message', () =
 
 test('authorization, metadata, decoding and transport failures retain distinct messages', () => {
   const status = (health, malformed = false) => lookupMessage('test', {pending: 0, ...health}, 0, false, malformed);
-  assert.match(status({connectionNeeded: true}), /verifying/);
+  assert.match(status({connectionNeeded: true}), /need a connection/);
   assert.match(status({metadataMissing: true}), /Track details unavailable/);
   assert.match(status({found: true}), /readable/);
   assert.match(status({}, true), /readable/);
   assert.match(status({failed: true}), /Couldn’t check all/);
   assert.match(lookupMessage('', {pending: 1}, 0, false, false), /Play a song/);
+});
+
+test('timed out lookup leaves the loading state even if the renderer is parsing', () => {
+  assert.match(lookupMessage('test', {pending: 0, timedOut: true}, 1, true, false), /timed out/);
+});
+
+test('pause freezes the supplied position and a 500 ms running drift reanchors immediately', () => {
+  const clock = new PlaybackClock();
+  clock.accept({position: 10000, playing: true, rate: 1, sampledAt: 1000}, 0, 1000);
+  clock.accept({position: 11000, playing: true, rate: 1, sampledAt: 1500}, 500, 1500);
+  assert.equal(clock.read(500), 11000);
+  clock.accept({position: 11250, playing: false, rate: 1, sampledAt: 1750}, 750, 1750);
+  assert.equal(clock.read(3000), 11250);
+  clock.accept({position: 11250, playing: true, rate: 1, sampledAt: 4000}, 3000, 4000);
+  assert.equal(clock.read(3250), 11500);
 });
 
 test('Spicy broker results use Braccato for line and rich timing, with attribution', async () => {

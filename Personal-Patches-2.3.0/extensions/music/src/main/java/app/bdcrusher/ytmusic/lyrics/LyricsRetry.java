@@ -6,8 +6,8 @@ final class LyricsRetry {
     private LyricsRetry(){}
     static long jitter(long minimum){return minimum+java.util.concurrent.ThreadLocalRandom.current().nextLong(1,Math.max(2,Math.min(251,minimum/10+1)));}
     static long delay(Exception failure,int completedAttempts){
-        if(completedAttempts>=9)return -1;
-        long[] delays={750,1500,3000,6000,10000,30000,120000,300000};
+        if(completedAttempts>=3)return -1;
+        long[] delays={750,1500};
         long delay=delays[Math.max(0,completedAttempts-1)];
         if(failure instanceof LyricsNetwork.HttpFailure http){
             if(http.status!=408&&http.status!=429&&http.status!=500&&http.status!=502&&http.status!=503&&http.status!=504)return -1;

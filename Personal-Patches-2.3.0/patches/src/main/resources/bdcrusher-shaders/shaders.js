@@ -1503,6 +1503,7 @@ ${source}` : source);
   // web/src/shaders.js
   var native = window.BDShader;
   var canvas = document.querySelector("canvas");
+  var poster = document.getElementById("poster");
   var engine;
   var config = {};
   var state = {};
@@ -1512,6 +1513,8 @@ ${source}` : source);
   var imageEpoch = 0;
   var closed = false;
   var graphicsFailed = false;
+  var imageReady = false;
+  var shaderReady = false;
   function fail(error) {
     native?.failure(String(error?.message || error).slice(0, 160));
   }
@@ -1530,20 +1533,24 @@ ${source}` : source);
     };
   }
   function visibility() {
-    if (!engine) return;
     const motion = state.visible && state.playing && config.animateBackground && !config.reducedMotion && !document.hidden;
+    poster.style.animationPlayState = motion ? "running" : "paused";
+    poster.hidden = !state.background || !state.image || !imageReady || shaderReady;
+    canvas.hidden = !state.background || !state.image || !shaderReady;
+    if (!engine) return;
     engine.animationSpeed = motion ? config.speed ?? 1 : 0;
-    if (state.background && motion) engine.start();
-    else {
+    if (shaderReady && motion) engine.start();
+    else if (shaderReady) {
       engine.stop();
       engine.renderFrame();
     }
   }
   function update() {
     try {
-      canvas.hidden = !state.background || !state.image;
-      canvas.style.opacity = String(Math.max(0, Math.min(1, config.opacity ?? 0.75)));
-      canvas.style.filter = `brightness(${1 - (config.dimming ?? 0.3)})`;
+      const opacity = String(Math.max(0, Math.min(1, config.opacity ?? 0.75))), brightness = 1 - (config.dimming ?? 0.3);
+      canvas.style.opacity = poster.style.opacity = opacity;
+      canvas.style.filter = `brightness(${brightness})`;
+      poster.style.filter = `blur(42px) brightness(${brightness}) saturate(${config.saturation ?? 1.5})`;
       try {
         create();
       } catch (error) {
@@ -1551,28 +1558,34 @@ ${source}` : source);
         fail(error);
       }
       engine?.setOptions({ warpIntensity: config.strength ?? 1, saturation: config.saturation ?? 1.5, transitionDuration: state.frame ? 250 : config.transition ?? 1e3, animationSpeed: config.animateBackground ? config.speed ?? 1 : 0, blurPasses: 8, dithering: 8e-3 });
-      if (engine && state.image && state.image !== lastImage) {
-        const epoch = ++imageEpoch;
-        lastImage = state.image;
-        if (!state.frame) canvas.style.visibility = "hidden";
-        const img = new Image();
+      if (state.image && state.image !== lastImage) {
+        const epoch = ++imageEpoch, url = lastImage = state.image, img = new Image();
         img.onload = () => {
           if (closed || epoch !== imageEpoch) return;
+          poster.src = url;
+          imageReady = true;
           try {
-            engine.loadImageElement(img);
-            canvas.style.visibility = "visible";
-            visibility();
-          } catch (e) {
-            fail(e);
+            if (engine && !graphicsFailed) {
+              engine.loadImageElement(img);
+              shaderReady = true;
+            }
+          } catch (error) {
+            shaderReady = false;
+            fail(error);
           }
+          visibility();
+          native?.artReady?.(generation, url);
         };
         img.onerror = () => {
           if (epoch === imageEpoch) {
             lastImage = "";
-            fail(new Error("Artwork image unavailable; native background retained"));
+            imageReady = false;
+            shaderReady = false;
+            visibility();
+            fail(new Error("Artwork image unavailable"));
           }
         };
-        img.src = state.image;
+        img.src = url;
       }
       visibility();
     } catch (error) {
@@ -1582,7 +1595,10 @@ ${source}` : source);
   canvas.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
     engine?.stop();
-    native?.failure("Graphics context lost; native artwork retained");
+    shaderReady = false;
+    graphicsFailed = true;
+    visibility();
+    native?.failure("Graphics context lost; blurred artwork shown");
   });
   canvas.addEventListener("webglcontextrestored", () => {
     engine?.dispose();
@@ -1612,11 +1628,13 @@ ${source}` : source);
       update();
     },
     state(next) {
-      if (next.generation !== generation) {
+      if (next.generation !== generation || !next.image) {
         generation = next.generation;
         lastImage = "";
         imageEpoch++;
-        canvas.style.visibility = "hidden";
+        imageReady = false;
+        shaderReady = false;
+        engine?.stop();
       }
       state = next;
       update();
