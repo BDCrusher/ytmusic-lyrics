@@ -18,6 +18,23 @@ The worktree starts at the tracked personal 9.45.51 source and merges official M
 
 The app-home build entry point is build-music-230.ps1. The parity run is retained under Verification/music-parity-01.
 
+## 0.11.0-beta.3 playback crash and diagnostics
+
+The supplied exception was `AbstractMethodError` at `Logger.LogMessage.buildMessageString()`
+while Better Lyrics was discovering sources. The beta.2 Singles build passed Android's
+SDK DEX verifier but lacked that method on three personal callback classes. R8 had
+no compile-time copy of Morphe's `Logger.LogMessage` interface. The Singles build now
+supplies the pinned shared extension library as compile-only input, and the verifier
+checks every emitted personal callback's executable implementation in the payload
+and patched APK. The official logger remains in the official runtime.
+
+Both categories can add a separate capture path that records player stages while
+Morphe debug logging is off. The patch wraps the Android process crash handler and
+delegates to the existing handler. The audio hooks surround the actual `AudioTrack.play()`
+call on each tested target. The recorder stores a bounded history and can export Java
+crash stacks plus Android 11+ process exit records. See `PERSONAL-README.md` for controls.
+The original crash reported before debug logging was enabled has no matching stack.
+
 ## Earlier rebase checks
 
 Candidate MPP SHA-256: ad28adf629c517238e4280fe72368aa1789abe94f7a0487b7ac94254fc89bc82.
@@ -33,7 +50,7 @@ Full Collection with the optional Shaders selected patched both originals. SDK D
 Use one personal .mpp with two categories in Morphe Manager.
 
 - **Full Collection** offers the combined personal setup, including Shaders, Volume Boost, Better Lyrics and Downloads.
-- **Singles** offers Shaders, Volume Boost, Better Lyrics and Downloads as individually selectable entries to use with official Morphe patches. A user can select just one or a supported combination.
+- **Singles** offers Shaders, Volume Boost, Better Lyrics, Downloads and Diagnostics as individually selectable entries to use with official Morphe patches. A user can select just one or a supported combination.
 
 The personal bundle names exactly two categories. The Full Collection and Singles use separate runtime entry points. Morphe's official Lyrics and Downloads features remain enabled when their corresponding Singles are selected. Each Single changes the relevant existing hook in place.
 ### Singles compatibility checks

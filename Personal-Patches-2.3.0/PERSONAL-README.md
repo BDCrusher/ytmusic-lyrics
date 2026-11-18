@@ -7,12 +7,16 @@ Morphe Patches 2.3.0 at `31234a8465683a389bcfba25ad636fd1cd38fd02`.
 
 - **Full Collection** contains the complete personal setup, including the optional
   Shaders and Clone YouTube Music patches. Select this setup from the personal source.
-- **Singles** contains exactly **Shaders**, **Volume Boost**, **Better Lyrics** and
-  **Downloads**. With the official Morphe source enabled, deselect the personal
-  Full Collection entries and choose any of the four personal Singles. Leave official
+- **Singles** contains **Shaders**, **Volume Boost**, **Better Lyrics**, **Downloads**
+  and **Diagnostics**. With the official Morphe source enabled, deselect the personal
+  Full Collection entries and choose the personal Singles you want. Leave official
   **Third-party lyrics** enabled with Better Lyrics (Single) and official **Downloads**
-  enabled with Downloads (Single). Shaders and Volume Boost require no other personal
-  selection.
+  enabled with Downloads (Single). Shaders, Volume Boost and Diagnostics require
+  no other personal selection.
+
+Official Morphe 2.3.0 passed with either source order. With official 2.4.0-dev.1,
+list the official Morphe source first. The reverse order can prevent patching when
+Downloads is selected because the official 4K settings resources are unavailable.
 
 Better Lyrics uses the same personal renderer, lyrics pull-out, source catalogue,
 and settings in both categories. The source list includes Morphe's providers,
@@ -53,6 +57,27 @@ Volume boost appears as a speaker button that scrolls with the player actions. I
 on each app launch and offers up to +12 dB for a supported Music audio session.
 New native downloads use YouTube Music's progress and notifications.
 
+## Crash diagnostics
+
+Full Collection includes **Crash diagnostics** by default. With official Morphe,
+select **Diagnostics (Single)**. It works alongside Morphe's **Enable debugging**
+patch and its crash reporter. You can leave the runtime debug, verbose and Litho
+logging switches off.
+
+When a crash occurs, reopen Music and go to **Settings → Morphe → Crash diagnostics →
+Save crash report**. The report contains the app and patch versions, the last captured
+Java exception type and stack frames, player and audio output events, and Android's
+recent process exit records (Android 11 and above). It includes a limited stack
+excerpt for an ANR when Android supplies one. The short history stays on the device
+until exported through the Android file picker. The report omits exception messages,
+account data, URLs, song titles, video IDs, lyrics and raw debug logs.
+
+Use **Record playback steps** to pause new capture. Previously saved crash and
+previous-session records remain available. The file identifies Java crashes captured
+after installing the patch and can show recent Android exit records for the same
+app package. The earlier crash that occurred before debug logging was enabled remains
+undiagnosed.
+
 ## Build
 
 Run the app-home `build-music-230.ps1 :patches:buildAndroid`.
@@ -66,7 +91,8 @@ outputs into the app home.
 The app-home `Verification/music-parity-01` directory contains exact-bundle patch logs,
 desktop fixtures and compiled audit reports. The test entry points are
 `verifyMusicSingles`, `verifyMusic94551`, `auditNativeMusic94551`, `PlaylistOccurrencesTest` and
-`DownloadQualityTest`.
+`DownloadQualityTest`. The 0.11.0-beta.3 crash regression, original and patched DEX
+checks, and crash history tests are retained in `Verification/music-crash-01`.
 
 Device acceptance is separate from SDK checks. Run the renderer's status and provider
 fixtures with `node --test web/tests/lyrics-lookup.test.mjs` after preparing the pinned

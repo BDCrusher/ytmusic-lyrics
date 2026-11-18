@@ -1,6 +1,8 @@
 /* Copyright 2026 BDCrusher. GPL-3.0. */
 package app.bdcrusher.ytmusic.singles
 
+import app.bdcrusher.ytmusic.diagnostics.crashDiagnosticsResources
+import app.bdcrusher.ytmusic.diagnostics.installCrashDiagnostics
 import app.bdcrusher.ytmusic.nativeentry.addonEditionGuard
 import app.bdcrusher.ytmusic.nativeentry.installNativeLyricsHooks
 import app.bdcrusher.ytmusic.nativeentry.normalizePersonalLyricsAccessors
@@ -59,6 +61,17 @@ private fun BytecodePatchContext.hasHostCall(type: String, name: String): Boolea
         }
     }
     return found
+}
+
+val diagnosticsSingle = bytecodePatch(
+    name = "Diagnostics (Single)",
+    description = "Records playback steps and crash information even with Morphe debug logging off.",
+    default = false,
+) {
+    category("Singles")
+    compatibleWith(COMPATIBILITY_YOUTUBE_MUSIC)
+    dependsOn(singlesRuntime, crashDiagnosticsResources("Singles"))
+    finalize { installCrashDiagnostics() }
 }
 
 val shadersSingle = bytecodePatch(

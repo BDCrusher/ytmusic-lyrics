@@ -6,7 +6,10 @@ import app.morphe.patcher.PatcherConfig
 import app.morphe.patcher.apk.ApkUtils.applyTo
 import app.morphe.patcher.dex.SdkDexVerifier
 import app.morphe.patcher.patch.loadPatchesFromJar
+import app.morphe.patcher.util.registersUsed
+import com.android.tools.smali.dexlib2.AccessFlags
 import com.android.tools.smali.dexlib2.dexbacked.DexBackedDexFile
+import com.android.tools.smali.dexlib2.iface.ClassDef
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.MethodReference
 import java.io.File
@@ -16,7 +19,20 @@ import kotlinx.coroutines.runBlocking
 
 private const val MUSIC = "com.google.android.apps.youtube.music"
 private const val OWN = "Lapp/bdcrusher/ytmusic/"
-private val names = setOf("Shaders", "Volume Boost", "Better Lyrics", "Downloads").map { "$it (Single)" }.toSet()
+private const val RECORDER = OWN + "diagnostics/PlaybackCrashRecorder;"
+private val names = setOf("Shaders", "Volume Boost", "Better Lyrics", "Downloads", "Diagnostics").map { "$it (Single)" }.toSet()
+
+internal fun verifyPersonalLogCallback(owner: ClassDef): Boolean {
+    if (!owner.type.startsWith(OWN) || "Lapp/morphe/extension/shared/Logger\$LogMessage;" !in owner.interfaces) {
+        return false
+    }
+    check(owner.methods.any {
+        it.name == "buildMessageString" && it.parameterTypes.isEmpty() && it.returnType == "Ljava/lang/String;"
+            && AccessFlags.PUBLIC.isSet(it.accessFlags) && !AccessFlags.STATIC.isSet(it.accessFlags)
+            && it.implementation != null
+    }) { "Missing executable Logger.LogMessage.buildMessageString in ${owner.type}" }
+    return true
+}
 
 private fun sha(file: File): String = file.inputStream().use { stream ->
     val digest = MessageDigest.getInstance("SHA-256")
@@ -43,6 +59,13 @@ fun main(args: Array<String>) {
         val payload = bundle.getInputStream(bundle.getEntry("extensions/bdcrusher-music-singles.mpe")).buffered()
         val classes = payload.use { DexBackedDexFile.fromInputStream(null, it).classes }
         check(classes.isNotEmpty() && classes.all { it.type.startsWith(OWN) || it.type == "Lcom/android/tools/r8/RecordTag;" }) { "Foreign Single payload classes" }
+        val callbacks = classes.count(::verifyPersonalLogCallback)
+        check(callbacks > 0) { "Expected personal Logger.LogMessage implementations in the Singles payload" }
+        println("PASS: $callbacks executable personal Logger callbacks in the Singles payload")
+        val activity = classes.single { it.type == OWN + "diagnostics/CrashReportActivity;" }
+        for (method in listOf("<init>", "onCreate", "onActivityResult")) {
+            check(activity.methods.any { it.name == method && it.implementation != null }) { "Missing report picker method $method" }
+        }
     }
     val loaded = loadPatchesFromJar(inputs).byPatchesFile
     val ours = loaded.getValue(personal)
@@ -56,7 +79,8 @@ fun main(args: Array<String>) {
     val selectedOfficial = loaded.getValue(official).filter { patch ->
         patch.compatibility.orEmpty().any { item -> item.packageName == MUSIC && item.targets.any { it.version == version || it.version == null } } &&
             (patch.default || patch.name in setOf("Downloads", "Third-party lyrics"))
-    }.filterNot { it.name == "Third-party lyrics" && "no-official-lyrics" in cases }
+    }.filterNot { (it.name == "Third-party lyrics" && "no-official-lyrics" in cases)
+        || (it.name == "Downloads" && "no-official-downloads" in cases) }
     check(selectedOfficial.size >= 30)
     val selectedPersonal = personalMusic.filter { it.category == "Singles" && it.name in cases }
     check(selectedPersonal.size == cases.count { it in names } && selectedPersonal.isNotEmpty())
@@ -75,7 +99,10 @@ fun main(args: Array<String>) {
     }
     val types = mutableSetOf<String>()
     val calls = mutableMapOf<String, Int>()
+    val diagnostics = "Diagnostics (Single)" in cases
+    var callbacks = 0
     ZipFile(result).use { zip ->
+        check((zip.getEntry("assets/bdcrusher-features/crash-diagnostics.txt") != null) == diagnostics)
         val lyricsSelected = "Better Lyrics (Single)" in cases
         for (asset in listOf("renderer.js", "providers.json", "instrumental.css")) {
             val entry = zip.getEntry("assets/bdcrusher-lyrics/$asset")
@@ -92,10 +119,22 @@ fun main(args: Array<String>) {
             val dex = zip.getInputStream(entry).buffered().use { DexBackedDexFile.fromInputStream(null, it) }
             for (owner in dex.classes) {
                 check(types.add(owner.type)) { "Duplicate ${owner.type}" }
+                if (verifyPersonalLogCallback(owner)) callbacks++
                 if (owner.type.startsWith(OWN)) continue
-                for (m in owner.methods) for (insn in (m.implementation?.instructions ?: emptyList())) {
-                    val call = (insn as? ReferenceInstruction)?.reference as? MethodReference ?: continue
-                    if (call.definingClass.startsWith(OWN)) calls.merge("${call.definingClass}->${call.name}", 1, Int::plus)
+                for (m in owner.methods) {
+                    val instructions = m.implementation?.instructions?.toList() ?: continue
+                    for ((index, instruction) in instructions.withIndex()) {
+                        val call = (instruction as? ReferenceInstruction)?.reference as? MethodReference ?: continue
+                        if (call.definingClass.startsWith(OWN)) calls.merge("${call.definingClass}->${call.name}", 1, Int::plus)
+                        if (call.definingClass == RECORDER && call.name == "onAudioOutput") {
+                            val next = instructions[index + 1]
+                            val play = (next as? ReferenceInstruction)?.reference as? MethodReference
+                            val complete = (instructions[index + 2] as? ReferenceInstruction)?.reference as? MethodReference
+                            check(play?.definingClass == "Landroid/media/AudioTrack;" && play.name == "play")
+                            check(next.registersUsed == instruction.registersUsed) { "Wrong audio output receiver" }
+                            check(complete?.definingClass == RECORDER && complete.name == "onAudioStarted")
+                        }
+                    }
                 }
             }
         }
@@ -104,7 +143,8 @@ fun main(args: Array<String>) {
         "Shaders (Single)" to "shaders/ShaderRuntime;->onNativePanel",
         "Volume Boost (Single)" to "common/PlayerVolumeBoost;->handleCommand",
         "Better Lyrics (Single)" to "lyrics/RendererPlayback;->sample",
-        "Downloads (Single)" to "playlists/PersonalDownloadRouting;->replaceDownloadCommand"
+        "Downloads (Single)" to "playlists/PersonalDownloadRouting;->replaceDownloadCommand",
+        "Diagnostics (Single)" to "diagnostics/PlaybackCrashRecorder;->install"
     )
     for ((feature, hook) in expected) {
         check(calls.getOrDefault(OWN + hook, 0) == if (feature in cases) 1 else 0) {
@@ -116,6 +156,12 @@ fun main(args: Array<String>) {
     check(calls.getOrDefault(OWN + "lyrics/LyricsSettingsPage;->install", 0) == if (lyrics) 1 else 0)
     check(calls.getOrDefault(OWN + "lyrics/PersonalLyricsTab;->onTabSelected", 0) == if (lyrics) 1 else 0)
     check(calls.getOrDefault(OWN + "playlists/DownloadPrompt;->showNative", 0) == if (downloads) 1 else 0)
+    val diagnosticsCount = if (diagnostics) 1 else 0
+    for (hook in listOf("onTrackResponse", "onMetadata", "onPlayback", "onAudioOutput", "onAudioStarted")) {
+        check(calls.getOrDefault("$RECORDER->$hook", 0) == diagnosticsCount) { "Wrong crash recorder hook count for $hook" }
+    }
+    check(calls.getOrDefault(OWN + "diagnostics/CrashDiagnosticsSettings;->install", 0) == diagnosticsCount)
+    println("PASS: $callbacks executable personal Logger callbacks in the patched APK")
     check(calls.keys.none { "PersonalRuntime;->attach" in it || "TaskDismissal;" in it }) { "Full Collection hooks in Singles" }
     println("PASS: ${selectedPersonal.map { it.name }} compatible with ${selectedOfficial.size} official patches, ${types.size} distinct classes")
     println("Patched unsigned APK ${sha(result)}")

@@ -225,18 +225,27 @@ tasks.named("compileKotlin") { dependsOn(isolatedMain) }
 tasks.named("compileTestKotlin") { dependsOn(isolatedTest) }
 
 val musicClasses = rootProject.file("extensions/music/build/intermediates/javac/release/compileReleaseJavaWithJavac/classes")
+val extensionLibrary = gradle.includedBuild("morphe-patches-library-2.2.0")
+val extensionLibraryClasses = extensionLibrary.projectDir.resolve(
+    "extension-library/build/intermediates/javac/release/compileReleaseJavaWithJavac/classes"
+)
+val singlesContracts = listOf("shared/library", "shared-youtube/library", "shared-youtube/stub", "youtube/stub", "music")
+    .map { rootProject.file("extensions/$it/build/intermediates/javac/release/compileReleaseJavaWithJavac/classes") } +
+    extensionLibraryClasses
 val singlesExtension = tasks.register("prepareSinglesExtension") {
     dependsOn(":extensions:music:compileReleaseJavaWithJavac")
-    inputs.dir(musicClasses)
+    dependsOn(extensionLibrary.task(":extension-library:compileReleaseJavaWithJavac"))
+    inputs.files(singlesContracts).withNormalizer(ClasspathNormalizer::class)
     val payload = layout.buildDirectory.file("singles/bdcrusher-music-singles.mpe")
     outputs.file(payload)
     doLast {
         val folder = payload.get().asFile.parentFile.also { it.mkdirs() }
         val program = folder.resolve("personal.jar")
         val android = File(System.getenv("ANDROID_HOME")).resolve("platforms/android-36/android.jar")
-        val contracts = listOf("shared/library", "shared-youtube/library", "shared-youtube/stub", "youtube/stub", "music")
-            .map { rootProject.file("extensions/$it/build/intermediates/javac/release/compileReleaseJavaWithJavac/classes") }
-            .filter { it.isDirectory }
+        // R8 needs the compile-only interface to preserve methods on desugared logging lambdas.
+        check(extensionLibraryClasses.resolve("app/morphe/extension/shared/Logger\$LogMessage.class").isFile) {
+            "Missing the Morphe Logger callback compile-time contract."
+        }
         ZipOutputStream(program.outputStream()).use { zip ->
             musicClasses.resolve("app/bdcrusher").walkTopDown().filter { it.extension == "class" }.forEach { file ->
                 zip.putNextEntry(ZipEntry(file.relativeTo(musicClasses).invariantSeparatorsPath))
@@ -247,7 +256,7 @@ val singlesExtension = tasks.register("prepareSinglesExtension") {
         val compileOnlyJar = folder.resolve("contracts.jar")
         ZipOutputStream(compileOnlyJar.outputStream()).use { zip ->
             val names = mutableSetOf<String>()
-            for (root in contracts) for (file in root.walkTopDown().filter { it.extension == "class" }) {
+            for (root in singlesContracts) for (file in root.walkTopDown().filter { it.extension == "class" }) {
                 val path = file.relativeTo(root).invariantSeparatorsPath
                 if (path.startsWith("app/bdcrusher/") || !names.add(path)) continue
                 zip.putNextEntry(ZipEntry(path))
@@ -265,6 +274,18 @@ val singlesExtension = tasks.register("prepareSinglesExtension") {
             -keepattributes RuntimeVisibleAnnotations
             -keepclassmembers class * {
                 @android.webkit.JavascriptInterface <methods>;
+            }
+            -keep class app.bdcrusher.ytmusic.diagnostics.PlaybackCrashRecorder {
+                public static void install(...);
+                public static void on*(...);
+            }
+            -keep class app.bdcrusher.ytmusic.diagnostics.CrashDiagnosticsSettings {
+                public static void install(...);
+            }
+            -keep class app.bdcrusher.ytmusic.diagnostics.CrashReportActivity {
+                public <init>();
+                protected void onCreate(android.os.Bundle);
+                protected void onActivityResult(int, int, android.content.Intent);
             }
             -keep class app.bdcrusher.ytmusic.shaders.ShaderLifecycle {
                 public static void attach(android.app.Activity);

@@ -61,7 +61,7 @@ fun main(args: Array<String>) {
             "lyrics" -> patch.name == "Third-party lyrics"
             "shaders" -> patch.name == "Shaders"
             "defaults" -> patch.default
-            "without-personal" -> patch.default && patch.name !in setOf("Third-party lyrics", "Volume boost", "Theme")
+            "without-personal" -> patch.default && patch.name !in setOf("Third-party lyrics", "Volume boost", "Theme", "Crash diagnostics")
             "without-downloads" -> patch.name != "Downloads" && (patch.default || patch.name == "Shaders")
             "features" -> patch.default || patch.name == "Shaders" || patch.name == "Downloads"
             else -> error("Unknown mode $mode")
@@ -96,11 +96,15 @@ fun main(args: Array<String>) {
     val downloadsHost = "Lapp/morphe/extension/music/patches/DownloadsPatch;"
     val nativeOfflineHooks = mutableSetOf<String>()
     val nativeExportHooks = mutableSetOf<String>()
+    val diagnostics = selected.any { it.name == "Crash diagnostics" }
+    var callbacks = 0
     ZipFile(result).use { archive ->
+        check((archive.getEntry("assets/bdcrusher-features/crash-diagnostics.txt") != null) == diagnostics)
         for (entry in archive.entries().asSequence().filter { it.name.matches(Regex("classes[0-9]*[.]dex")) }) {
             val dex = archive.getInputStream(entry).buffered().use { DexBackedDexFile.fromInputStream(null, it) }
             for (owner in dex.classes) {
                 check(seen.add(owner.type)) { "Duplicate ${owner.type}" }
+                if (verifyPersonalLogCallback(owner)) callbacks++
                 for (method in owner.methods) {
                     check(method.name !in setOf("bd_downloadContent", "bd_libraryDownloadsContent")) { "Retired Library bridge remains: $method" }
                     val code = method.implementation?.instructions?.toList().orEmpty()
@@ -145,6 +149,12 @@ fun main(args: Array<String>) {
     for (hook in listOf("nativeModel", "handleCommand", "audioSession", "releaseAudioTrack")) {
         check(calls.getOrDefault("$volume->$hook", 0) == if (selected.any { it.name == "Volume boost" }) 1 else 0)
     }
+    val recorder = "Lapp/bdcrusher/ytmusic/diagnostics/PlaybackCrashRecorder;"
+    for (hook in listOf("onTrackResponse", "onMetadata", "onPlayback", "onAudioOutput", "onAudioStarted")) {
+        check(calls.getOrDefault("$recorder->$hook", 0) == if (diagnostics) 1 else 0)
+    }
+    check(calls.getOrDefault("Lapp/bdcrusher/ytmusic/diagnostics/CrashDiagnosticsSettings;->install", 0) == if (diagnostics) 1 else 0)
+    println("PASS: $callbacks executable personal Logger callbacks in the patched APK")
     println("PASS: $mode, ${seen.size} unique classes; retired Library bridge absent")
     println("Patched unsigned APK ${hash(result)}")
 }
