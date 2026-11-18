@@ -1,8 +1,8 @@
 {
-  "version": "0.11.0-beta.3",
-  "download_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/download/v0.11.0-beta.3/BDCrusher-YT-Music-0.11.0-beta.3.mpp",
-  "created_at": "2026-11-18T07:02:55",
-  "description": "YouTube Music 9.45.51 and 9.46.51 arm64. Fixes the Singles debug crash and adds playback crash reports.",
+  "version": "0.11.0-beta.4",
+  "download_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/download/v0.11.0-beta.4/BDCrusher-YT-Music-0.11.0-beta.4.mpp",
+  "created_at": "2026-11-18T11:29:57",
+  "description": "YouTube Music 9.45.51 and 9.46.51 arm64. Fixes the Better Lyrics provider crash after playback starts.",
   "signature_download_url": "",
-  "page_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.11.0-beta.3"
+  "page_url": "https://github.com/BDCrusher/ytmusic-lyrics/releases/tag/v0.11.0-beta.4"
 }
